@@ -1,0 +1,91 @@
+- name: 系统内置
+  children:
+    - icon: input
+      iconType: svg
+      label: 文本框
+      type: Text
+      defaults: {}
+      componentFields: []
+    - icon: textarea
+      iconType: svg
+      label: 文本域
+      type: Textarea
+      defaults: {}
+      componentFields: []
+    - icon: select
+      iconType: svg
+      label: 选择器
+      type: Checkbox
+      defaults: {}
+      componentFields: []
+    - icon: checkbox
+      iconType: svg
+      label: 多选框
+      type: Select
+      defaults: {}
+      componentFields: []
+    - icon: radio
+      iconType: svg
+      label: 单选框
+      type: Radio
+      defaults: {}
+      componentFields: []
+    - icon: radio-button
+      iconType: svg
+      label: 单选按钮
+      type: Radio
+      defaults: {}
+      componentFields: []
+    - icon: el-icon-picture-outline
+      label: 图片上传
+      type: Img
+      defaults: {}
+      componentFields: []
+    - icon: date
+      iconType: svg
+      label: 日期选择
+      type: Date
+      defaults: {}
+      componentFields: []
+    - icon: date-range
+      iconType: svg
+      label: 日期范围
+      type: DateRange
+      defaults: {}
+      componentFields: []
+    - icon: time
+      iconType: svg
+      label: 时间选择
+      type: Time
+      defaults: {}
+      componentFields: []
+    - icon: time-range
+      iconType: svg
+      label: 时间范围
+      type: TimeRange
+      defaults: {}
+      componentFields: []
+    - icon: map
+      iconType: svg
+      label: 城市选择
+      type: City
+      defaults: {}
+      componentFields: []
+- name: 信息采集
+  children:
+    - icon: el-icon-s-claim
+      label: 一图一参
+      type: PictureSizes
+      defaults: {}
+      componentFields: []
+    - icon: el-icon-copy-document
+      label: 两图一参
+      type: PictureSizes
+      defaults: {}
+      componentFields: []
+    - icon: excel
+      iconType: svg
+      label: 多图多参
+      type: PictureSizes
+      defaults: {}
+      componentFields: []

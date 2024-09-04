@@ -1,0 +1,23 @@
+{
+  "name": "dofast-ui-admin",
+  "uuid": "0c6d24d0-b663-4e6d-a421-0b26220469f5",
+  "icon": "src/assets/logo/x64.png",
+  "window": {
+    "title": "澳美MES"
+  },
+  "debug": {
+    "resource": "dist"
+  },
+  "build": {
+    "resource": "dist"
+  },
+  "macos": {
+    "window": {}
+  },
+  "windows": {
+    "window": {
+      "icon": "src/assets/logo/x64.png",
+      "maximized": true
+    }
+  }
+}

@@ -1,0 +1,4 @@
+#!/bin/sh
+npx prettier --write src
+git add .
+# npm run eslint --fix
