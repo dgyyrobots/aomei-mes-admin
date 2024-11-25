@@ -7,7 +7,7 @@
           <el-input v-model="machineryTypeName" placeholder="请输入分类名称" clearable size="small" prefix-icon="el-icon-search" style="margin-bottom: 20px" />
         </div>
         <div class="head-container">
-          <el-tree :data="machineryTypeOptions" :props="defaultProps" :expand-on-click-node="false" :filter-node-method="filterNode" ref="tree" default-expand-all @node-click="handleNodeClick" />
+          <el-tree :data="machineryTypeOptions" :props="defaultProps" :expand-on-click-node="false" :filter-node-method="filterNode" ref="tree" default-expand-all @node-click="handleNodeClick" ></el-tree>
         </div>
       </el-col>
       <!--设备数据-->
@@ -162,9 +162,28 @@ export default {
     /** 查询设备类型下拉树结构 */
     getTreeselect() {
       listMachinerytype().then(response => {
+        console.log(response.data);
         this.machineryTypeOptions = [];
-        const data = this.handleTree(response.data, 'id', 'parentTypeId')[0];
-        this.machineryTypeOptions.push(data);
+        const treeData = this.buildTree(response.data);
+        //const data = this.handleTree(response.data, 'id', 'parentTypeId')[0];
+        console.log(treeData);
+        this.machineryTypeOptions = treeData;
+        //this.machineryTypeOptions.push(data);
+      });
+    },
+    // 构建树形结构的递归函数
+    buildTree(data, parentId = 0) {
+      return data.filter(item => item.parentTypeId === parentId).map(item => {
+        const children = this.buildTree(data, item.id);
+        return {
+          id: item.id,
+          machineryTypeName: item.machineryTypeName,
+          machineryTypeCode: item.machineryTypeCode,
+          parentTypeId: item.parentTypeId,
+          ancestors: item.ancestors,
+          enableFlag: item.enableFlag,
+          children: children,
+        };
       });
     },
     // 筛选节点

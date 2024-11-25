@@ -129,10 +129,24 @@
         </el-row>
         <el-divider content-position="center">物料与供应商</el-divider>
         <el-row>
+
+          <el-col :span="8">
+            <el-form-item label="采购单信息" prop="itemCode">
+              <el-input v-if="form.id == null" v-model="form.itemCode" readonly placeholder="请选择物料">
+                <el-button slot="append" @click="handleSelectGoods" icon="el-icon-search"></el-button>
+              </el-input>
+              <!--如果已经保存过，则产品不允许再修改，需要修改就删除重做-->
+              <el-input v-else v-model="form.itemCode"> </el-input>
+            </el-form-item>
+
+            <GoodsSelect ref="goodsSelect" @onSelected="onGoodsSelected" ></GoodsSelect>
+
+          </el-col>
+
           <el-col :span="8">
             <el-form-item label="产品物料编码" prop="itemCode">
-              <el-input v-if="form.id == null" v-model="form.itemCode" readonly placeholder="请选择物料">
-                <el-button slot="append" @click="handleSelectProduct" icon="el-icon-search"></el-button>
+              <el-input disabled v-if="form.id == null" v-model="form.itemCode" readonly placeholder="请选择物料">
+                <el-button disabled slot="append" @click="handleSelectProduct" icon="el-icon-search"></el-button>
               </el-input>
               <!--如果已经保存过，则产品不允许再修改，需要修改就删除重做-->
               <el-input v-else v-model="form.itemCode"> </el-input>
@@ -141,12 +155,12 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="产品物料名称" prop="itemName">
-              <el-input v-model="form.itemName" readonly="readonly" />
+              <el-input disabled v-model="form.itemName" readonly="readonly" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="单位" prop="unitOfMeasure">
-              <el-input v-model="form.unitOfMeasure" readonly="readonly" />
+              <el-input disabled v-model="form.unitOfMeasure" readonly="readonly" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -199,13 +213,14 @@
               <el-date-picker clearable v-model="form.inspectDate" type="date" value-format="timestamp" placeholder="请选择检测日期"> </el-date-picker>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
-            <el-form-item label="检测结果" prop="checkResult">
-              <el-select v-model="form.checkResult" placeholder="请选择检测结果">
-                <el-option v-for="dict in dict.type.mes_qc_result" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
+              <<!--   检验结果基于物料的检测项       -->
+<!--          <el-col :span="8">-->
+<!--            <el-form-item label="检测结果" prop="checkResult">-->
+<!--              <el-select v-model="form.checkResult" placeholder="请选择检测结果">-->
+<!--                <el-option v-for="dict in dict.type.mes_qc_result" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>-->
+<!--              </el-select>-->
+<!--            </el-form-item>-->
+<!--          </el-col>-->
         </el-row>
         <el-row>
           <el-col :span="24">
@@ -264,6 +279,9 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+
+
   </div>
 </template>
 
@@ -274,10 +292,12 @@ import VendorSelect from '@/components/vendorSelect/single.vue';
 import IqcLine from './iqcline.vue';
 import { genCode } from '@/api/mes/autocode/rule';
 import { getReport2 } from '@/api/mes/report/report';
+import GoodsSelect from '@/components/purchaseGoods/single.vue';
+
 export default {
   name: 'Iqc',
   dicts: ['mes_qc_result', 'mes_order_status'],
-  components: { ItemSelect, VendorSelect, IqcLine },
+  components: { ItemSelect, VendorSelect, IqcLine , GoodsSelect},
   data() {
     return {
       //自动生成编码
@@ -344,7 +364,6 @@ export default {
       rules: {
         iqcCode: [{ required: true, message: '来料检验单编号不能为空', trigger: 'blur' }],
         iqcName: [{ required: true, message: '来料检验单名称不能为空', trigger: 'blur' }],
-
         vendorCode: [{ required: true, message: '供应商不能为空', trigger: 'blur' }],
         itemCode: [{ required: true, message: '物料不能为空', trigger: 'blur' }],
         quantityRecived: [{ required: true, message: '本次接收数量不能为空', trigger: 'blur' }],
@@ -439,6 +458,7 @@ export default {
       this.reset();
       this.open = true;
       this.title = '添加来料检验单';
+      this.form.inspectDate = new Date(); // 追加当前时间展示
       this.optType = 'add';
     },
     //查看明细
@@ -570,6 +590,23 @@ export default {
         window.open(`/pdf/web/viewer.html?file=${encodeURIComponent(href)}`);
       });
     },
+    handleSelectGoods() {
+      this.$refs.goodsSelect.showFlag = true;
+    },
+    //采购选择弹出框
+    onGoodsSelected(obj) {
+      if (obj != undefined && obj != null) {
+        console.log(obj);
+        this.form.poNo = obj.poNo;
+        this.form.itemCode = obj.goodsNumber;
+        this.form.itemName = obj.goodsName;
+        this.form.specification = obj.goodsSpecs;
+        this.form.unitOfMeasure = obj.company;
+        this.form.quantityRecived = obj.receiveNum;
+        this.form.reciveDate = obj.createTime;
+      }
+    },
+
   },
 };
 </script>

@@ -25,75 +25,87 @@
 // 首页数据汇总
 import request from '@/utils/request';
 export default {
-    order() {
+    // 渠道营业额
+    /*order() {
         return request({
             url: '/channel/order/day-total-money',
             method: 'get',
         });
-    },
-    mixinOrder() {
+    },*/
+  // 销售成交额
+    /*mixinOrder() {
         return request({
             url: '/trade/mixin-order/day-total-money',
             method: 'get',
         });
-    },
-    ysp() {
+    },*/
+  // 应收款
+    /*ysp() {
         return new Promise((rej, res) => {
             rej({ data: 0 })
         })
-    },
-    yfk() {
+    },*/
+  // 应付款
+  /*  yfk() {
         return new Promise((rej, res) => {
             rej({ data: 0 })
         })
-    },
-    user() {
+    },*/
+  // 客户数量
+    /*user() {
         return request({
             url: '/member/user/count-all',
             method: 'get',
         });
-    },
-    mdVendor() {
+    },*/
+  // 供应商
+  /*mdVendor() {
         return request({
             url: '/mes/md-vendor/count-all',
             method: 'get',
         });
-    },
+    },*/
+  // 物料数量
     mdItem() {
         return request({
             url: '/mes/md-item/count-all',
             method: 'get',
         });
     },
+  // 工单数量
     workorder() {
         return request({
             url: '/mes/pro/workorder/count-all',
             method: 'get',
         });
     },
+  // 委外工单
     workorderOut() {
         return request({
             url: '/mes/pro/workorder/count-out-all',
             method: 'get',
         });
     },
+  // 等待排产数量
     waitProduce() {
         return request({
             url: '/mes/pro/task/count-wait-produce',
             method: 'get',
         });
     },
-    countWait() {
+  // 待发货订单
+    /*countWait() {
         return request({
             url: '/trade/order/count-wait-delivery',
             method: 'get',
         });
-    },
-    product() {
+    },*/
+  // 等待出库订单
+   /* product() {
         return request({
             url: '/wms/product-produce/count-wait',
             method: 'get',
         });
-    },
+    },*/
 
 }

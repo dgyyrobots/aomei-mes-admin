@@ -40,6 +40,13 @@ module.exports = {
     open: false,
     proxy: {
       // detail: https://cli.vuejs.org/config/#devserver-proxy
+      ['/prod-api']: {
+        target: process.env.VITE_BASE_URL, // 确保这里设置为您的后端服务地址
+        changeOrigin: true,
+        pathRewrite: {
+          ['^/prod-api']: '', // 重写路径，去掉 /prod-api 前缀
+        },
+      },
       ['/proxy-api']: {
         target: process.env.VITE_BASE_URL,
         changeOrigin: true,

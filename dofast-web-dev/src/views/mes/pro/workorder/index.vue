@@ -7,8 +7,8 @@
       <el-form-item label="工单名称" prop="workorderName">
         <el-input v-model="queryParams.workorderName" placeholder="请输入工单名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="来源单据" prop="sourceCode">
-        <el-input v-model="queryParams.sourceCode" placeholder="请输入来源单据" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="母工单号" prop="sourceCode">
+        <el-input v-model="queryParams.sourceCode" placeholder="请输入母工单号" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
 
       <el-form-item label="产品编号" prop="productCode">
@@ -23,18 +23,18 @@
             :value="dict.value"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="客户编码" prop="clientCode">
-        <el-input v-model="queryParams.clientCode" placeholder="请输入客户编码" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="客户名称" prop="clientName">
-        <el-input v-model="queryParams.clientName" placeholder="请输入客户名称" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="生产方" prop="isOut">
-        <el-radio-group v-model="queryParams.isOut">
-          <el-radio :key="false" :label="false">自产</el-radio>
-          <el-radio :key="true" :label="true">委外</el-radio>
-        </el-radio-group>
-      </el-form-item>
+      <!--      <el-form-item label="客户编码" prop="clientCode">
+              <el-input v-model="queryParams.clientCode" placeholder="请输入客户编码" clearable @keyup.enter.native="handleQuery" />
+            </el-form-item>
+            <el-form-item label="客户名称" prop="clientName">
+              <el-input v-model="queryParams.clientName" placeholder="请输入客户名称" clearable @keyup.enter.native="handleQuery" />
+            </el-form-item>
+            <el-form-item label="生产方" prop="isOut">
+              <el-radio-group v-model="queryParams.isOut">
+                <el-radio :key="false" :label="false">自产</el-radio>
+                <el-radio :key="true" :label="true">委外</el-radio>
+              </el-radio-group>
+            </el-form-item>-->
       <el-form-item label="需求日期" prop="requestDate">
         <el-date-picker clearable v-model="queryParams.requestDate" type="date" value-format="timestamp"
           placeholder="请选择需求日期"></el-date-picker>
@@ -81,7 +81,7 @@
           <dict-tag :options="dict.type.mes_workorder_sourcetype" :value="scope.row.orderSource" />
         </template>
       </el-table-column>
-      <el-table-column label="订单编号" width="140" align="center" prop="sourceCode" />
+      <el-table-column label="母工单号" width="180" align="center" prop="sourceCode" />
       <el-table-column label="产品编号" width="120" align="center" prop="productCode" />
       <el-table-column label="产品名称" width="200" align="center" prop="productName" :show-overflow-tooltip="true" />
       <el-table-column label="规格型号" align="center" prop="productSpc" :show-overflow-tooltip="true" />
@@ -158,7 +158,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="来源类型" prop="orderSource">
-              <el-radio-group v-model="form.orderSource" disabled v-if="optType == 'view'">
+<!--              <el-radio-group v-model="form.orderSource" disabled v-if="optType == 'view'">
                 <el-radio v-for="dict in dict.type.mes_workorder_sourcetype" :key="dict.value" :label="dict.value">
                   {{ dict.label }}
                 </el-radio>
@@ -167,10 +167,16 @@
                 <el-radio v-for="dict in dict.type.mes_workorder_sourcetype" :key="dict.value" :label="dict.value">
                   {{ dict.label }}
                 </el-radio>
-              </el-radio-group>
+              </el-radio-group>-->
+
+              <el-select v-model="form.orderSource" placeholder="请选择来源类型">
+                <el-option v-for="dict in dict.type.mes_workorder_sourcetype" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+
             </el-form-item>
           </el-col>
-          <el-col :span="8" v-if="form.orderSource == 'ORDER'">
+          <el-col :span="8" v-if="form.orderSource == '2'">
             <el-form-item label="订单编号" prop="sourceCode">
               <el-input v-model="form.sourceCode" placeholder="请输入订单编号" />
             </el-form-item>
@@ -182,6 +188,18 @@
                   :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
+
+            <el-form-item label="工艺版本" prop="status">
+              <el-select v-model="form.routeCode" placeholder="请选择工艺版本">
+                <el-option
+                  v-for="item in form.routeList"
+                  :key="item.value"
+                  :label="item.value"
+                  :value="item.value">
+                </el-option>
+              </el-select>
+            </el-form-item>
+
           </el-col>
         </el-row>
         <el-row>
@@ -229,7 +247,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row v-if="form.orderSource == 'ORDER'">
+        <el-row v-if="form.orderSource == '2'">
           <el-col :span="12">
             <el-form-item label="客户编码" prop="clientCode">
               <el-input v-model="form.clientCode" placeholder="请输入客户编码">
@@ -267,9 +285,9 @@
         <el-tab-pane label="BOM组成">
           <Workorderbom ref="bomlist" :optType="optType" :workorder="form" @handleAddSub="handleSubAdd"></Workorderbom>
         </el-tab-pane>
-        <el-tab-pane label="物料需求" v-if="form.parentId == 0">
+<!--        <el-tab-pane label="物料需求" v-if="form.parentId == 0">
           <WorkorderItemList :workorder="form"></WorkorderItemList>
-        </el-tab-pane>
+        </el-tab-pane>-->
         <el-tab-pane label="快捷排产" v-if="form.status == 'CONFIRMED'">
           <el-steps :active="activeProcess" v-if="form.id != null" align-center simple>
             <el-step v-for="(item, index) in processOptions" :key="index" :title="item.processName"
@@ -277,7 +295,7 @@
           </el-steps>
           <template v-for="(item, index) in processOptions">
             <el-card :key="index" v-if="activeProcess == index">
-              <ProTask :workorderId="form.id" :processId="item.processId" :colorCode="item.colorCode" :optType="optType">
+              <ProTask :workorderId="form.id" :workorderName = "form.workorderName" :workorderCode="form.workorderCode" :processId="item.processId" :colorCode="item.colorCode" :optType="optType">
               </ProTask>
             </el-card>
           </template>
@@ -298,6 +316,7 @@
 <script>
 import { createPrintLog } from "@/api/report/printLog";
 import { listProductprocess } from '@/api/mes/pro/routeprocess';
+import { getRouteCodeByItemCode } from '@/api/mes/pro/proroute';
 import ProTask from '../schedule/proTask.vue';
 import { listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder } from '@/api/mes/pro/workorder';
 import Workorderbom from './bom/bom.vue';
@@ -414,7 +433,8 @@ export default {
   },
   methods: {
     getProcess() {
-      listProductprocess(this.form.productId).then(response => {
+      console.log(this.form);
+      listProductprocess(this.form.id).then(response => {
         this.processOptions = response.data;
       });
     },
@@ -575,34 +595,52 @@ export default {
       }, timeout);
     },
     // 查询明细按钮操作
-    handleView(row) {
+    async handleView(row) {
       this.reset();
       this.getTreeselect();
       const workorderId = row.id || this.id;
-      console.log(row);
-      getWorkorder(workorderId).then(response => {
+      await getWorkorder(workorderId).then(response => {
         this.form = response.data;
+        console.log(this.form)
         this.getProcess();
+        // 根据当前选中的物料, 获取工艺路线编号
+        /*this.initRouteList(this.form.productCode);
+        console.log("AAA: " + this.form.routeList);*/
+        /*this.open = true;
+        this.title = '查看工单信息';
+        this.optType = 'view';*/
+      });
+      await getRouteCodeByItemCode(this.form.productCode).then(response => {
+        console.log(response.data);
+        this.form.routeList = response.data;
         this.open = true;
         this.title = '查看工单信息';
         this.optType = 'view';
       });
     },
     /** 修改按钮操作 */
-    handleUpdate(row) {
+    async handleUpdate(row) {
       this.reset();
       this.getTreeselect();
       if (row != null) {
         this.form.parentId = row.id;
       }
-      getWorkorder(row.id).then(response => {
+     await getWorkorder(row.id).then(response => {
         this.form = response.data;
+        // 根据当前选中的物料, 获取工艺路线编号
+      /*  this.initRouteList(this.form.productCode)
+        console.log("BBB: " + this.form.routeList);*/
         this.getProcess();
+      });
+      await getRouteCodeByItemCode(this.form.productCode).then(response => {
+        console.log(response.data);
+        this.form.routeList = response.data;
         this.open = true;
         this.title = '修改生产工单';
         this.optType = 'edit';
       });
     },
+
     /** 提交按钮 */
     submitForm() {
       this.$refs['form'].validate(valid => {
@@ -669,6 +707,9 @@ export default {
         this.form.productName = obj.itemName;
         // this.form.productSpc = obj.specification;
         this.form.unitOfMeasure = obj.unitOfMeasure;
+        // 根据当前选中的物料, 获取工艺路线编号
+        this.initRouteList(obj.itemCode);
+        console.log("CCC: " + this.form.routeList);
       }
     },
     //客户选择弹出框

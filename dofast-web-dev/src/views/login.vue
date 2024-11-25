@@ -16,7 +16,7 @@
         <div class="form-cont">
           <el-tabs class="form" v-model="loginForm.loginType" style="float: none">
             <el-tab-pane label="账号密码登录" name="uname"></el-tab-pane>
-            <el-tab-pane label="短信验证码登录" name="sms"></el-tab-pane>
+            <!--            <el-tab-pane label="短信验证码登录" name="sms"></el-tab-pane>-->
           </el-tabs>
           <div>
             <el-form ref="loginForm" :model="loginForm" :rules="LoginRules" class="login-form">
@@ -34,7 +34,7 @@
                 </el-form-item>
                 <el-form-item prop="password">
                   <el-input v-model="loginForm.password" type="password" auto-complete="off" placeholder="密码"
-                    @keyup.enter.native="getCode">
+                            @keyup.enter.native="getCode">
                     <svg-icon slot="prefix" icon-class="password" class="el-input__icon input-icon" />
                   </el-input>
                 </el-form-item>
@@ -42,47 +42,47 @@
               </div>
 
               <!-- 短信验证码登录 -->
-              <div v-if="loginForm.loginType === 'sms'">
-                <el-form-item prop="mobile">
-                  <el-input v-model="loginForm.mobile" type="text" auto-complete="off" placeholder="请输入手机号">
-                    <svg-icon slot="prefix" icon-class="phone" class="el-input__icon input-icon" />
-                  </el-input>
-                </el-form-item>
-                <el-form-item prop="mobileCode">
-                  <el-input v-model="loginForm.mobileCode" type="text" auto-complete="off" placeholder="短信验证码"
-                    class="sms-login-mobile-code-prefix" @keyup.enter.native="handleLogin">
-                    <template>
-                      <svg-icon slot="prefix" icon-class="password" class="el-input__icon input-icon" />
-                    </template>
-                    <template slot="append">
-                      <span v-if="mobileCodeTimer <= 0" class="getMobileCode" @click="getSmsCode"
-                        style="cursor: pointer">获取验证码</span>
-                      <span v-if="mobileCodeTimer > 0" class="getMobileCode">{{ mobileCodeTimer }}秒后可重新获取</span>
-                    </template>
-                  </el-input>
-                </el-form-item>
-              </div>
+              <!--              <div v-if="loginForm.loginType === 'sms'">
+                              <el-form-item prop="mobile">
+                                <el-input v-model="loginForm.mobile" type="text" auto-complete="off" placeholder="请输入手机号">
+                                  <svg-icon slot="prefix" icon-class="phone" class="el-input__icon input-icon" />
+                                </el-input>
+                              </el-form-item>
+                              <el-form-item prop="mobileCode">
+                                <el-input v-model="loginForm.mobileCode" type="text" auto-complete="off" placeholder="短信验证码"
+                                  class="sms-login-mobile-code-prefix" @keyup.enter.native="handleLogin">
+                                  <template>
+                                    <svg-icon slot="prefix" icon-class="password" class="el-input__icon input-icon" />
+                                  </template>
+                                  <template slot="append">
+                                    <span v-if="mobileCodeTimer <= 0" class="getMobileCode" @click="getSmsCode"
+                                      style="cursor: pointer">获取验证码</span>
+                                    <span v-if="mobileCodeTimer > 0" class="getMobileCode">{{ mobileCodeTimer }}秒后可重新获取</span>
+                                  </template>
+                                </el-input>
+                              </el-form-item>
+                            </div>-->
 
               <!-- 下方的登录按钮 -->
               <el-form-item style="width: 100%">
                 <el-button :loading="loading" size="medium" type="primary" style="width: 100%"
-                  @click.native.prevent="getCode">
+                           @click.native.prevent="getCode">
                   <span v-if="!loading">登 录</span>
                   <span v-else>登 录 中...</span>
                 </el-button>
               </el-form-item>
 
               <!--  社交登录 -->
-              <el-form-item style="width: 100%">
-                <div class="oauth-login" style="display: flex">
-                  <div class="oauth-login-item" v-for="item in SysUserSocialTypeEnum" :key="item.type"
-                    @click="doSocialLogin(item)">
-                    <img src="@/assets/logo/OzMrzn.png" v-if="item.title == '企业微信'" height="25px" width="25px" alt="登录" />
-                    <img src="@/assets/logo/OzMDRs.png" v-if="item.title == '钉钉'" height="25px" width="25px" alt="登录" />
-                    <span>{{ item.title }}</span>
-                  </div>
-                </div>
-              </el-form-item>
+              <!--              <el-form-item style="width: 100%">
+                              <div class="oauth-login" style="display: flex">
+                                <div class="oauth-login-item" v-for="item in SysUserSocialTypeEnum" :key="item.type"
+                                  @click="doSocialLogin(item)">
+                                  <img src="@/assets/logo/OzMrzn.png" v-if="item.title == '企业微信'" height="25px" width="25px" alt="登录" />
+                                  <img src="@/assets/logo/OzMDRs.png" v-if="item.title == '钉钉'" height="25px" width="25px" alt="登录" />
+                                  <span>{{ item.title }}</span>
+                                </div>
+                              </div>
+                            </el-form-item>-->
             </el-form>
           </div>
         </div>
@@ -91,7 +91,7 @@
 
     <!-- 图形验证码 -->
     <Verify ref="verify" :captcha-type="'blockPuzzle'" :img-size="{ width: '400px', height: '200px' }"
-      @success="handleLogin" />
+            @success="handleLogin" />
 
     <!-- footer -->
     <div class="footer">Copyright © 2020-2023 huizhizao.vip All Rights Reserved.</div>
@@ -130,10 +130,9 @@ export default {
         mobile: '',
         mobileCode: '',
         rememberMe: false,
-        tenantName: '',
+        tenantName: '江苏澳美',
       },
       scene: 21,
-
       loading: false,
       redirect: undefined,
       // 枚举
@@ -207,13 +206,16 @@ export default {
     //   });
     // }
     // 验证码开关
-    this.captchaEnable = getCaptchaEnable();
+    //this.captchaEnable = getCaptchaEnable();
+    this.captchaEnable = false;
+    this.tenantName = '江苏澳美';
     // 重定向地址
     this.redirect = this.$route.query.redirect ? decodeURIComponent(this.$route.query.redirect) : undefined;
     this.getCookie();
   },
   methods: {
     getCode() {
+      console.log(this.captchaEnable);
       // 情况一，未开启：则直接登录
       if (!this.captchaEnable) {
         this.handleLogin({});
@@ -222,7 +224,10 @@ export default {
 
       // 情况二，已开启：则展示验证码；只有完成验证码的情况，才进行登录
       // 弹出验证码
-      this.$refs.verify.show();
+      // this.$refs.verify.show();
+      // 不喜欢验证码
+      this.handleLogin({});
+      return;
     },
     getCookie() {
       const username = getUsername();

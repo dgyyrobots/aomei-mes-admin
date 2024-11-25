@@ -139,6 +139,7 @@
             </el-form-item>
           </el-col>
         </el-row>
+
         <!--供应商-->
         <el-row v-else-if="form.barcodeType == 'VENDOR'">
           <el-col :span="12">

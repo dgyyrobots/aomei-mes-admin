@@ -25,7 +25,7 @@ export const DICT_TYPE = {
   USER_TYPE: 'user_type',
   COMMON_STATUS: 'common_status',
   TERMINAL: 'terminal',
-
+  PURCHASE_STATUS: 'purchase_status',
   // ========== SYSTEM 模块 ==========
   SYSTEM_YES_NO: 'system_yes_no',
   SYSTEM_USER_SEX: 'system_user_sex',

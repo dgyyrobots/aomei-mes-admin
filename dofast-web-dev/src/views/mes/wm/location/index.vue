@@ -31,6 +31,7 @@
         </template>
       </el-table-column>
       <el-table-column label="库区名称" align="center" prop="locationName" />
+      <el-table-column label="所属工艺编码" align="center" prop="processCode" />
       <el-table-column label="面积" align="center" prop="area" />
       <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -68,6 +69,11 @@
           <el-col :span="12">
             <el-form-item label="面积" prop="area">
               <el-input-number :min="0" :step="1" :percision="2" v-model="form.area" placeholder="请输入面积" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="工序编码" prop="area">
+              <el-input v-model="form.processCode" placeholder="请输入工序编码" />
             </el-form-item>
           </el-col>
         </el-row>

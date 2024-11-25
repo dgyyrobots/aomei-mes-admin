@@ -29,6 +29,7 @@
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.keyFlag" />
         </template>
       </el-table-column>
+      <el-table-column label="项次" align="center" prop="sequence" />
       <el-table-column label="准备时间" align="center" prop="defaultPreTime" />
       <el-table-column label="等待时间" align="center" prop="defaultSufTime" />
       <el-table-column label="甘特图显示颜色" align="center" prop="colorCode">

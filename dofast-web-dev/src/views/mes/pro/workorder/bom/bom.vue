@@ -12,16 +12,17 @@
 
     <el-table v-loading="loading" :data="workorderbomList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="BOM物料编号" width="120" align="center" prop="itemCode" />
-      <el-table-column label="BOM物料名称" width="200" align="center" prop="itemName" :show-overflow-tooltip="true" />
-      <el-table-column label="规格型号" align="center" prop="itemSpc" :show-overflow-tooltip="true" />
+      <el-table-column label="BOM料号" width="120" align="center" prop="itemCode" />
+      <el-table-column label="BOM名称" width="200" align="center" prop="itemName" :show-overflow-tooltip="true" />
+      <el-table-column label="规格" align="center" prop="itemSpc" :show-overflow-tooltip="true" />
       <el-table-column label="单位" align="center" prop="unitOfMeasure" />
       <el-table-column label="物料/产品" align="center" prop="itemOrProduct">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.mes_item_product" :value="scope.row.itemOrProduct" />
         </template>
       </el-table-column>
-      <el-table-column label="预计使用量" align="center" prop="quantity" />
+      <el-table-column label="预计用量" align="center" prop="quantity" />
+      <el-table-column label="项次" align="center" prop="sequence" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
 
         <template slot-scope="scope">

@@ -102,8 +102,6 @@ export default {
       this.lineChartData2 = { xse, yue };
     },
     async getOrderMonthTotal() {
-
-
       let { data } = await getOrderMonthTotal();
       let value = Object.keys(data).map(item => {
         return { name: item, value: data[item] }

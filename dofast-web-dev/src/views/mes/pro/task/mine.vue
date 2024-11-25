@@ -3,34 +3,34 @@
     <!-- 搜索工作栏 -->
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="任务编号" prop="taskCode">
-        <el-input v-model="queryParams.taskCode" placeholder="请输入任编号" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.taskCode" placeholder="请输入任编号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="任务名称" prop="taskName">
-        <el-input v-model="queryParams.taskName" placeholder="请输入任务名称" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.taskName" placeholder="请输入任务名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="工单名称" prop="workorderName">
         <el-input v-model="queryParams.workorderName" placeholder="请输入工单名称" clearable
-          @keyup.enter.native="handleQuery" />
+                  @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="规格型号" prop="specification">
         <el-input v-model="queryParams.specification" placeholder="请输入规格型号" clearable
-          @keyup.enter.native="handleQuery" />
+                  @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="客户名称" prop="clientName">
-        <el-input v-model="queryParams.clientName" placeholder="请输入客户名称" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.clientName" placeholder="请输入客户名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="开始时间" prop="startTime">
         <el-date-picker v-model="queryParams.startTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
-          type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-          :default-time="['00:00:00', '23:59:59']" />
+                        type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                        :default-time="['00:00:00', '23:59:59']"/>
       </el-form-item>
       <el-form-item label="生产时长" prop="duration">
-        <el-input v-model="queryParams.duration" placeholder="请输入生产时长" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.duration" placeholder="请输入生产时长" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
           <el-option v-for="dict in  dict.type.mes_pro_task_status" :key="dict.value" :label="dict.label"
-            :value="dict.value"></el-option>
+                     :value="dict.value"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="打印状态" prop="isPrint">
@@ -41,18 +41,18 @@
       </el-form-item>
       <el-form-item label="完成时间" prop="endTime">
         <el-date-picker v-model="queryParams.endTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
-          type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-          :default-time="['00:00:00', '23:59:59']" />
+                        type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                        :default-time="['00:00:00', '23:59:59']"/>
       </el-form-item>
 
       <el-form-item label="需求日期" prop="requestDate">
         <el-date-picker v-model="queryParams.requestDate" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
-          type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
-          :default-time="['00:00:00', '23:59:59']" />
+                        type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
+                        :default-time="['00:00:00', '23:59:59']"/>
       </el-form-item>
 
       <el-form-item label="备注" prop="remark">
-        <el-input v-model="queryParams.remark" placeholder="请输入备注" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.remark" placeholder="请输入备注" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
 
       <el-form-item>
@@ -80,29 +80,29 @@
 
     <!-- 列表 -->
     <el-table v-loading="loading" :data="list">
-      <el-table-column label="任务编号" align="center" prop="taskCode" width="110">
+      <el-table-column label="任务编号" align="center" prop="taskCode" width="150">
         <template slot-scope="scope">
           <el-button size="mini" type="text" @click="handleView(scope.row)" v-hasPermi="['pro:workorder:query']">
             {{ scope.row.taskCode }}
           </el-button>
         </template>
       </el-table-column>
-      <el-table-column label="工单/任务名称" align="center" prop="taskName" width="200">
+      <el-table-column label="工单/任务名称" align="center" prop="taskName" width="350" :show-overflow-tooltip="true">
 
         <template slot-scope="scope">
-          {{ scope.row.workorderName }}<br />{{ scope.row.taskName }}
+          {{ scope.row.workorderName }}<br/>{{ scope.row.taskName }}
         </template>
       </el-table-column>
-      <el-table-column label="产品编号/名称" align="center" prop="itemCode" width="110">
+      <el-table-column label="产品编号/名称" align="center" prop="itemCode" width="150" :show-overflow-tooltip="true">
 
         <template slot-scope="scope">
-          {{ scope.row.itemCode }}<br />{{ scope.row.itemName }}
+          {{ scope.row.itemCode }}<br/>{{ scope.row.itemName }}
         </template>
       </el-table-column>
+      <el-table-column label="规格" align="center" prop="specification" fixed="right" :show-overflow-tooltip="true"/>
       <!-- <el-table-column label="产品名称" align="center" prop="itemName" /> -->
-      <el-table-column label="工序名称" align="center" prop="processName" />
+      <el-table-column label="工序名称" align="center" prop="processName"/>
       <el-table-column label="任务/生产数量" align="center" prop="quantity">
-
         <template v-slot="scope">
           <span>{{ scope.row.quantity }}/{{ scope.row.quantityProduced }}</span>
         </template>
@@ -120,20 +120,38 @@
           <span>{{ parseTime(scope.row.startTime) }}</span>
         </template>
       </el-table-column> -->
-      <el-table-column label="备注" align="center" prop="remark" />
-      <el-table-column label="规格" align="center" prop="specification" fixed="right" />
-      <el-table-column label="订单号" align="center" prop="sourceCode" fixed="right" width="140" />
-      <el-table-column label="需求日期" align="center" prop="requestDate" class-name="small-padding fixed-width" width="100"
-        fixed="right">
+      <!--      <el-table-column label="备注" align="center" prop="remark" />-->
 
+      <!--      <el-table-column label="订单号" align="center" prop="sourceCode" fixed="right" width="140" />-->
+      <el-table-column label="需求日期" align="center" prop="requestDate" class-name="small-padding fixed-width" width="100"
+                       fixed="right">
+
+        <!--        <template v-slot="scope">
+                  <span>{{ parseTime(scope.row.requestDate, '{y}-{m}-{d}') }}</span><br /><span
+                    v-if="scope.row.requestDate < date && scope.row.status != 'FINISHED'" style="color: red;">延期{{
+              Math.ceil((date
+                - scope.row.requestDate) / (1000 * 3600 * 24)) }}天</span>
+                  <span
+                    v-if="scope.row.requestDate > date && scope.row.status != 'FINISHED' && (scope.row.requestDate - date) < (1000 * 3600 * 24)"
+                    style="color: #FFA500;">紧急</span>
+                </template>-->
         <template v-slot="scope">
-          <span>{{ parseTime(scope.row.requestDate, '{y}-{m}-{d}') }}</span><br /><span
-            v-if="scope.row.requestDate < date && scope.row.status != 'FINISHED'" style="color: red;">延期{{
-      Math.ceil((date
-        - scope.row.requestDate) / (1000 * 3600 * 24)) }}天</span>
-          <span
-            v-if="scope.row.requestDate > date && scope.row.status != 'FINISHED' && (scope.row.requestDate - date) < (1000 * 3600 * 24)"
-            style="color: #FFA500;">紧急</span>
+          <!-- 当 scope.row.requestDate 不为空时，才渲染需求日期 -->
+          <span v-if="scope.row.requestDate">
+      {{ parseTime(scope.row.requestDate, '{y}-{m}-{d}') }}
+            <!-- 任务未完成时，才进行时间判定 -->
+      <span v-if="scope.row.status !== 'FINISHED'">
+        <!-- 如果当前日期大于需求日期，则表示延期 -->
+        <span v-if="new Date().toISOString() > new Date(scope.row.requestDate).toISOString()" style="color: red;">
+          延期{{ Math.ceil((new Date().getTime() - new Date(scope.row.requestDate).getTime()) / (1000 * 3600 * 24)) }}天
+        </span>
+        <!-- 如果当前日期小于需求日期，则表示未延期，展示未来的需求日期 -->
+        <span v-else style="color: green;">
+          剩余{{ Math.ceil((new Date(scope.row.requestDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24)) }}天
+        </span>
+      </span>
+    </span>
+          <!-- 当 requestDate 为空时，不显示任何内容 -->
         </template>
       </el-table-column>
       <!-- <el-table-column label="打印状态" align="center" prop="isPrint" class-name="small-padding fixed-width" fixed="right">
@@ -143,11 +161,11 @@
         </template>
       </el-table-column> -->
       <el-table-column label="报工/打印状态" align="center" prop="isReport" class-name="small-padding fixed-width"
-        fixed="right" width="110">
+                       fixed="right" width="110">
 
         <template v-slot="scope">
           <el-tag type="info" v-if="!scope.row.isReport">未报工</el-tag>
-          <span v-else>报工{{ scope.row.isReport }}次</span><br />
+          <span v-else>报工{{ scope.row.isReport }}次</span><br/>
           <el-tag type="info" v-if="scope.row.isPrint=='0'">未打印</el-tag>
           <span v-else>已打印</span>
         </template>
@@ -160,7 +178,7 @@
             <div>开始时间:{{ parseTime(scope.row.actualStartTime) }}</div>
             <div>完工时间:{{ parseTime(scope.row.actualEndTime) }}</div>
             <dict-tag style="cursor: pointer;" slot="reference" :type="DICT_TYPE.MES_PRO_TASK_STATUS"
-              :value="scope.row.status"></dict-tag>
+                      :value="scope.row.status"></dict-tag>
           </el-popover>
         </template>
       </el-table-column>
@@ -168,14 +186,17 @@
 
         <template v-slot="scope">
           <el-button size="mini" v-if="scope.row.status == 'NORMAL'" type="text" icon="el-icon-edit"
-            @click="handleUpdateStatus(scope.row, 'STARTED', '你确定要开始这个任务吗？')"
-            v-hasPermi="['pro:task:update']">开始</el-button>
+                     @click="handleUpdateStatus(scope.row, 'STARTED', '你确定要开始这个任务吗？')"
+                     v-hasPermi="['pro:task:update']">开始
+          </el-button>
           <el-button size="mini" v-if="scope.row.status == 'PAUSE'" type="text" icon="el-icon-edit"
-            @click="handleUpdateStatus(scope.row, 'STARTED', '你确定要继续这个任务吗？')"
-            v-hasPermi="['pro:task:update']">继续</el-button>
+                     @click="handleUpdateStatus(scope.row, 'STARTED', '你确定要继续这个任务吗？')"
+                     v-hasPermi="['pro:task:update']">继续
+          </el-button>
           <el-button size="mini" v-if="scope.row.status == 'STARTED'" type="text" icon="el-icon-edit"
-            @click="handleUpdateStatus(scope.row, 'FINISHED', '你确定要完成这个任务吗？')"
-            v-hasPermi="['pro:task:update']">完成</el-button>
+                     @click="handleUpdateStatus(scope.row, 'FINISHED', '你确定要完成这个任务吗？')"
+                     v-hasPermi="['pro:task:update']">完成
+          </el-button>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
@@ -184,35 +205,144 @@
           <!-- <el-button size="mini" type="text" v-if="fag" icon="el-icon-edit" @click="yjbg(scope.row)">一键报工</el-button> -->
           <!-- v-if="scope.row.status == 'FINISHED'" -->
           <el-button size="mini" type="text" icon="el-icon-edit"
-            @click="handleUpdateCount(scope.row)">报工</el-button>
+                     @click="handleUpdateCount(scope.row)">报工
+          </el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handlePrint(scope.row)"
-            v-hasPermi="['report:print-log:update']">打印</el-button>
+                     v-hasPermi="['report:print-log:update']">打印
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
     <!-- 分页组件 -->
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
-      @pagination="getList" />
-    <el-dialog v-if="open" :visible.sync="open" width="750px">
-      <el-form ref="form" :model="form" :rules="rules">
-        <el-form-item prop="quantity" label="报工总数量">
-          <el-input-number v-model="form.quantity" />
-        </el-form-item>
-        <el-form-item prop="nickName" label="报工人">
-          <el-input v-model="form.nickName" placeholder="请输入报工人姓名" />
-        </el-form-item>
-        <el-form-item prop="reportFee" label="报工价格">
-          <el-input v-model="form.reportFee" placeholder="请输入报工价格" />
-        </el-form-item>
-        <el-form-item prop="quantityQualify" label="合格品数量">
-          <el-input-number v-model="form.quantityQualify" />
-        </el-form-item>
-        <el-form-item prop="quantityUnqualify" label="不良品数量">
-          <el-input-number v-model="form.quantityUnqualify" />
-        </el-form-item>
+                @pagination="getList"/>
+    <!--    <el-dialog v-if="open" :visible.sync="open" width="750px">
+          <el-form ref="form" :model="form" :rules="rules">
+            <el-form-item prop="quantity" label="报工总数量">
+              <el-input-number v-model="form.quantity" />
+            </el-form-item>
+            <el-form-item prop="nickName" label="报工人">
+              <el-input v-model="form.nickName" placeholder="请输入报工人姓名" />
+            </el-form-item>
+            <el-form-item prop="reportFee" label="报工价格">
+              <el-input v-model="form.reportFee" placeholder="请输入报工价格" />
+            </el-form-item>
+            <el-form-item prop="quantityQualify" label="合格品数量">
+              <el-input-number v-model="form.quantityQualify" />
+            </el-form-item>
+            <el-form-item prop="quantityUnqualify" label="不良品数量">
+              <el-input-number v-model="form.quantityUnqualify" />
+            </el-form-item>
+          </el-form>
+          <div slot="footer">
+            <el-button type="primary" @click="submitForm">提交 </el-button>
+            <el-button @click="cancel">取 消</el-button>
+          </div>
+        </el-dialog>-->
+    <!-- 报工弹出框 -->
+    <el-dialog :title="title" :visible.sync="open" width="960px" append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="报工类型" prop="feedbackType">
+              <el-select v-model="form.feedbackType" placeholder="请选择报工类型">
+                <el-option v-for="dict in dict.type.mes_feedback_type" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="生产工单" prop="workorderCode">
+              <el-input disabled v-model="form.workorderCode" placeholder="请选择生产工单"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="生产任务" prop="taskCode">
+              <el-input disabled v-model="form.taskCode" placeholder="请选择生产任务"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="产品编码" prop="itemCode">
+              <el-input disabled v-model="form.itemCode" readonly="readonly"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="产品名称" prop="itemName">
+              <el-input disabled v-model="form.itemName" readonly="readonly"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="单位" prop="unitOfMeasure">
+              <el-input disabled v-model="form.unitOfMeasure" readonly="readonly"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="规格型号" prop="specification">
+              <el-input disabled v-model="form.specification" type="textarea" readonly="readonly"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="报工数量" prop="quantityFeedback">
+              <el-input readonly="readonly" v-model="form.quantityFeedback"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="合格品数量" prop="quantityQualified">
+              <el-input-number :min="0" @change="handleQuantityChanged" v-model="form.quantityQualified"
+                               placeholder="请输入合格品数量"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="不良品数量" prop="quantityUnquanlified">
+              <el-input-number :min="0" @change="handleQuantityChanged" v-model="form.quantityUnquanlified"
+                               placeholder="请输入不良品数量"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="报工班组" prop="teamCode">
+              <el-input disabled v-model="form.teamCode" placeholder="请输入报工班组"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="报工时间" prop="feedbackTime">
+              <el-date-picker disabled clearable v-model="form.feedbackTime" type="date" value-format="timestamp"
+                              placeholder="请选择报工时间"></el-date-picker>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-divider>班组成员信息</el-divider>
+        <el-row>
+          <el-col :span="24">
+            <div style="text-align: right; margin-top: 20px;">
+              <el-button type="primary" @click="addTeamMember()">新增</el-button>
+            </div>
+          </el-col>
+        </el-row>
+        <el-card class="box-card">
+          <el-table :data="teamMembers" style="width: 100%">
+            <el-table-column prop="id" label="成员ID" width="180"/>
+            <el-table-column prop="nickname" label="成员昵称" width="180"/>
+            <el-table-column prop="username" label="成员名称" width="180"/>
+            <el-table-column prop="position" label="职位"/>
+            <el-table-column label="操作">
+              <template slot-scope="scope">
+                <el-button size="mini" type="text" icon="el-icon-delete" @click="deleteTeamMember(scope.row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+        <UserSingleSelect ref="userSelect" @onSelected="onUserSelected"></UserSingleSelect>
       </el-form>
-      <div slot="footer">
-        <el-button type="primary" @click="submitForm">提交 </el-button>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitForm">保 存</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
@@ -222,81 +352,81 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="工单编号" prop="workorderCode">
-              <el-input v-model="form2.workorderCode" disabled />
+              <el-input v-model="form2.workorderCode" disabled/>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="任务名称" prop="taskName">
-              <el-input v-model="form2.taskName" disabled />
+              <el-input v-model="form2.taskName" disabled/>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="规格型号" prop="specification">
-              <el-input v-model="form2.specification" placeholder="请输入规格" disabled />
+              <el-input v-model="form2.specification" placeholder="请输入规格" disabled/>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="8">
             <el-form-item label="任务编号" prop="taskCode">
-              <el-input v-model="form2.taskCode" disabled />
+              <el-input v-model="form2.taskCode" disabled/>
             </el-form-item>
           </el-col>
 
           <el-col :span="8">
             <el-form-item label="工序编号" prop="processCode">
-              <el-input v-model="form2.processCode" disabled />
+              <el-input v-model="form2.processCode" disabled/>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="需求日期" prop="requestDate">
               <el-date-picker clearable v-model="form2.requestDate" type="date" value-format="timestamp"
-                placeholder="请选择需求日期" disabled></el-date-picker>
+                              placeholder="请选择需求日期" disabled></el-date-picker>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="12">
             <el-form-item :label="form2.status == 'NORMAL' ? '计划开工时间' : '开工时间'" prop="startTime" label-width="100"
-              style="transform:translateX('20px');">
+                          style="transform:translateX('20px');">
               <el-date-picker clearable v-model="form2.startTime" type="date" value-format="timestamp"
-                disabled></el-date-picker>
+                              disabled></el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="form2.status != 'FINISHED' ? '计划完工时间' : '完工时间'" prop="endTime" label-width="100"
-              style=" transform:translateX('20px');">
+                          style=" transform:translateX('20px');">
               <el-date-picker clearable v-model="form2.endTime" type="date" value-format="timestamp"
-                placeholder="请选择需求日期" disabled></el-date-picker>
+                              placeholder="请选择需求日期" disabled></el-date-picker>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="6">
             <el-form-item label="计划报工" prop="quantity">
-              <el-input v-model="form2.quantity" disabled />
+              <el-input v-model="form2.quantity" disabled/>
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="报工" prop="quantityProduced">
-              <el-input v-model="form2.quantityProduced" disabled />
+              <el-input v-model="form2.quantityProduced" disabled/>
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="合格" prop="quantityQuanlify">
-              <el-input v-model="form2.quantityQuanlify" disabled />
+              <el-input v-model="form2.quantityQuanlify" disabled/>
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="不合格" prop="quantityUnquanlify">
-              <el-input v-model="form2.quantityUnquanlify" disabled />
+              <el-input v-model="form2.quantityUnquanlify" disabled/>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
-              <el-input v-model="form2.remark" type="textarea" />
+              <el-input v-model="form2.remark" type="textarea"/>
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -327,24 +457,32 @@
 </template>
 
 <script>
-import { createPrintLog } from "@/api/report/printLog";
-import { listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder } from '@/api/mes/pro/workorder';
-import { getTaskPage, create, create2, getProtask, updateTasks } from '@/api/mes/pro/protask';
-import { updateProtask, updateTasksPrint } from '@/api/mes/pro/protask';
-import { addFeedback as updateTask } from '@/api/mes/pro/feedback';
-import { getAccessToken } from '@/utils/auth';
-import { getConfigKey } from '@/api/system/config';
-import { genCode } from '@/api/mes/autocode/rule';
+import {createPrintLog} from "@/api/report/printLog";
+import {listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder} from '@/api/mes/pro/workorder';
+import {getTaskPage, create, create2, getProtask, updateTasks} from '@/api/mes/pro/protask';
+import {updateProtask, updateTasksPrint} from '@/api/mes/pro/protask';
+import {addFeedback, addFeedback as updateTask, updateFeedback} from '@/api/mes/pro/feedback';
+import {getAccessToken} from '@/utils/auth';
+import {getConfigKey} from '@/api/system/config';
+import {genCode} from '@/api/mes/autocode/rule';
 import FileUpload from '@/components/FileUpload/index3.vue';
 import Workorderbom from '../workorder/bom/bom.vue';
 import WorkorderItemList from '../workorder/items/item.vue';
+import WorkorderSelect from '@/components/workorderSelect/single.vue';
+import ProtaskSelect from '@/components/TaskSelect/taskSelectSingle.vue';
+import UserSingleSelect from '@/components/userSelect/single.vue';
+import {getTeammemberByTeamCode} from "@/api/mes/cal/teammember";
+
 export default {
   name: 'Task',
-  dicts: ['mes_order_status', 'mes_workorder_sourcetype', 'mes_pro_task_status'],
+  dicts: ['mes_order_status', 'mes_workorder_sourcetype', 'mes_pro_task_status', 'mes_feedback_type'],
   components: {
     FileUpload,
     Workorderbom,
     WorkorderItemList,
+    WorkorderSelect,
+    ProtaskSelect,
+    UserSingleSelect,
   },
   data() {
     return {
@@ -424,23 +562,27 @@ export default {
         createTime: []
       },
       // 表单参数
-      form: {},
+      form: {
+        quantityFeedback: 0,
+        quantityQualified: 0,
+        quantityUnquanlified: 0,
+      },
       // 表单校验
       rules: {
-        taskCode: [{ required: true, message: '任务编号不能为空', trigger: 'blur' }],
-        taskName: [{ required: true, message: '任务名称不能为空', trigger: 'blur' }],
-        workorderId: [{ required: true, message: '生产工单ID不能为空', trigger: 'blur' }],
-        workorderCode: [{ required: true, message: '生产工单编号不能为空', trigger: 'blur' }],
-        workorderName: [{ required: true, message: '工单名称不能为空', trigger: 'blur' }],
-        workstationId: [{ required: true, message: '工作站ID不能为空', trigger: 'blur' }],
-        workstationCode: [{ required: true, message: '工作站编号不能为空', trigger: 'blur' }],
-        workstationName: [{ required: true, message: '工作站名称不能为空', trigger: 'blur' }],
-        processId: [{ required: true, message: '工序ID不能为空', trigger: 'blur' }],
-        itemId: [{ required: true, message: '产品物料ID不能为空', trigger: 'blur' }],
-        itemCode: [{ required: true, message: '产品物料编码不能为空', trigger: 'blur' }],
-        itemName: [{ required: true, message: '产品物料名称不能为空', trigger: 'blur' }],
-        unitOfMeasure: [{ required: true, message: '单位不能为空', trigger: 'blur' }],
-        quantity: [{ required: true, message: '排产数量不能为空', trigger: 'blur' }],
+        taskCode: [{required: true, message: '任务编号不能为空', trigger: 'blur'}],
+        taskName: [{required: true, message: '任务名称不能为空', trigger: 'blur'}],
+        workorderId: [{required: true, message: '生产工单ID不能为空', trigger: 'blur'}],
+        workorderCode: [{required: true, message: '生产工单编号不能为空', trigger: 'blur'}],
+        workorderName: [{required: true, message: '工单名称不能为空', trigger: 'blur'}],
+        workstationId: [{required: true, message: '工作站ID不能为空', trigger: 'blur'}],
+        workstationCode: [{required: true, message: '工作站编号不能为空', trigger: 'blur'}],
+        workstationName: [{required: true, message: '工作站名称不能为空', trigger: 'blur'}],
+        processId: [{required: true, message: '工序ID不能为空', trigger: 'blur'}],
+        itemId: [{required: true, message: '产品物料ID不能为空', trigger: 'blur'}],
+        itemCode: [{required: true, message: '产品物料编码不能为空', trigger: 'blur'}],
+        itemName: [{required: true, message: '产品物料名称不能为空', trigger: 'blur'}],
+        unitOfMeasure: [{required: true, message: '单位不能为空', trigger: 'blur'}],
+        quantity: [{required: true, message: '排产数量不能为空', trigger: 'blur'}],
       },
       row: '',
       autoGenFlag: '',
@@ -465,6 +607,7 @@ export default {
         // requestDate: [{ required: true, message: '需求日期不能为空', trigger: 'blur' }],
       },
       adjunctTypes: null,
+      teamMembers: [],
     };
   },
   created() {
@@ -558,7 +701,7 @@ export default {
     getTreeselect() {
       listWorkorder().then(response => {
         this.workorderOptions = [];
-        const data = { id: 0, workorderName: '顶级节点', children: [] };
+        const data = {id: 0, workorderName: '顶级节点', children: []};
         data.children = this.handleTree(response.data.list, 'id', 'parentId');
         this.workorderOptions.push(data);
       });
@@ -614,6 +757,7 @@ export default {
       this.loading = true;
       // 执行查询
       getTaskPage(this.queryParams).then(response => {
+        console.log(response.data);
         this.list = response.data.list;
         this.total = response.data.total;
         this.loading = false;
@@ -666,6 +810,7 @@ export default {
         attr3: undefined,
         attr4: undefined,
       };
+      this.teamMembers = [];
       this.resetForm('form');
     },
     /** 搜索按钮操作 */
@@ -681,29 +826,65 @@ export default {
     /** 新增按钮操作 */
     async handleUpdateStatus(row, status, message) {
       await this.$modal.confirm(message);
-      await updateProtask({ id: row.id, status });
+      await updateProtask({id: row.id, status});
       this.getList();
     },
     async handleUpdateCount(row) {
       this.row = row
+      this.title = '报工';
       this.reset();
+      console.log(row);
+      if (row.feedbackStatus != "N") {
+        this.$modal.msgError('当前任务已报工!');
+        return;
+      }
+      this.form.workorderCode = row.workorderCode;
+      this.form.workorderName = row.workorderName;
+      this.form.taskId = row.id;
+      this.form.taskCode = row.taskCode;
+      this.form.taskName = row.taskName;
+      this.form.teamCode = row.attr1;
+      this.form.itemId = row.itemId;
+      this.form.itemCode = row.itemCode;
+      this.form.itemName = row.itemName;
+      this.form.specification = row.specification;
+      this.form.unitOfMeasure = row.unitOfMeasure;
+      this.form.workstationCode = row.workstationCode;
+      this.form.workstationName = row.workstationName;
+      this.form.workstationId = row.workstationId;
+      this.form.workorderId = row.workorderId;
+      this.form.feedbackTime = new Date();
+      this.form.feedbackStatus = row.feedbackStatus;
+      this.form.processCode = row.processCode;
+      this.form.processName = row.processName;
+      this.form.processId = row.processId;
+      // 基于班组编码获取绑定的人员信息
+      getTeammemberByTeamCode(this.form.teamCode).then(response => {
+        console.log(response);
+        for (let i = 0; i < response.data.length; i++) {
+          let obj = response.data[i];
+          obj.username = obj.userName; // 用户名
+          obj.nickname = obj.nickName; // 昵称
+          this.teamMembers.push(obj);
+        }
+      });
       this.open = true;
     },
     async handlePrint(row) {
       await this.$modal.confirm('确认打印？')
-      let datas = await createPrintLog({ printName: this.$store.state.user.nickname, printType: this.$route.meta.title + '-任务编号', printCode: row.taskCode });
+      let datas = await createPrintLog({printName: this.$store.state.user.nickname, printType: this.$route.meta.title + '-任务编号', printCode: row.taskCode});
       if (!datas.data) {
         this.$message.error(datas.msg);
         return
       }
-      let { data } = await getConfigKey('REPORT_WORKORDER');
+      let {data} = await getConfigKey('REPORT_WORKORDER');
       window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/${data.value}?token=${getAccessToken()}&workorderId=${row.workorderId}`);
-      let datas1 = await updateTasksPrint({ id: row.id });
+      let datas1 = await updateTasksPrint({id: row.id});
       this.getList();
     },
     /** 提交按钮 */
     submitForm() {
-      this.$refs['form'].validate(valid => {
+      /*this.$refs['form'].validate(valid => {
         this.form.feedbackType = 'SELF';
         this.form.reportFee = this.form.reportFee * 1;
         // delete this.form.reportFee;
@@ -717,27 +898,69 @@ export default {
           this.getList();
         });
         return;
+      });*/
+      this.$refs['form'].validate(valid => {
+        if (valid) {
+          console.log('提交表单', this.form);
+          this.form.feedbackMemberList = this.teamMembers;
+          if (this.form.feedbackStatus === "N") {
+            addFeedback(this.form).then(response => {
+              this.$modal.msgSuccess('新增成功');
+              this.open = false;
+              this.getList();
+            });
+          } else {
+            this.$modal.msgError('当前任务已报工!');
+            return;
+          }
+        }
       });
-    }
-   //  async yjbg(row) {
+    },
+    handleUpdate(row) {
+      this.reset();
+      const recordId = row.id || this.ids;
+      getFeedback(recordId).then(response => {
+        this.form = response.data;
+        this.teamMembers = this.form.memberList;
+        this.open = true;
+        this.title = '修改生产报工记录';
+      });
+    },
+    handleQuantityChanged() {
+      this.form.quantityFeedback = this.form.quantityQualified + this.form.quantityUnquanlified;
+    },
+    addTeamMember() {
+      // 实现新增班组成员的逻辑
+      this.$refs.userSelect.showFlag = true;
+    },
+    deleteTeamMember(id) {
+      // 实现删除班组成员的逻辑
+      this.teamMembers = this.teamMembers.filter(member => member.id !== id);
+    },
+    //人员选择返回
+    onUserSelected(row) {
+      console.log(row);
+      this.teamMembers.push(row);
+    },
+    //  async yjbg(row) {
     //   await this.$modal.confirm(`确认一键报工?`).then(async () => {
-   //      row.taskId = row.id;
-        // let data = await create(row);
-        // data.data.userName = this.$store.state.user.nickname;
-        // data.data.nickName = this.$store.state.user.nickname;
-        // data.data.feedbackTime = +new Date();
-        // let data2 = await create2(data.data);
-   //      row.userName = this.$store.state.user.username;
-   //      row.nickName = this.$store.state.user.nickname;
-   //      row.feedbackTime = +new Date();
-   //      let data2 = await create2(row);
+    //      row.taskId = row.id;
+    // let data = await create(row);
+    // data.data.userName = this.$store.state.user.nickname;
+    // data.data.nickName = this.$store.state.user.nickname;
+    // data.data.feedbackTime = +new Date();
+    // let data2 = await create2(data.data);
+    //      row.userName = this.$store.state.user.username;
+    //      row.nickName = this.$store.state.user.nickname;
+    //      row.feedbackTime = +new Date();
+    //      let data2 = await create2(row);
     //     if (data2.code == 0) {
     //       this.$modal.msgSuccess('报工成功');
     //       // 更新列表数据
     //       this.getList();
     //     }
     //   })
-  //   }
+    //   }
   },
 };
 </script>

@@ -47,12 +47,14 @@ export const isRelogin = { show: false };
 let requestList = [];
 // 是否正在刷新中
 let isRefreshToken = false;
-
+// 校验当前请求IP
+let isExternal = window.location.hostname !== '172.18.12.250';
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8';
 // 创建axios实例
 const service = axios.create({
   // axios中请求配置有baseURL选项，表示请求URL公共部分
   baseURL: process.env.VUE_APP_BASE_API, // 此处的 /admin-api/ 地址，原因是后端的基础路径为 /admin-api/
+  //baseURL: isExternal ? 'http://58.220.114.70:48080' : process.env.VUE_APP_BASE_API,
   // 超时
   timeout: 30000,
   // 禁用 Cookie 等信息

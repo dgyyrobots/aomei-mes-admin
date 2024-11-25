@@ -282,7 +282,7 @@ export default {
         enableFlag: [{ required: true, message: '是否启用不能为空', trigger: 'blur' }],
         workshopId: [{ required: true, message: '请选择所属车间', trigger: 'blur' }],
         processId: [{ required: true, message: '请选择所属工序', trigger: 'blur' }],
-        warehouseId: [{ required: true, message: '请选择线边库', trigger: 'blur' }],
+       /* warehouseId: [{ required: true, message: '请选择线边库', trigger: 'blur' }],*/
       },
     };
   },

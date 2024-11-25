@@ -87,6 +87,8 @@ export default {
       open: false,
       // 查询参数
       queryParams: {
+        pageNo: 1,
+        pageSize: 10,
         workorderCode: null,
         workorderName: null,
         orderSource: null,
@@ -116,9 +118,11 @@ export default {
   methods: {
     /** 查询生产工单列表 */
     getList() {
+      console.log('queryParams', this.queryParams);
       this.loading = true;
       listWorkorder(this.queryParams).then(response => {
         this.workorderList = response.data.list;
+        console.log('workorderList', this.workorderList);
         this.loading = false;
       });
     },

@@ -82,6 +82,7 @@ export default {
     getList() {
       this.loading = true;
       listTeammember(this.queryParams).then(response => {
+        console.log(response);
         this.teammemberList = response.data.list;
         this.total = response.data.total;
         this.loading = false;
@@ -136,13 +137,14 @@ export default {
       this.title = '添加班组成员';
     },
     userSelected(rows) {
+      console.log(rows);
       if (rows != null) {
         rows.forEach(user => {
           this.form.teamId = this.teamId;
-          this.form.userId = user.userId;
-          this.form.userName = user.userName;
-          this.form.nickName = user.nickName;
-          this.form.tel = user.phonenumber;
+          this.form.userId = user.id;
+          this.form.userName = user.username;
+          this.form.nickName = user.nickname;
+          this.form.tel = user.mobile;
           addTeammember(this.form).then(response => {
             this.getList();
           });

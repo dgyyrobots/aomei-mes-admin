@@ -42,3 +42,15 @@ export function delBarcode(barcodeId) {
     method: 'delete',
   });
 }
+
+// 打印条码信息
+export function printBarcode(barCode) {
+  return request({
+    url: '/mes/wms/print/label',
+    method: 'post',
+    data: barCode,  // 直接传递数据对象
+    headers: {
+      'Content-Type': 'application/json' // 确保是 JSON 格式
+    }
+  });
+}

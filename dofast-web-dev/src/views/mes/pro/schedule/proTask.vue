@@ -187,6 +187,8 @@ export default {
   },
   props: {
     workorderId: null,
+    workorderCode: null,
+    workorderName: null,
     colorCode: null,
     processId: null,
     optType: null,
@@ -235,8 +237,8 @@ export default {
         taskCode: null,
         taskName: null,
         workorderId: this.workorderId,
-        workorderCode: null,
-        workorderName: null,
+        workorderCode: this.workorderCode,
+        workorderName: this.workorderName,
         workstationId: null,
         workstationCode: null,
         workstationName: null,
@@ -310,6 +312,7 @@ export default {
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
+          console.log(this.form);
           if (this.form.id != null) {
             updateProtask(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');

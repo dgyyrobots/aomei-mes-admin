@@ -208,6 +208,7 @@
             </el-form-item>
           </el-col>
         </el-row>
+
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注">
@@ -216,17 +217,24 @@
             </el-form-item>
           </el-col>
         </el-row>
+
+        <el-col :span="24">
+          <el-form-item label="附件" prop="adjuncts">
+            <file-upload v-model="form.adjuncts" :file-type="adjunctTypes" :limit="20" :file-size="100"></file-upload>
+          </el-form-item>
+        </el-col>
+
       </el-form>
       <el-tabs type="border-card" v-if="form.id != null">
         <el-tab-pane label="BOM组成">
           <ItemBom :optType="optType" :itemId="form.id"></ItemBom>
         </el-tab-pane>
-        <el-tab-pane label="供应商"></el-tab-pane>
+<!--        <el-tab-pane label="供应商"></el-tab-pane>
         <el-tab-pane label="替代品"></el-tab-pane>
         <el-tab-pane label="SIP"></el-tab-pane>
         <el-tab-pane label="SOP">
           <SOPTab :itemId="form.id" :optType="optType"></SOPTab>
-        </el-tab-pane>
+        </el-tab-pane>-->
       </el-tabs>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="cancel" v-if="optType == 'view'">返回</el-button>
@@ -269,13 +277,15 @@ import { treeselect } from '@/api/mes/md/itemtype';
 import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
 import { getTreeList } from '@/api/mes/wm/warehouse';
+import FileUpload from '@/components/FileUpload/index3.vue';
 
 export default {
   name: 'MdItem',
   dicts: ['sys_yes_no', 'mes_item_product'],
-  components: { Treeselect, ItemBom, SOPTab },
+  components: {FileUpload, Treeselect, ItemBom, SOPTab },
   data() {
     return {
+      adjunctTypes: null,
       warehouseInfo: [],
       warehouseOptions: [],
       warehouseProps: {

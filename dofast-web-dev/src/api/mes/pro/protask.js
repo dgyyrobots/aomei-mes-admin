@@ -103,3 +103,12 @@ export function updateTasksPrint(data) {
   });
 }
 
+// 排产
+export function updateTeamById(data) {
+  return request({
+    url: '/mes/pro/task/updateTeamById',
+    method: 'put',
+    data: data,
+  });
+}
+

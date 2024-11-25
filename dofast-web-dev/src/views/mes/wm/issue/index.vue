@@ -2,20 +2,20 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="100px">
       <el-form-item label="领料单编号" prop="issueCode">
-        <el-input v-model="queryParams.issueCode" placeholder="请输入领料单编号" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.issueCode" placeholder="请输入领料单编号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="领料单名称" prop="issueName">
-        <el-input v-model="queryParams.issueName" placeholder="请输入领料单名称" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.issueName" placeholder="请输入领料单名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="仓库名称" prop="warehouseName">
-        <el-input v-model="queryParams.warehouseName" placeholder="请输入仓库名称" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.warehouseName" placeholder="请输入仓库名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="领料日期" prop="issueDate">
         <el-date-picker clearable v-model="queryParams.issueDate" type="date" value-format="timestamp" placeholder="请选择领料日期"></el-date-picker>
       </el-form-item>
       <el-form-item label="单据状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择单据状态" clearable>
-          <el-option v-for="dict in dict.type.mes_order_status" :key="dict.value" :label="dict.label" :value="dict.value" />
+          <el-option v-for="dict in dict.type.mes_order_status" :key="dict.value" :label="dict.label" :value="dict.value"/>
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -26,22 +26,27 @@
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['wms:issue-header:create']">新增 </el-button>
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['wms:issue-header:create']">新增</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
+        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['wms:issue-header:update']">修改</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:issue-header:delete']">删除</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['mes:wm:issueheader:export']">导出 </el-button>
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['mes:wm:issueheader:export']">导出</el-button>
       </el-col>
+
+      <!--      <el-col :span="1.5">
+              <el-button type="warning" plain icon="el-icon-download" size="mini" :disabled="single"  @click="handleFeeding" v-hasPermi="['wms:issue-header:create']">扫码上料</el-button>
+            </el-col>-->
+
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="issueheaderList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
+      <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="领料单编号" align="center" width="150px" prop="issueCode">
         <template slot-scope="scope">
           <el-button type="text" @click="handleView(scope.row)" v-hasPermi="['wms:issue-header:query']">
@@ -49,10 +54,10 @@
           </el-button>
         </template>
       </el-table-column>
-      <el-table-column label="领料单名称" align="center" prop="issueName" :show-overflow-tooltip="true" />
-      <el-table-column label="生产工单" align="center" prop="workorderCode" />
-      <el-table-column label="客户编号" align="center" prop="clientCode" />
-      <el-table-column label="客户名称" align="center" prop="clientName" />
+      <el-table-column label="领料单名称" align="center" prop="issueName" :show-overflow-tooltip="true"/>
+      <el-table-column label="生产工单" align="center" prop="workorderCode"/>
+      <el-table-column label="客户编号" align="center" prop="clientCode"/>
+      <el-table-column label="客户名称" align="center" prop="clientName"/>
       <el-table-column label="领料日期" align="center" prop="issueDate" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.issueDate, '{y}-{m}-{d}') }}</span>
@@ -60,19 +65,19 @@
       </el-table-column>
       <el-table-column label="单据状态" align="center" prop="status">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.mes_order_status" :value="scope.row.status" />
+          <dict-tag :options="dict.type.mes_order_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status == 'PREPARE'" @click="handleExecute(scope.row)" v-hasPermi="['wms:issue-header:update']">执行领出 </el-button>
-          <el-button size="mini" type="text" icon="el-icon-edit" v-if="scope.row.status == 'PREPARE'" @click="handleUpdate(scope.row)" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status == 'PREPARE'" @click="handleDelete(scope.row)" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status == 'PREPARE' || scope.row.status == 'CONFIRMED'" @click="handleExecute(scope.row)" v-hasPermi="['wms:issue-header:update']">执行上料</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" v-if="scope.row.status == 'PREPARE' || scope.row.status == 'CONFIRMED' " @click="handleUpdate(scope.row)" v-hasPermi="['wms:issue-header:update']">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status == 'PREPARE'" @click="handleDelete(scope.row)" v-hasPermi="['wms:issue-header:delete']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList" />
+    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList"/>
 
     <!-- 添加或修改生产领料单头对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="960px" append-to-body>
@@ -80,7 +85,7 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="领料单编号" prop="issueCode">
-              <el-input v-model="form.issueCode" placeholder="请输入领料单编号" />
+              <el-input v-model="form.issueCode" placeholder="请输入领料单编号" :disabled="optType !== 'add'"/>
             </el-form-item>
           </el-col>
           <el-col :span="4">
@@ -90,19 +95,26 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="领料单名称" prop="issueName">
-              <el-input v-model="form.issueName" placeholder="请输入领料单名称" />
+              <el-input v-model="form.issueName" placeholder="请输入领料单名称" :disabled="optType !== 'add'"/>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="8">
             <el-form-item label="领料日期" prop="issueDate">
-              <el-date-picker clearable v-model="form.issueDate" type="date" value-format="timestamp" placeholder="请选择领料日期"></el-date-picker>
+              <el-date-picker clearable v-model="form.issueDate" type="date" value-format="timestamp" placeholder="请选择领料日期" :disabled="optType !== 'add'"></el-date-picker>
             </el-form-item>
           </el-col>
+
           <el-col :span="8">
             <el-form-item label="领料仓库">
-              <el-cascader v-model="warehouseInfo" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
+              <el-cascader
+                v-model="warehouseInfo"
+                :options="warehouseOptions"
+                :props="warehouseProps"
+                placeholder="请选择"
+                @change="handleWarehouseChanged"
+              ></el-cascader>
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -124,19 +136,49 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="客户编号">
-              <el-input v-model="form.clientCode" placeholder="请选择生产工单"></el-input>
+              <el-input v-model="form.clientCode" placeholder="请选择生产工单" :disabled="optType !== 'add'"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="客户名称">
-              <el-input v-model="form.clientName" placeholder="请选择生产工单"></el-input>
+              <el-input v-model="form.clientName" placeholder="请选择生产工单" :disabled="optType !== 'add'"></el-input>
             </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="任务信息" prop="taskCode">
+              <el-input v-model="form.taskCode" placeholder="请选择任务信息" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleTaskSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <TaskSelectSingle :workorderId="form.workorderId" ref="taskSelect" @onSelected="onTaskSelected"></TaskSelectSingle>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="工作站" prop="workstationName">
+              <el-input v-model="form.workstationName" placeholder="请选择工作站" disabled>
+                <!--                <el-button slot="append" icon="el-icon-search" @click="handleWorkstationSelect"></el-button>-->
+              </el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="设备信息" prop="machineryCode">
+              <el-input v-model="form.machineryCode" placeholder="请选择设备信息" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleMachineryAdd"></el-button>
+              </el-input>
+            </el-form-item>
+            <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
-              <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
+              <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -147,25 +189,172 @@
       </el-card>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="cancel" v-if="optType == 'view' || form.status != 'PREPARE'">返回</el-button>
-        <el-button type="primary" @click="submitForm" v-if="form.status == 'PREPARE' && optType != 'view'">确 定 </el-button>
+        <el-button type="primary" @click="submitForm" v-if="form.status == 'PREPARE' && optType != 'view'">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 扫码上料对话框-弃用-嫌操作复杂 -->
+    <el-dialog :title="title" :visible.sync="feedingOpen" width="960px" append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="领料单编号" prop="issueCode">
+              <el-input v-model="form.issueCode" disabled placeholder="请输入领料单编号"/>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="领料单名称" prop="issueName">
+              <el-input v-model="form.issueName" disabled placeholder="请输入领料单名称"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="领料日期" prop="issueDate">
+              <el-date-picker disabled clearable v-model="form.issueDate" type="date" value-format="timestamp" placeholder="请选择领料日期"></el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="领料仓库">
+              <el-cascader disabled v-model="warehouseInfo" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="单据状态" prop="status">
+              <el-select disabled v-model="form.status" disabled>
+                <el-option v-for="dict in dict.type.mes_order_status" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="生产工单" prop="workorderCode">
+              <el-input disabled v-model="form.workorderCode" placeholder="请选择生产工单">
+                <el-button disabled slot="append" icon="el-icon-search" @click="handleWorkorderSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <WorkorderSelect ref="woSelect" @onSelected="onWorkorderSelected"></WorkorderSelect>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="客户编号">
+              <el-input disabled v-model="form.clientCode" placeholder="请选择生产工单"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="客户名称">
+              <el-input disabled v-model="form.clientName" placeholder="请选择生产工单"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+
+          <el-col :span="12">
+            <el-form-item label="任务信息" prop="taskName">
+              <el-input v-model="form.taskName" placeholder="请选择任务信息" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleTaskSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <TaskSelectSingle :workorderId="form.workorderId" ref="taskSelect" @onSelected="onTaskSelected"></TaskSelectSingle>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="工作站" prop="workstationName">
+              <el-input v-model="form.workstationName" placeholder="请选择工作站" disabled>
+                <!--                <el-button slot="append" icon="el-icon-search" @click="handleWorkstationSelect"></el-button>-->
+              </el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+
+        </el-row>
+
+
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="备注" prop="remark">
+              <el-input disabled v-model="form.remark" type="textarea" placeholder="请输入内容"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      <el-divider v-if="form.id != null" content-position="center">上料信息</el-divider>
+      <el-card shadow="always" v-if="form.id != null" class="box-card">
+        <el-row v-if="optType != 'view'" :gutter="10" class="mb8">
+          <el-col :span="8">
+            <el-input v-model="purchaseId" placeholder="请输入采购ID"/>
+          </el-col>
+          <el-col :span="4">
+            <el-button type="primary" round @click="getCameraInfo()">摄像头</el-button>
+          </el-col>
+
+          <el-col :span="1.5">
+            <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleBlur()" v-hasPermi="['wms:issue-header:create']">新增</el-button>
+          </el-col>
+          <!--      <el-col :span="1.5">
+                  <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
+                </el-col>-->
+          <el-col :span="1.5">
+            <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleFeedDelete" v-hasPermi="['wms:issue-header:delete']">删除</el-button>
+          </el-col>
+          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+        </el-row>
+
+        <el-table v-loading="loading" :data="feedLineList" @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="55" align="center"/>
+          <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode"/>
+          <el-table-column label="产品物料名称" width="120px" align="center" prop="itemName" :show-overflow-tooltip="true"/>
+          <el-table-column label="规格型号" align="center" prop="specification" :show-overflow-tooltip="true"/>
+          <el-table-column label="领料状态" align="center" prop="status"/>
+          <el-table-column label="单位" align="center" prop="unitOfMeasure"/>
+          <el-table-column label="领料数量" align="center" prop="quantityIssued"/>
+          <el-table-column label="批次号" align="center" prop="batchCode"/>
+          <el-table-column label="仓库名称" align="center" prop="warehouseName"/>
+          <el-table-column label="库区名称" align="center" prop="locationName"/>
+          <el-table-column label="库位名称" align="center" prop="areaName"/>
+        </el-table>
+      </el-card>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="feedSubmitForm">确 定</el-button>
+        <el-button @click="feedCancel">取 消</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 摄像头预览弹出框 -->
+    <el-dialog title="摄像头预览" :visible.sync="cameraPreviewVisible" width="50%" v-dialogDrag append-to-body>
+      <div>
+        <video ref="videoCameraPreview" autoplay playsinline style="width: 100%; height: auto;"></video>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cameraPreviewVisible = false">关 闭</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
-import { listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, execute } from '@/api/mes/wm/issueheader';
+import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, execute} from '@/api/mes/wm/issueheader';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
-import { getTreeList } from '@/api/mes/wm/warehouse';
-import { genCode } from '@/api/mes/autocode/rule';
+import TaskSelectSingle from "@/components/TaskSelect/taskSelectSingle.vue";
+import {getTreeList} from '@/api/mes/wm/warehouse';
+import {genCode} from '@/api/mes/autocode/rule';
 import Issueline from './line.vue';
+import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
+import {createFeedLine, getByIssueId, createFeedLineList, createFeedLineListByIssueId} from "@/api/wms/feedLine";
+import jsQR from "jsqr";
+import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
 
 export default {
   name: 'Issueheader',
   dicts: ['mes_order_status'],
-  components: { Issueline, WorkstationSelect, WorkorderSelect },
+  components: {MachinerySelectSingle, Issueline, WorkstationSelect, WorkorderSelect, TaskSelectSingle},
   data() {
     return {
       autoGenFlag: false,
@@ -195,6 +384,7 @@ export default {
       title: '',
       // 是否显示弹出层
       open: false,
+      feedingOpen: false,
       // 查询参数
       queryParams: {
         pageNo: 1,
@@ -220,14 +410,29 @@ export default {
         status: null,
       },
       // 表单参数
-      form: {},
+      form: {
+        machineryCode: null,
+        machineryName: null,
+        machineryId: null,
+      },
       // 表单校验
       rules: {
-        issueCode: [{ required: true, message: '领料单编号不能为空', trigger: 'blur' }],
-        issueName: [{ required: true, message: '领料单名称不能为空', trigger: 'blur' }],
-        issueDate: [{ required: true, message: '请指定领出日期', trigger: 'blur' }],
-        workorderCode: [{ required: true, message: '请指定生产工单', trigger: 'blur' }],
+        issueCode: [{required: true, message: '领料单编号不能为空', trigger: 'blur'}],
+        issueName: [{required: true, message: '领料单名称不能为空', trigger: 'blur'}],
+        issueDate: [{required: true, message: '请指定领出日期', trigger: 'blur'}],
+        workorderCode: [{required: true, message: '请指定生产工单', trigger: 'blur'}],
+        workorderId: [{required: true, message: '请指定生产工单', trigger: 'blur'}],
+        /* taskName: [{required: true, message: '请指定生产任务', trigger: 'blur'}],
+         machineryName: [{required: true, message: '请选择设备信息', trigger: 'blur'}],*/
       },
+      //摄像头配置
+      targetCameraId: null,
+      videoWidth: 640,
+      videoHeight: 480,
+      cameraPreviewVisible: false, // 控制摄像头弹出框
+      scanResult: '', // 存储扫描结果
+      purchaseId: '', // 采购单ID
+      feedLineList: [], // 上料明细数据
     };
   },
   created() {
@@ -239,6 +444,7 @@ export default {
     getList() {
       this.loading = true;
       listIssueheader(this.queryParams).then(response => {
+        console.log(response.data)
         this.issueheaderList = response.data.list;
         this.total = response.data.total;
         this.loading = false;
@@ -247,6 +453,10 @@ export default {
     getWarehouseList() {
       getTreeList().then(response => {
         this.warehouseOptions = response.data;
+        // 如果是新增页面，并且warehouseInfo是空数组，自动设置默认值
+        if (this.optType === 'add' && this.warehouseInfo.length === 0 && this.warehouseOptions.length > 0) {
+          this.warehouseInfo = [this.warehouseOptions[0].value, this.warehouseOptions[0].children[0].value, this.warehouseOptions[0].children[0].children[0].value];
+        }
       });
     },
     // 取消按钮
@@ -254,7 +464,12 @@ export default {
       this.open = false;
       this.reset();
     },
+    feedCancel() {
+      this.feedingOpen = false;
+      this.reset();
+    },
     // 表单重置
+    /** 表单重置 */
     reset() {
       this.form = {
         id: null,
@@ -291,7 +506,11 @@ export default {
         createTime: null,
         updateBy: null,
         updateTime: null,
+        machineryName: null,
+        machineryCode: null,
+        machineryId: null,
       };
+      this.warehouseInfo = []; // 重置领料仓库信息
       this.autoGenFlag = false;
       this.resetForm('form');
     },
@@ -315,20 +534,25 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
+      this.warehouseInfo = [];
       this.title = '添加生产领料单';
       this.optType = 'add';
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const issueId = row.id || this.ids;
-      getIssueheader(issueId).then(response => {
+      const id = row.id;
+      getIssueheader(id).then(response => {
         this.form = response.data;
-        this.warehouseInfo[0] = response.data.warehouseId;
-        this.warehouseInfo[1] = response.data.locationId;
-        this.warehouseInfo[2] = response.data.areaId;
+        console.log(this.form)
+        // 设置领料仓库信息
+        this.warehouseInfo = [
+          response.data.warehouseId,
+          response.data.locationId,
+          response.data.areaId
+        ];
         this.open = true;
-        this.title = '修改生产领料单';
+        this.title = "修改生产领料单";
         this.optType = 'edit';
       });
     },
@@ -338,9 +562,15 @@ export default {
       const issueIds = row.id;
       getIssueheader(issueIds).then(response => {
         this.form = response.data;
-        this.warehouseInfo[0] = response.data.warehouseId;
+        // 设置领料仓库信息
+        this.warehouseInfo = [
+          response.data.warehouseId,
+          response.data.locationId,
+          response.data.areaId
+        ];
+        /*this.warehouseInfo[0] = response.data.warehouseId;
         this.warehouseInfo[1] = response.data.locationId;
-        this.warehouseInfo[2] = response.data.areaId;
+        this.warehouseInfo[2] = response.data.areaId;*/
         this.open = true;
         this.title = '查看领料单信息';
         this.optType = 'view';
@@ -351,6 +581,15 @@ export default {
       this.$refs['form'].validate(valid => {
         if (valid) {
           if (this.form.id != null) {
+            console.log(this.form)
+            if (this.form.taskCode == null || this.form.taskCode == undefined || this.form.taskCode == '') {
+              this.$modal.msgError('请选择生产任务');
+              return;
+            }
+            if (this.form.machineryName == null || this.form.machineryName == undefined || this.form.machineryName == '') {
+              this.$modal.msgError('请选择生产设备');
+              return;
+            }
             updateIssueheader(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
               this.open = false;
@@ -375,24 +614,19 @@ export default {
           return execute(issueIds); //执行入库
         })
         .then(() => {
+          // 追加上料记录
+          createFeedLineListByIssueId(issueIds).then(response => {
+            console.log(response.data);
+          });
           this.getList();
           this.$modal.msgSuccess('出库成功');
         })
-        .catch(() => {});
+        .catch(() => {
+        });
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const issueIds = row.id || this.ids;
-      this.$modal
-        .confirm('是否确认删除生产领料单头编号为"' + issueIds + '"的数据项？')
-        .then(function () {
-          return delIssueheader(issueIds);
-        })
-        .then(() => {
-          this.getList();
-          this.$modal.msgSuccess('删除成功');
-        })
-        .catch(() => {});
+
     },
     /** 导出按钮操作 */
     handleExport() {
@@ -406,10 +640,14 @@ export default {
     },
     //选择默认的仓库、库区、库位
     handleWarehouseChanged(obj) {
-      if (obj != null) {
-        this.form.warehouseId = obj[0];
-        this.form.locationId = obj[1];
-        this.form.areaId = obj[2];
+      if (obj !== null) {
+        this.form.warehouseId = obj[0]; // 仓库
+        this.form.locationId = obj[1]; // 库区
+        this.form.areaId = obj[2]; // 库位
+      } else {
+        this.form.warehouseId = null;
+        this.form.locationId = null;
+        this.form.areaId = null;
       }
     },
     //选择工作站
@@ -421,6 +659,8 @@ export default {
         this.form.workstationId = row.id;
         this.form.workstationCode = row.workstationCode;
         this.form.workstationName = row.workstationName;
+        this.form.requestDate = row.requestDate;
+        this.$refs.form.validateField('workstationName')
       }
     },
     //选择生产工单
@@ -445,6 +685,320 @@ export default {
         });
       } else {
         this.form.issueCode = null;
+      }
+    },
+    // 开始进行扫码上料
+    handleFeeding(row) {
+      // 根据当前选中的Id获取对于数据
+      const issueId = row.id || this.ids;
+      /* if (!issueId) {
+         this.$modal.msgError('请先选择领料单');
+         return;
+       }
+       console.log("选中行状态: " + row.status);
+       if (row.status != 'CONFIRMED') {
+         this.$modal.msgError('请先确认领料单');
+         return;
+       }*/
+      getIssueheader(issueId).then(response => {
+        this.form = response.data;
+        console.log(this.form);
+        this.warehouseInfo[0] = response.data.warehouseId;
+        this.warehouseInfo[1] = response.data.locationId;
+        this.warehouseInfo[2] = response.data.areaId;
+      });
+      getByIssueId(issueId).then(response => {
+        this.feedLineList = response.data; // 获取到数据
+        this.feedingOpen = true;
+        this.title = '扫码上料';
+        this.optType = 'edit';
+      });
+
+    },
+    handleTaskSelect() {
+      this.$refs.taskSelect.showFlag = true;
+    },
+    onTaskSelected(row) {
+      if (row != undefined && row != null) {
+        this.form.taskName = row.taskName;
+        this.form.taskCode = row.taskCode;
+        this.form.taskId = row.id;
+        this.form.processCode = row.processCode;
+        this.form.processId = row.processId;
+        this.form.workstationCode = row.workstationCode;
+        this.form.workstationId = row.workstationId;
+        this.form.workstationName = row.workstationName;
+        console.log(this.form)
+      }
+    },
+    async getCameraInfo() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+        const specificCamera = videoDevices.find(device => device.label === 'GC8034');
+        if (specificCamera) {
+          this.targetCameraId = specificCamera.deviceId;
+          console.log('找到指定摄像头:', specificCamera);
+        } else {
+          const defaultCamera = videoDevices[0];
+          if (defaultCamera) {
+            this.targetCameraId = defaultCamera.deviceId;
+            console.log('使用默认摄像头:', defaultCamera);
+          } else {
+            console.log('未找到任何可用的摄像头');
+            this.$notify({
+              title: '错误',
+              message: '未找到任何可用的摄像头',
+              type: 'error'
+            });
+            return;
+          }
+        }
+        this.showCameraPreview();
+      } catch (error) {
+        console.error('获取摄像头信息失败:', error);
+        this.$notify({
+          title: '错误',
+          message: '获取摄像头信息失败',
+          type: 'error'
+        });
+      }
+    }
+    ,
+
+    startScanning() {
+      const deviceId = this.targetCameraId || undefined;
+      const constraints = {
+        audio: false,
+        video: {
+          width: this.videoWidth,
+          height: this.videoHeight,
+          deviceId: {exact: deviceId}
+        }
+      };
+
+      navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+        this.$refs.videoCameraPreview.srcObject = stream;
+        this.$refs.videoCameraPreview.onloadedmetadata = () => {
+          this.$refs.videoCameraPreview.play();
+          this.loading = false;
+          this.scanQRCode();
+        };
+      }).catch(err => {
+        console.error("无法打开摄像头: ", err);
+        this.$notify({
+          title: '警告',
+          message: '没有开启摄像头权限或浏览器版本不兼容.',
+          type: 'warning'
+        });
+        this.cameraPreviewVisible = false;
+      });
+    }
+    ,
+    scanQRCode() {
+      const that = this;
+      const video = this.$refs.videoCameraPreview;
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      let type = null;
+      function tick() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          // 将视频流绘制到 canvas 上
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          // 获取 canvas 的图像数据
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          // 使用 jsQR 解码图像数据
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+          });
+          if (code) {
+            console.log('QR Code scanned:', code.data);
+            // 处理扫描到的二维码数据
+            // let fin = null;// 最终扫描的数据
+            if (code.data) {
+              // 关闭当前的摄像头预览弹出框
+              that.cameraPreviewVisible = false;
+              try {
+                // 替换中文引号为英文引号，并解析 JSON
+                code.data = code.data.replace(/“/g, '"').replace(/”/g, '"').replace(/：/g, ':').replace(/，/g, ',');
+                // 移除零宽度非换行空格字符
+                code.data = code.data.replace(/\uFEFF/g, '');
+                // 直接解析 JSON 字符串
+                const data = JSON.parse(code.data);
+                // 检查是否包含 id 属性
+                if (data && data.id) {
+                  console.log("data.id:", data.id);
+                  that.purchaseId = data.id;
+                  type = data.type;
+                } else {
+                  console.log("data.id is undefined");
+                }
+              } catch (error) {
+                that.$message.error('扫描结果不是有效的 JSON 字符串');
+              }
+              that.handleBlur(type); // 基于当前的采购单获取所有的物料数据
+              that.stopScanning();
+            }
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      tick();
+    }
+    ,
+    // 停止扫描二维码
+    stopScanning() {
+      const stream = this.$refs.videoCameraPreview.srcObject;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    }
+    ,
+    // 显示摄像头预览弹出框
+    showCameraPreview() {
+      this.cameraPreviewVisible = true;
+      this.startScanning();
+    },
+    issueLineAdd(){
+      if (!this.purchaseId.includes('{') || !this.purchaseId.includes('}')) {
+        this.$message.error('请扫描正确的单据信息!');
+        return;
+      }
+      this.handleBlur();
+    },
+    handleBlur: function (type) {
+      let finType = '';
+      if(type){
+        finType = type;
+      }
+      // 基于当前的采购单获取所有的物料数据
+      if (!this.purchaseId) {
+        return;
+      }
+      if (this.purchaseId && (this.purchaseId.includes('{') || this.purchaseId.includes('[') || this.purchaseId.includes('}') || this.purchaseId.includes(']')) && !this.purchaseId.includes('"')) {
+        this.purchaseId = this.purchaseId.trim();
+        // 清理文本框内容的多余空格，并格式化为标准 JSON 格式
+        this.purchaseId = this.purchaseId
+          // 去除字段名和字段值之间的多余空格
+          .replace(/\s*[:]\s*/g, ':')
+          .replace(/\s*,\s*/g, ',')
+          .replace(/\s*{\s*/g, '{')
+          .replace(/\s*}\s*/g, '}')
+          .replace(/\s*\[\s*/g, '[')
+          .replace(/\s*\]\s*/g, ']');
+        // 给键和字符串值加上双引号
+        let formattedData = this.purchaseId
+          // 给所有键名加双引号
+          .replace(/([a-zA-Z0-9_]+)(?=\s*[:])/g, '"$1"')
+          // 给字符串值加双引号，排除数字和其他非字符串类型的值
+          .replace(/(:\s*)([a-zA-Z\u4e00-\u9fa5_-]+)(?=\s*,|\s*\})/g, '$1"$2"');
+        // Step 2: 处理数字和标识符类型的字符串，如 AMCG86-241030001 和 20241106805-01，需给它们加上双引号
+        formattedData = formattedData.replace(/(:\s*)([A-Za-z0-9-]+)(?=\s*,|\s*\})/g, '$1"$2"');
+        try {
+          // Step 3: 使用 JSON.parse 转换为对象
+          const parsedData = JSON.parse(formattedData);
+          // Step 4: 使用 JSON.stringify 格式化为标准 JSON 字符串
+          const data = JSON.stringify(parsedData, null, 2);
+          const transedData = JSON.parse(data);
+          // 检查是否包含 id 属性
+          if (transedData) {
+            // 更新 purchaseId
+            this.purchaseId = transedData.id;
+            finType = transedData.type;
+          }
+        } catch (error) {
+          this.$message.error('扫描结果不是有效的 JSON 字符串');
+        }
+      }
+      let obj = {
+        'id': this.purchaseId,
+        'type': finType
+      }
+      // 获取当前采购单身信息
+      getStockInfoByPurchaseId(obj).then(response => {
+        console.log(response.data);
+        let obj = response.data;
+        // 追加生产领料表单身信息
+        obj.quantityIssued = obj.quantityOnhand;
+        const isItemExists = this.feedLineList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
+        // 如果物料Id不存在，则添加到this.allocatedList
+        if (!isItemExists) {
+          console.log(obj);
+          obj.issueId = this.issueId;
+          this.feedLineList.push(obj);
+        } else {
+          this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
+        }
+      });
+    },
+    handleFeedDelete() {
+      const ids = this.ids; // 确保 this.ids 是一个有效的 ID 数组
+      this.feedLineList = this.feedLineList.filter(item => {
+        return !ids.includes(item.id) || item.status === 'Y';
+      });
+    },
+    // 完成扫码上料
+    feedSubmitForm() {
+      let finList = [];
+      let obj = {};
+      if (!this.form.workstationId) {
+        this.$message.error(`请选择任务单!`);
+      }
+      for (let i = 0; i < this.feedLineList.length; i++) {
+        if (this.feedLineList[i].status == 'Y') {
+          return;
+        }
+        obj.issueId = this.form.id;
+        obj.workorderCode = this.form.workorderCode;
+        obj.taskCode = this.form.taskCode;
+        obj.taskName = this.form.taskName;
+        obj.processCode = this.form.processCode;
+        obj.processId = this.form.processId;
+        obj.workstationCode = this.form.workstationCode;
+        obj.workstationId = this.form.workstationId;
+        obj.workstationName = this.form.workstationName;
+        obj.materialStockId = this.feedLineList[i].id;
+        obj.itemId = this.feedLineList[i].itemId;
+        obj.itemCode = this.feedLineList[i].itemCode;
+        obj.itemName = this.feedLineList[i].itemName;
+        obj.specification = this.feedLineList[i].specification;
+        obj.unitOfMeasure = this.feedLineList[i].unitOfMeasure;
+        obj.quantity = this.feedLineList[i].quantityIssued;
+        obj.batchCode = this.feedLineList[i].batchCode;
+        obj.warehouseId = this.feedLineList[i].warehouseId;
+        obj.warehouseName = this.form.warehouseName;
+        obj.warehouseCode = this.feedLineList[i].warehouseCode;
+        obj.locationId = this.feedLineList[i].locationId;
+        obj.locationCode = this.feedLineList[i].locationCode;
+        obj.locationName = this.feedLineList[i].locationName;
+        obj.areaId = this.feedLineList[i].areaId;
+        obj.areaCode = this.feedLineList[i].areaCode;
+        obj.areaName = this.feedLineList[i].areaName;
+        finList.push(obj);
+      }
+      console.log(finList);
+      createFeedLineList(finList).then(response => {
+        this.$modal.msgSuccess("上料成功");
+        this.feedingOpen = false;
+        this.getList();
+      });
+    },
+
+    handleMachineryAdd() {
+      this.$refs.machinerySelect.showFlag = true;
+    },
+    //设备资源选择回调
+    onMachineryAdd(rows) {
+      if (rows != undefined && rows != null) {
+        this.form.machineryCode = rows.machineryCode;
+        this.form.machineryName = rows.machineryName;
+        this.form.machineryId = rows.id;
+        console.log(this.form.machineryName);
+        console.log(this.form.machineryCode);
       }
     },
   },

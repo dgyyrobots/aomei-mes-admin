@@ -1,12 +1,19 @@
 <template>
   <div class="app-container">
     <el-row v-if="optType != 'view'" :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['wms:issue-header:create']">新增 </el-button>
+      <el-col :span="8">
+          <el-input v-model="purchaseId" placeholder="请输入采购ID"/>
       </el-col>
+      <el-col :span="4">
+        <el-button type="primary" round @click="getCameraInfo()">摄像头</el-button>
+      </el-col>
+
       <el-col :span="1.5">
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleBlur" v-hasPermi="['wms:issue-header:create']">新增 </el-button>
+      </el-col>
+<!--      <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
-      </el-col>
+      </el-col>-->
       <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
       </el-col>
@@ -18,6 +25,7 @@
       <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode" />
       <el-table-column label="产品物料名称" width="120px" align="center" prop="itemName" :show-overflow-tooltip="true" />
       <el-table-column label="规格型号" align="center" prop="specification" :show-overflow-tooltip="true" />
+      <el-table-column label="领料状态" align="center" prop="status" />
       <el-table-column label="单位" align="center" prop="unitOfMeasure" />
       <el-table-column label="领料数量" align="center" prop="quantityIssued" />
       <el-table-column label="批次号" align="center" prop="batchCode" />
@@ -25,9 +33,11 @@
       <el-table-column label="库区名称" align="center" prop="locationName" />
       <el-table-column label="库位名称" align="center" prop="areaName" />
       <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" />
-      <el-table-column label="操作" align="center" v-if="optType != 'view'" width="100px" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center"  v-if="optType != 'view'" width="100px" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+<!--
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-if="optType != 'view'" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
+-->
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-if="optType != 'view'" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
         </template>
       </el-table-column>
@@ -108,12 +118,25 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 摄像头预览弹出框 -->
+    <el-dialog title="摄像头预览" :visible.sync="cameraPreviewVisible" width="50%" v-dialogDrag append-to-body>
+      <div>
+        <video ref="videoCameraPreview" autoplay playsinline style="width: 100%; height: auto;"></video>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cameraPreviewVisible = false">关 闭</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
 import { listIssueline, getIssueline, delIssueline, addIssueline, updateIssueline } from '@/api/mes/wm/issueline';
 import StockSelect from '@/components/stockSelect/single.vue';
+import jsQR from "jsqr";
+import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
 
 export default {
   name: 'Issueline',
@@ -176,6 +199,13 @@ export default {
         itemId: [{ required: true, message: '产品物料不能为空', trigger: 'blur' }],
         quantityIssued: [{ required: true, message: '领料数量不能为空', trigger: 'blur' }],
       },
+      //摄像头配置
+      targetCameraId: null,
+      videoWidth: 640,
+      videoHeight: 480,
+      cameraPreviewVisible: false, // 控制摄像头弹出框
+      scanResult: '', // 存储扫描结果
+      purchaseId: '', // 采购单ID
     };
   },
   created() {
@@ -186,6 +216,7 @@ export default {
     getList() {
       this.loading = true;
       listIssueline(this.queryParams).then(response => {
+        console.log(response.data);
         this.issuelineList = response.data.list;
         this.total = response.data.total;
         this.loading = false;
@@ -266,8 +297,11 @@ export default {
     },
     /** 提交按钮 */
     submitForm() {
-      this.$refs['form'].validate(valid => {
+      /*this.$refs['form'].validate(valid => {
         if (valid) {
+          console.log(("新增:" + this.form));
+          console.log(this.form);
+
           if (this.form.id != null) {
             updateIssueline(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
@@ -282,11 +316,18 @@ export default {
             });
           }
         }
-      });
+      });*/
+      this.handleBlur();
     },
     /** 删除按钮操作 */
     handleDelete(row) {
       const lineIds = row.id || this.ids;
+      const status = row.status
+      console.log(status);
+      if (status === 'Y') {
+        this.$modal.msgError('已领料 ，不能删除');
+        return;
+      }
       this.$modal
         .confirm('是否确认删除生产领料单行编号为"' + lineIds + '"的数据项？')
         .then(function () {
@@ -335,6 +376,216 @@ export default {
         `issueline_${new Date().getTime()}.xlsx`,
       );
     },
+
+    async getCameraInfo() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        const specificCamera = videoDevices.find(device => device.label === 'GC8034');
+        if (specificCamera) {
+          this.targetCameraId = specificCamera.deviceId;
+          console.log('找到指定摄像头:', specificCamera);
+        } else {
+          const defaultCamera = videoDevices[0];
+          if (defaultCamera) {
+            this.targetCameraId = defaultCamera.deviceId;
+            console.log('使用默认摄像头:', defaultCamera);
+          } else {
+            console.log('未找到任何可用的摄像头');
+            this.$notify({
+              title: '错误',
+              message: '未找到任何可用的摄像头',
+              type: 'error'
+            });
+            return;
+          }
+        }
+        this.showCameraPreview();
+      } catch (error) {
+        console.error('获取摄像头信息失败:', error);
+        this.$notify({
+          title: '错误',
+          message: '获取摄像头信息失败',
+          type: 'error'
+        });
+      }
+    },
+
+    startScanning() {
+      const deviceId = this.targetCameraId || undefined;
+      const constraints = {
+        audio: false,
+        video: {
+          width: this.videoWidth,
+          height: this.videoHeight,
+          deviceId: {exact: deviceId}
+        }
+      };
+
+      navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+        this.$refs.videoCameraPreview.srcObject = stream;
+        this.$refs.videoCameraPreview.onloadedmetadata = () => {
+          this.$refs.videoCameraPreview.play();
+          this.loading = false;
+          this.scanQRCode();
+        };
+      }).catch(err => {
+        console.error("无法打开摄像头: ", err);
+        this.$notify({
+          title: '警告',
+          message: '没有开启摄像头权限或浏览器版本不兼容.',
+          type: 'warning'
+        });
+        this.cameraPreviewVisible = false;
+      });
+    },
+    scanQRCode() {
+      const that = this;
+      const video = this.$refs.videoCameraPreview;
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      let type = '';
+      function tick() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          // 将视频流绘制到 canvas 上
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          // 获取 canvas 的图像数据
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          // 使用 jsQR 解码图像数据
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+          });
+          if (code) {
+            console.log('QR Code scanned:', code.data);
+            // 处理扫描到的二维码数据
+            // let fin = null;// 最终扫描的数据
+            if (code.data) {
+              // 关闭当前的摄像头预览弹出框
+              that.cameraPreviewVisible = false;
+              try {
+                // 替换中文引号为英文引号，并解析 JSON
+                code.data = code.data.replace(/“/g, '"').replace(/”/g, '"').replace(/：/g, ':').replace(/，/g, ',');
+                // 移除零宽度非换行空格字符
+                code.data = code.data.replace(/\uFEFF/g, '');
+                // 直接解析 JSON 字符串
+                const data = JSON.parse(code.data);
+                // 检查是否包含 id 属性
+                if (data && data.id) {
+                  console.log("data.id:", data.id);
+                  that.purchaseId = data.id;
+                  type = data.type;
+                } else {
+                  console.log("data.id is undefined");
+                }
+              } catch (error) {
+                that.$message.error('扫描结果不是有效的 JSON 字符串');
+              }
+              that.handleBlur(type); // 基于当前的采购单获取所有的物料数据
+              that.stopScanning();
+            }
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      tick();
+    }
+    ,
+    // 停止扫描二维码
+    stopScanning() {
+      const stream = this.$refs.videoCameraPreview.srcObject;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    }
+    ,
+    // 显示摄像头预览弹出框
+    showCameraPreview() {
+      this.cameraPreviewVisible = true;
+      this.startScanning();
+    },
+
+    handleBlur: function(type) {
+      let finType = '';
+      if(type){
+        finType = type;
+      }
+      // 现在可以使用 this 来访问 Vue 组件实例
+      console.log(this.form);
+      // 获取当前的采购单Id
+      console.log(this.purchaseId);
+      // 基于当前的采购单获取所有的物料数据
+      if (!this.purchaseId) {
+        return;
+      }
+      if (isNaN(this.purchaseId)) {
+        if (this.purchaseId && (this.purchaseId.includes('{') || this.purchaseId.includes('[') || this.purchaseId.includes('}') || this.purchaseId.includes(']')) && !this.purchaseId.includes('"')) {
+          this.purchaseId = this.purchaseId.trim();
+          // 清理文本框内容的多余空格，并格式化为标准 JSON 格式
+          this.purchaseId = this.purchaseId
+            // 去除字段名和字段值之间的多余空格
+            .replace(/\s*[:]\s*/g, ':')
+            .replace(/\s*,\s*/g, ',')
+            .replace(/\s*{\s*/g, '{')
+            .replace(/\s*}\s*/g, '}')
+            .replace(/\s*\[\s*/g, '[')
+            .replace(/\s*\]\s*/g, ']');
+          // 给键和字符串值加上双引号
+          let formattedData = this.purchaseId
+            // 给所有键名加双引号
+            .replace(/([a-zA-Z0-9_]+)(?=\s*[:])/g, '"$1"')
+            // 给字符串值加双引号，排除数字和其他非字符串类型的值
+            .replace(/(:\s*)([a-zA-Z\u4e00-\u9fa5_-]+)(?=\s*,|\s*\})/g, '$1"$2"');
+          // Step 2: 处理数字和标识符类型的字符串，如 AMCG86-241030001 和 20241106805-01，需给它们加上双引号
+          formattedData = formattedData.replace(/(:\s*)([A-Za-z0-9-]+)(?=\s*,|\s*\})/g, '$1"$2"');
+          try {
+            // Step 3: 使用 JSON.parse 转换为对象
+            const parsedData = JSON.parse(formattedData);
+            // Step 4: 使用 JSON.stringify 格式化为标准 JSON 字符串
+            const data = JSON.stringify(parsedData, null, 2);
+            const transedData = JSON.parse(data);
+            // 检查是否包含 id 属性
+            if (transedData) {
+              // 更新 purchaseId
+              this.purchaseId = transedData.id;
+              finType = transedData.type;
+            }
+          } catch (error) {
+            this.$message.error('扫描结果不是有效的 JSON 字符串');
+          }
+        }
+      }
+      let obj = {
+        'id': this.purchaseId,
+        'type': finType
+      }
+      // 获取当前采购单身信息
+      getStockInfoByPurchaseId(obj).then(response => {
+        console.log(response.data);
+        let obj = response.data;
+        // 追加生产领料表单身信息
+        obj.quantityIssued = obj.quantityOnhand;
+        const isItemExists = this.issuelineList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
+        // 如果物料Id不存在，则添加到this.allocatedList
+        if (!isItemExists) {
+          // 将当前数据传入领料单单身表
+          console.log(obj);
+          obj.issueId = this.issueId;
+          addIssueline(obj).then(response => {
+            this.$modal.msgSuccess('新增成功');
+            //this.open = false;
+            this.getList();
+          });
+        } else {
+          this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
+        }
+      });
+
+    }
+
+
   },
 };
 </script>

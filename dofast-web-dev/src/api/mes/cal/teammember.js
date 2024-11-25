@@ -17,6 +17,13 @@ export function getTeammember(memberId) {
   });
 }
 
+export function getTeammemberByTeamCode(teamCode) {
+  return request({
+    url: '/cal/team-member/getByTeamCode?teamCode=' + teamCode,
+    method: 'get',
+  });
+}
+
 // 新增班组成员
 export function addTeammember(data) {
   return request({

@@ -36,17 +36,21 @@
 
     <el-table v-loading="loading" :data="teamList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="班组编号" align="center" prop="teamCode">
+<!--      <el-table-column label="班组编号" align="center" prop="teamCode">
         <template slot-scope="scope">
           <el-button type="text" @click="handleView(scope.row)" v-hasPermi="['mes:cal:team:query']">{{ scope.row.teamCode }}</el-button>
         </template>
-      </el-table-column>
+      </el-table-column>-->
+      <el-table-column label="班组编号" align="center" prop="teamCode" />
+
       <el-table-column label="班组名称" align="center" prop="teamName" />
       <el-table-column label="班组类型" align="center" prop="calendarType">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.mes_calendar_type" :value="scope.row.calendarType" />
         </template>
       </el-table-column>
+      <el-table-column label="负责人" align="center" prop="principalName" />
+      <el-table-column label="班组人数" align="center" prop="personCount" />
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
@@ -85,6 +89,19 @@
             </el-form-item>
           </el-col>
         </el-row>
+
+
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="负责人" prop="principalName">
+              <el-input v-model="form.principalName" placeholder="请选择负责人" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleUserSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <UserSingleSelect ref="userSelect" @onSelected="userSelected"></UserSingleSelect>
+          </el-col>
+
+        </el-row>
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
@@ -108,9 +125,11 @@
 import { listTeam, getTeam, delTeam, listAllTeam, addTeam, updateTeam } from '@/api/mes/cal/team';
 import Teammember from './member';
 import { genCode } from '@/api/mes/autocode/rule';
+import UserSingleSelect from '@/components/userSelect/single.vue';
+
 export default {
   name: 'Team',
-  components: { Teammember },
+  components: {UserSingleSelect, Teammember },
   dicts: ['mes_calendar_type'],
   data() {
     return {
@@ -161,6 +180,7 @@ export default {
     getList() {
       this.loading = true;
       listTeam(this.queryParams).then(response => {
+        console.log(response);
         this.teamList = response.data.list;
         this.total = response.data.total;
         this.loading = false;
@@ -289,6 +309,18 @@ export default {
         this.form.teamCode = null;
       }
     },
+    // 弹出用户选择框
+    handleUserSelect(){
+      this.$refs.userSelect.open();
+    },
+    // 回写用户
+    userSelected(obj){
+      console.log(obj);
+      if (obj != undefined && obj != null) {
+        this.form.principalName = obj.nickname;
+        this.form.principalId = obj.id;
+      }
+    }
   },
 };
 </script>

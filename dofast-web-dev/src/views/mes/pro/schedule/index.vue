@@ -359,7 +359,12 @@ export default {
     },
 
     getProcess() {
-      listProductprocess(this.form.productId).then(response => {
+      /*listProductprocess(this.form.productId).then(response => {
+        this.processOptions = response.data;
+      });*/
+      // 工艺路线跟随工单绑定的工艺编码进行查询
+      listProductprocess(this.form.id).then(response => {
+        console.log(response.data);
         this.processOptions = response.data;
       });
     },
@@ -477,6 +482,7 @@ export default {
       }
       getWorkorder(row.id).then(response => {
         this.form = response.data;
+        console.log(this.form);
         this.getProcess();
         this.open = true;
         this.title = '修改生产工单';

@@ -1,9 +1,9 @@
 <template>
   <div class="panel-group grid lg:grid-cols-6 md:grid-cols-4 sm:grid-cols-2 gap-10">
     <div :key="i" class="card-panel-col" v-for="(item, i) in data"
-      v-hasPermi="['channel:order:query', 'trade:order:query']">
+         v-hasPermi="['channel:order:query', 'trade:order:query']">
       <div class="card-panel sm:flex md:flex lg:block !sm:flex-justify-center !md:flex-justify-center"
-        @click="handleSetLineChartData('newVisitis')" :style="{ backgroundColor: item.color }">
+           @click="handleSetLineChartData('newVisitis')" :style="{ backgroundColor: item.color }">
         <div class="card-panel-icon-wrapper hidden-xm-and-down hiddens">
           <svg-icon :icon-class="item.icon" class-name="card-panel-icon" />
         </div>
@@ -29,18 +29,18 @@ export default {
   data() {
     return {
       data: [
-        { icon: 'shopping', title: '渠道营业额', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } },
-        { icon: 'monitor', title: '销售成交额', value: 0, color: '#02cdc6', span: { xs: 12, sm: 8, lg: 4 } },
-        { icon: 'clipboard', title: '应收款', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } },
-        { icon: 'documentation', title: '应付款', value: 0, color: '#fe840f', span: { xs: 12, sm: 8, lg: 4 } },
-        { icon: 'merchant', title: '客户总数', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } },
-        { icon: 'pay', title: '供应商数', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } },
+        /*   { icon: 'shopping', title: '渠道营业额', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } },
+           { icon: 'monitor', title: '销售成交额', value: 0, color: '#02cdc6', span: { xs: 12, sm: 8, lg: 4 } },*/
+        /*  { icon: 'clipboard', title: '应收款', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } },
+          { icon: 'documentation', title: '应付款', value: 0, color: '#fe840f', span: { xs: 12, sm: 8, lg: 4 } },*/
+        /* { icon: 'merchant', title: '客户总数', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } },
+         { icon: 'pay', title: '供应商数', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } },*/
         { icon: 'number', title: '物料总数', value: 0, color: '#fe840f', span: { xs: 12, sm: 8, lg: 4 } },
         { icon: 'link', title: '工单总数', value: 0, color: '#fe840f', span: { xs: 12, sm: 8, lg: 4 } },
         { icon: 'list', title: '委外工单', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } },
         { icon: 'example', title: '待排产任务', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } },
-        { icon: 'list', title: '待发货订单', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } },
-        { icon: 'example', title: '待出库订单', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } },
+        /*  { icon: 'list', title: '待发货订单', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } },
+          { icon: 'example', title: '待出库订单', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } },*/
       ],
     };
   },

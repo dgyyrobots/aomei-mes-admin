@@ -135,3 +135,21 @@ export function importTemplate() {
     responseType: 'blob',
   });
 }
+
+// 用户人脸信息上传
+export function uploadFace(data) {
+  return request({
+    url: '/system/user/profile/update-face',
+    method: 'put',
+    data: data,
+  });
+}
+
+// 查询用户所有头像信息
+export function getUserFaces() {
+  return request({
+    url: '/system/user/profile/get-face',
+    method: 'get',
+  });
+}
+

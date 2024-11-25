@@ -91,16 +91,29 @@
             </el-form-item>
             <WorkorderSelect ref="woSelect" @onSelected="onWorkorderSelected"></WorkorderSelect>
           </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="生产任务" prop="taskCode">
+              <el-input v-model="form.taskCode" placeholder="请选择生产任务">
+                <el-button slot="append" icon="el-icon-search" @click="handleTaskSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <ProtaskSelect ref="taskSelect" :workorderId="form.workorderId" @onSelected="onTaskSelected"></ProtaskSelect>
+          </el-col>
+
           <el-col :span="8">
             <el-form-item label="接收仓库">
               <el-cascader v-model="warehouseInfo" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
-            <el-form-item label="退料日期" prop="rtDate">
-              <el-date-picker clearable v-model="form.rtDate" type="date" value-format="timestamp" placeholder="请选择退料日期"></el-date-picker>
-            </el-form-item>
-          </el-col>
+        </el-row>
+
+        <el-row>
+        <el-col :span="8">
+          <el-form-item label="退料日期" prop="rtDate">
+            <el-date-picker clearable v-model="form.rtDate" type="date" value-format="timestamp" placeholder="请选择退料日期"></el-date-picker>
+          </el-form-item>
+        </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">
@@ -129,11 +142,14 @@ import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import Rtissueline from './line.vue';
 import { getTreeList } from '@/api/mes/wm/warehouse';
 import { genCode } from '@/api/mes/autocode/rule';
+import ProtaskSelect from '@/components/TaskSelect/taskSelectSingle.vue';
+
 
 export default {
   name: 'Rtissue',
   dicts: ['mes_order_status'],
   components: {
+    ProtaskSelect,
     Rtissueline,
     WorkorderSelect,
   },
@@ -386,6 +402,23 @@ export default {
         });
       } else {
         this.form.rtCode = null;
+      }
+    },
+    handleTaskSelect() {
+      this.$refs.taskSelect.showFlag = true;
+      this.$refs.taskSelect.getList();
+    },
+    onTaskSelected(row) {
+      if (row != undefined && row != null) {
+        this.form.taskId = row.id;
+        this.form.taskCode = row.taskCode;
+        this.form.taskName = row.taskName;
+        this.form.workstationId = row.workstationId;
+        this.form.workstationCode = row.workstationCode;
+        this.form.workstationName = row.workstationName;
+        this.form.processId = row.processId;
+        this.form.processCode = row.processCode;
+        this.form.processName = row.processName;
       }
     },
   },

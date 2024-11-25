@@ -1,120 +1,44 @@
 <template>
   <div class="app-container">
     <!-- 搜索工作栏 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="120px">
       <el-form-item label="任务编号" prop="taskCode">
-        <el-input v-model="queryParams.taskCode" placeholder="请输入任务编号" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.taskCode" placeholder="请输入任务编号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="任务名称" prop="taskName">
-        <el-input v-model="queryParams.taskName" placeholder="请输入任务名称" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.taskName" placeholder="请输入任务名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
-      <el-form-item label="生产工单ID" prop="workorderId">
-        <el-input v-model="queryParams.workorderId" placeholder="请输入生产工单ID" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="生产工单编号" prop="workorderCode">
-        <el-input v-model="queryParams.workorderCode" placeholder="请输入生产工单编号" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="工单名称" prop="workorderName">
-        <el-input v-model="queryParams.workorderName" placeholder="请输入工单名称" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="工作站ID" prop="workstationId">
-        <el-input v-model="queryParams.workstationId" placeholder="请输入工作站ID" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="工作站编号" prop="workstationCode">
-        <el-input v-model="queryParams.workstationCode" placeholder="请输入工作站编号" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="生产工单号" prop="workorderCode">
+        <el-input v-model="queryParams.workorderCode" placeholder="请输入生产工单编号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="工作站名称" prop="workstationName">
-        <el-input v-model="queryParams.workstationName" placeholder="请输入工作站名称" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.workstationName" placeholder="请输入工作站名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input v-model="queryParams.processId" placeholder="请输入工序ID" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="工序编码" prop="processCode">
-        <el-input v-model="queryParams.processCode" placeholder="请输入工序编码" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="工序名称" prop="processName">
-        <el-input v-model="queryParams.processName" placeholder="请输入工序名称" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="产品物料ID" prop="itemId">
-        <el-input v-model="queryParams.itemId" placeholder="请输入产品物料ID" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="产品物料编码" prop="itemCode">
-        <el-input v-model="queryParams.itemCode" placeholder="请输入产品物料编码" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="产品物料名称" prop="itemName">
-        <el-input v-model="queryParams.itemName" placeholder="请输入产品物料名称" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="规格型号" prop="specification">
-        <el-input v-model="queryParams.specification" placeholder="请输入规格型号" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="单位" prop="unitOfMeasure">
-        <el-input v-model="queryParams.unitOfMeasure" placeholder="请输入单位" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="排产数量" prop="quantity">
-        <el-input v-model="queryParams.quantity" placeholder="请输入排产数量" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="已生产数量" prop="quantityProduced">
-        <el-input v-model="queryParams.quantityProduced" placeholder="请输入已生产数量" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="合格品数量" prop="quantityQuanlify">
-        <el-input v-model="queryParams.quantityQuanlify" placeholder="请输入合格品数量" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="不良品数量" prop="quantityUnquanlify">
-        <el-input v-model="queryParams.quantityUnquanlify" placeholder="请输入不良品数量" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="调整数量" prop="quantityChanged">
-        <el-input v-model="queryParams.quantityChanged" placeholder="请输入调整数量" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="客户ID" prop="clientId">
-        <el-input v-model="queryParams.clientId" placeholder="请输入客户ID" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="客户编码" prop="clientCode">
-        <el-input v-model="queryParams.clientCode" placeholder="请输入客户编码" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="客户名称" prop="clientName">
-        <el-input v-model="queryParams.clientName" placeholder="请输入客户名称" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="客户简称" prop="clientNick">
-        <el-input v-model="queryParams.clientNick" placeholder="请输入客户简称" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="开始生产时间" prop="startTime">
-        <el-date-picker v-model="queryParams.startTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']" />
-      </el-form-item>
-      <el-form-item label="生产时长" prop="duration">
-        <el-input v-model="queryParams.duration" placeholder="请输入生产时长" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="完成生产时间" prop="endTime">
-        <el-date-picker v-model="queryParams.endTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']" />
-      </el-form-item>
-      <el-form-item label="甘特图显示颜色" prop="colorCode">
-        <el-input v-model="queryParams.colorCode" placeholder="请输入甘特图显示颜色" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="需求日期" prop="requestDate">
-        <el-date-picker v-model="queryParams.requestDate" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']" />
-      </el-form-item>
-      <el-form-item label="生产状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="请选择生产状态" clearable size="small">
-          <el-option label="请选择字典生成" value="" />
+
+      <el-form-item label="所属工序" prop="processId">
+        <el-select v-model="queryParams.processId" placeholder="请选择工序">
+          <el-option v-for="item in processOptions" :key="item.id" :label="item.name" :value="item.id"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="备注" prop="remark">
-        <el-input v-model="queryParams.remark" placeholder="请输入备注" clearable @keyup.enter.native="handleQuery" />
+
+      <el-form-item label="产品编码" prop="itemCode">
+        <el-input v-model="queryParams.itemCode" placeholder="请输入产品物料编码" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
-      <el-form-item label="预留字段1" prop="attr1">
-        <el-input v-model="queryParams.attr1" placeholder="请输入预留字段1" clearable @keyup.enter.native="handleQuery" />
+
+
+      <!--      <el-form-item label="开始生产时间" prop="startTime">
+              <el-date-picker v-model="queryParams.startTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']" />
+            </el-form-item>
+
+            <el-form-item label="需求日期" prop="requestDate">
+              <el-date-picker v-model="queryParams.requestDate" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']" />
+            </el-form-item>-->
+      <el-form-item label="生产状态" prop="status">
+        <el-select v-model="queryParams.status" placeholder="请选择生产状态" clearable size="small">
+          <el-option v-for="dict in dict.type.mes_pro_task_status" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
+        </el-select>
       </el-form-item>
-      <el-form-item label="预留字段2" prop="attr2">
-        <el-input v-model="queryParams.attr2" placeholder="请输入预留字段2" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="预留字段3" prop="attr3">
-        <el-input v-model="queryParams.attr3" placeholder="请输入预留字段3" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="预留字段4" prop="attr4">
-        <el-input v-model="queryParams.attr4" placeholder="请输入预留字段4" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="创建时间" prop="createTime">
-        <el-date-picker v-model="queryParams.createTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']" />
-      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
@@ -129,65 +53,48 @@
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" :loading="exportLoading" v-hasPermi="['pro:task:export']">导出</el-button>
       </el-col>
+
+      <el-col :span="1.5">
+        <el-button type="success" plain icon="el-icon-star-off" size="mini" :disabled="single" @click="handleSend" v-hasPermi="['pro:task:export']">派工</el-button>
+      </el-col>
+
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <!-- 列表 -->
-    <el-table v-loading="loading" :data="list">
-      <el-table-column label="任务ID" align="center" prop="id" />
-      <el-table-column label="任务编号" align="center" prop="taskCode" />
-      <el-table-column label="任务名称" align="center" prop="taskName" />
-      <el-table-column label="生产工单ID" align="center" prop="workorderId" />
-      <el-table-column label="生产工单编号" align="center" prop="workorderCode" />
-      <el-table-column label="工单名称" align="center" prop="workorderName" />
-      <el-table-column label="工作站ID" align="center" prop="workstationId" />
-      <el-table-column label="工作站编号" align="center" prop="workstationCode" />
-      <el-table-column label="工作站名称" align="center" prop="workstationName" />
-      <el-table-column label="工序ID" align="center" prop="processId" />
-      <el-table-column label="工序编码" align="center" prop="processCode" />
-      <el-table-column label="工序名称" align="center" prop="processName" />
-      <el-table-column label="产品物料ID" align="center" prop="itemId" />
-      <el-table-column label="产品物料编码" align="center" prop="itemCode" />
-      <el-table-column label="产品物料名称" align="center" prop="itemName" />
-      <el-table-column label="规格型号" align="center" prop="specification" />
-      <el-table-column label="单位" align="center" prop="unitOfMeasure" />
-      <el-table-column label="排产数量" align="center" prop="quantity" />
-      <el-table-column label="已生产数量" align="center" prop="quantityProduced" />
-      <el-table-column label="合格品数量" align="center" prop="quantityQuanlify" />
-      <el-table-column label="不良品数量" align="center" prop="quantityUnquanlify" />
-      <el-table-column label="调整数量" align="center" prop="quantityChanged" />
-      <el-table-column label="客户ID" align="center" prop="clientId" />
-      <el-table-column label="客户编码" align="center" prop="clientCode" />
-      <el-table-column label="客户名称" align="center" prop="clientName" />
-      <el-table-column label="客户简称" align="center" prop="clientNick" />
+    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="55" align="center"/>
+      <el-table-column fixed label="任务编号" min-width="150" align="center" prop="taskCode"/>
+      <el-table-column label="任务名称" min-width="150" :show-overflow-tooltip="true" align="center" prop="taskName"/>
+      <el-table-column label="生产工单号" min-width="150" :show-overflow-tooltip="true" align="center" prop="workorderCode"/>
+      <el-table-column label="工单名称" min-width="150" align="center" prop="workorderName"/>
+      <el-table-column label="工作站名称" min-width="150" align="center" prop="workstationName"/>
+      <el-table-column label="工序名称" min-width="150" align="center" prop="processName"/>
+      <el-table-column label="产品编码" min-width="150" align="center" prop="itemCode"/>
+      <el-table-column label="产品名称" min-width="150" :show-overflow-tooltip="true" align="center" prop="itemName"/>
+      <el-table-column label="排产数量" min-width="100" align="center" prop="quantity"/>
+      <el-table-column label="单位" align="center" prop="unitOfMeasure"/>
+      <el-table-column label="已生产数量" min-width="100" align="center" prop="quantityProduced"/>
+      <el-table-column label="合格品数量" min-width="100" align="center" prop="quantityQuanlify"/>
+      <el-table-column label="不良品数量" min-width="100" align="center" prop="quantityUnquanlify"/>
+      <el-table-column label="调整数量" min-width="100" align="center" prop="quantityChanged"/>
+      <el-table-column label="客户名称" min-width="100" :show-overflow-tooltip="true" align="center" prop="clientName"/>
       <el-table-column label="开始生产时间" align="center" prop="startTime" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.startTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="生产时长" align="center" prop="duration" />
       <el-table-column label="完成生产时间" align="center" prop="endTime" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.endTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="甘特图显示颜色" align="center" prop="colorCode" />
       <el-table-column label="需求日期" align="center" prop="requestDate" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.requestDate) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="生产状态" align="center" prop="status" />
-      <el-table-column label="备注" align="center" prop="remark" />
-      <el-table-column label="预留字段1" align="center" prop="attr1" />
-      <el-table-column label="预留字段2" align="center" prop="attr2" />
-      <el-table-column label="预留字段3" align="center" prop="attr3" />
-      <el-table-column label="预留字段4" align="center" prop="attr4" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-        <template v-slot="scope">
-          <span>{{ parseTime(scope.row.createTime) }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column label="生产状态" align="center" prop="status"/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template v-slot="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pro:task:update']">修改</el-button>
@@ -196,152 +103,289 @@
       </el-table-column>
     </el-table>
     <!-- 分页组件 -->
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList" />
+    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList"/>
 
     <!-- 对话框(添加 / 修改) -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" v-dialogDrag append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="任务编号" prop="taskCode">
-          <el-input v-model="form.taskCode" placeholder="请输入任务编号" />
-        </el-form-item>
-        <el-form-item label="任务名称" prop="taskName">
-          <el-input v-model="form.taskName" placeholder="请输入任务名称" />
-        </el-form-item>
-        <el-form-item label="生产工单ID" prop="workorderId">
-          <el-input v-model="form.workorderId" placeholder="请输入生产工单ID" />
-        </el-form-item>
-        <el-form-item label="生产工单编号" prop="workorderCode">
-          <el-input v-model="form.workorderCode" placeholder="请输入生产工单编号" />
-        </el-form-item>
-        <el-form-item label="工单名称" prop="workorderName">
-          <el-input v-model="form.workorderName" placeholder="请输入工单名称" />
-        </el-form-item>
-        <el-form-item label="工作站ID" prop="workstationId">
-          <el-input v-model="form.workstationId" placeholder="请输入工作站ID" />
-        </el-form-item>
-        <el-form-item label="工作站编号" prop="workstationCode">
-          <el-input v-model="form.workstationCode" placeholder="请输入工作站编号" />
-        </el-form-item>
-        <el-form-item label="工作站名称" prop="workstationName">
-          <el-input v-model="form.workstationName" placeholder="请输入工作站名称" />
-        </el-form-item>
-        <el-form-item label="工序ID" prop="processId">
-          <el-input v-model="form.processId" placeholder="请输入工序ID" />
-        </el-form-item>
-        <el-form-item label="工序编码" prop="processCode">
-          <el-input v-model="form.processCode" placeholder="请输入工序编码" />
-        </el-form-item>
-        <el-form-item label="工序名称" prop="processName">
-          <el-input v-model="form.processName" placeholder="请输入工序名称" />
-        </el-form-item>
-        <el-form-item label="产品物料ID" prop="itemId">
-          <el-input v-model="form.itemId" placeholder="请输入产品物料ID" />
-        </el-form-item>
-        <el-form-item label="产品物料编码" prop="itemCode">
-          <el-input v-model="form.itemCode" placeholder="请输入产品物料编码" />
-        </el-form-item>
-        <el-form-item label="产品物料名称" prop="itemName">
-          <el-input v-model="form.itemName" placeholder="请输入产品物料名称" />
-        </el-form-item>
-        <el-form-item label="规格型号" prop="specification">
-          <el-input v-model="form.specification" placeholder="请输入规格型号" />
-        </el-form-item>
-        <el-form-item label="单位" prop="unitOfMeasure">
-          <el-input v-model="form.unitOfMeasure" placeholder="请输入单位" />
-        </el-form-item>
-        <el-form-item label="排产数量" prop="quantity">
-          <el-input v-model="form.quantity" placeholder="请输入排产数量" />
-        </el-form-item>
-        <el-form-item label="已生产数量" prop="quantityProduced">
-          <el-input v-model="form.quantityProduced" placeholder="请输入已生产数量" />
-        </el-form-item>
-        <el-form-item label="合格品数量" prop="quantityQuanlify">
-          <el-input v-model="form.quantityQuanlify" placeholder="请输入合格品数量" />
-        </el-form-item>
-        <el-form-item label="不良品数量" prop="quantityUnquanlify">
-          <el-input v-model="form.quantityUnquanlify" placeholder="请输入不良品数量" />
-        </el-form-item>
-        <el-form-item label="调整数量" prop="quantityChanged">
-          <el-input v-model="form.quantityChanged" placeholder="请输入调整数量" />
-        </el-form-item>
-        <el-form-item label="客户ID" prop="clientId">
-          <el-input v-model="form.clientId" placeholder="请输入客户ID" />
-        </el-form-item>
-        <el-form-item label="客户编码" prop="clientCode">
-          <el-input v-model="form.clientCode" placeholder="请输入客户编码" />
-        </el-form-item>
-        <el-form-item label="客户名称" prop="clientName">
-          <el-input v-model="form.clientName" placeholder="请输入客户名称" />
-        </el-form-item>
-        <el-form-item label="客户简称" prop="clientNick">
-          <el-input v-model="form.clientNick" placeholder="请输入客户简称" />
-        </el-form-item>
-        <el-form-item label="开始生产时间" prop="startTime">
-          <el-date-picker clearable v-model="form.startTime" type="date" value-format="timestamp" placeholder="选择开始生产时间" />
-        </el-form-item>
-        <el-form-item label="生产时长" prop="duration">
-          <el-input v-model="form.duration" placeholder="请输入生产时长" />
-        </el-form-item>
-        <el-form-item label="完成生产时间" prop="endTime">
-          <el-date-picker clearable v-model="form.endTime" type="date" value-format="timestamp" placeholder="选择完成生产时间" />
-        </el-form-item>
-        <el-form-item label="甘特图显示颜色" prop="colorCode">
-          <el-input v-model="form.colorCode" placeholder="请输入甘特图显示颜色" />
-        </el-form-item>
-        <el-form-item label="需求日期" prop="requestDate">
-          <el-date-picker clearable v-model="form.requestDate" type="date" value-format="timestamp" placeholder="选择需求日期" />
-        </el-form-item>
-        <el-form-item label="生产状态" prop="status">
-          <el-radio-group v-model="form.status">
-            <el-radio label="1">请选择字典生成</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" placeholder="请输入备注" />
-        </el-form-item>
-        <el-form-item label="预留字段1" prop="attr1">
-          <el-input v-model="form.attr1" placeholder="请输入预留字段1" />
-        </el-form-item>
-        <el-form-item label="预留字段2" prop="attr2">
-          <el-input v-model="form.attr2" placeholder="请输入预留字段2" />
-        </el-form-item>
-        <el-form-item label="预留字段3" prop="attr3">
-          <el-input v-model="form.attr3" placeholder="请输入预留字段3" />
-        </el-form-item>
-        <el-form-item label="预留字段4" prop="attr4">
-          <el-input v-model="form.attr4" placeholder="请输入预留字段4" />
-        </el-form-item>
+    <el-dialog :title="title" :visible.sync="open" width="1080px" v-dialogDrag append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="120px">
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="生产工单" prop="workorderCode">
+              <el-input v-model="form.workorderCode" placeholder="请选择生产工单" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleWorkorderSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <WorkorderSelect ref="woSelect" @onSelected="onWorkorderSelected"></WorkorderSelect>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="工序名称" prop="processName">
+              <el-select v-model="form.processName" placeholder="请选择工序" @change="processChange">
+                <el-option v-for="item in workOrderProcessOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+
+            <el-form-item label="工作站" prop="workstationName">
+              <el-input v-model="form.workstationName" placeholder="请选择工作站" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleWorkstationSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <WorkstationSelect ref="wsSelect" @onSelected="onWorkstationSelected">
+            </WorkstationSelect>
+
+          </el-col>
+
+          <el-col :span="5">
+            <el-form-item label="甘特图显示颜色" prop="colorCode">
+              <el-color-picker v-model="form.colorCode"></el-color-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="7">
+            <el-input v-model="form.colorCode" maxlength="7" disabled placeholder="请输入颜色编码在左侧选择颜色"/>
+          </el-col>
+
+
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="产品编码" prop="itemCode">
+              <!--              <el-input v-model="form.itemCode" readonly="readonly" placeholder="请选择产品编码">
+                              <el-button slot="append" @click="handleSelectProduct" icon="el-icon-search"></el-button>
+                            </el-input>-->
+              <el-input v-model="form.itemCode" disabled placeholder="请输入产品编码"/>
+
+            </el-form-item>
+            <ItemSelect ref="itemSelect" @onSelected="onItemSelected"></ItemSelect>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="产品名称" prop="itemName">
+              <el-input v-model="form.itemName" disabled placeholder="请输入产品物料名称"/>
+            </el-form-item>
+          </el-col>
+
+        </el-row>
+
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="排产数量" prop="quantity">
+              <el-input v-model="form.quantity" placeholder="请输入排产数量"/>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="单位" prop="unitOfMeasure">
+              <el-input v-model="form.unitOfMeasure" disabled placeholder="请输入单位"/>
+            </el-form-item>
+          </el-col>
+
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="客户编码" prop="clientCode">
+              <el-input v-model="form.clientCode" disabled placeholder="请输入客户编码"/>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="客户名称" prop="clientName">
+              <el-input v-model="form.clientName" disabled placeholder="请输入客户名称"/>
+            </el-form-item>
+          </el-col>
+
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="开始时间" prop="startTime">
+              <el-date-picker clearable v-model="form.startTime" @change="calculateEndTime" type="datetime"
+                              value-format="timestamp" placeholder="请选择开始生产时间"></el-date-picker>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+
+            <el-form-item label="生产时长" prop="duration">
+              <el-input-number :min="1" :precision="0" :step="1" v-model="form.duration" @change="calculateEndTime"
+                               placeholder="请输入生产时长"/>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="完成时间" prop="endTime">
+              <el-date-picker clearable disabled v-model="form.endTime" type="datetime"
+                              value-format="timestamp"></el-date-picker>
+            </el-form-item>
+          </el-col>
+
+        </el-row>
+
+        <el-row :gutter="20">
+
+
+          <el-col :span="12">
+            <el-form-item label="需求日期" prop="requestDate">
+              <el-date-picker clearable v-model="form.requestDate" type="date" value-format="timestamp" placeholder="选择需求日期"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="备注" prop="remark">
+              <el-input
+                type="textarea"
+                v-model="form.remark"
+                placeholder="请输入备注"
+                resizable
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+
+    <el-dialog :title="title" :visible.sync="sendOpen" width="1080px" v-dialogDrag append-to-body>
+
+      <el-form ref="sendForm" :model="sendForm" :rules="rules" label-width="120px">
+
+        <el-divider>生产班组</el-divider>
+
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="班组编号" prop="teamCode">
+              <el-input v-model="sendForm.teamCode" placeholder="请选择班组" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleTeamSelect"></el-button>
+              </el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="班组名称" prop="teamName">
+              <el-input v-model="sendForm.teamName" disabled placeholder="请输入班组名称"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="班组类型" prop="calendarType">
+              <el-select v-model="sendForm.calendarType" disabled placeholder="请选择班组类型">
+                <el-option v-for="dict in dict.type.mes_calendar_type" :key="dict.value" :label="dict.label" :value="dict.value"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="班组负责人" prop="principalName">
+              <el-input v-model="sendForm.principalName" disabled placeholder="请输入班组负责人"/>
+            </el-form-item>
+          </el-col>
+
+        </el-row>
+
+      </el-form>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="sendSubmitForm">确认派工</el-button>
+        <el-button @click="sendCancel">取 消</el-button>
+      </div>
+
+
+    </el-dialog>
+
+
+    <el-dialog :title="teamTitle" :visible.sync="teamOpen" width="800" v-dialogDrag append-to-body custom-class="my-dialog-class">
+      <el-table :data="teamList">
+        <el-table-column label="班组ID" width="55" align="center">
+          <template slot-scope="scope">
+            <el-radio
+              v-model="selectedTeamId"
+              :label="scope.row.id"
+              @change="handleTeamRadioChange(scope.row)">
+            </el-radio>
+          </template>
+        </el-table-column>
+        <el-table-column label="班组编号" align="center" prop="teamCode"/>
+        <el-table-column label="班组名称" align="center" prop="teamName"/>
+        <el-table-column label="班组类型" align="center" prop="calendarType">
+          <template slot-scope="scope">
+            <dict-tag :options="dict.type.mes_calendar_type" :value="scope.row.calendarType"/>
+          </template>
+        </el-table-column>
+      </el-table>
+      <pagination v-show="teamTotal > 0" :total="teamTotal" :page.sync="teamQueryParams.pageNo" :limit.sync="teamQueryParams.pageSize" @pagination="getTeamList"/>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="teamSubmitForm">确 定</el-button>
+        <el-button @click="teamCancel">取 消</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
-import { createTask, updateTask, deleteTask, getTask, getTaskPage, exportTaskExcel } from '@/api/mes/pro/protask';
+import {addProtask, updateTask, deleteTask, getTask, getTaskPage, listProtask, exportTaskExcel, updateTeamById} from '@/api/mes/pro/protask';
+import {listAllProcess} from '@/api/mes/pro/process';
+import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
+import WorkorderSelect from '@/components/workorderSelect/single.vue';
+import {listProductprocess} from '@/api/mes/pro/routeprocess';
+import ItemSelect from '@/components/itemSelect/single.vue';
+import {listTeam, getTeam, delTeam, listAllTeam, addTeam, updateTeam} from '@/api/mes/cal/team';
+import UserSingleSelect from '@/components/userSelect/single.vue';
 
 export default {
   name: 'Task',
-  components: {},
+  components: {UserSingleSelect, ItemSelect, WorkorderSelect, WorkstationSelect},
+
+  dicts: ['mes_pro_task_status', 'mes_calendar_type'], // 生产任务状态字典
   data() {
     return {
       // 遮罩层
       loading: true,
+      teamLoading: true,
       // 导出遮罩层
       exportLoading: false,
       // 显示搜索条件
       showSearch: true,
       // 总条数
       total: 0,
+      // 班组总条数
+      teamTotal: 0,
       // 生产任务列表
       list: [],
+      // 班组列表
+      teamList: [],
       // 弹出层标题
       title: '',
+      sendTitle: '',
+      teamTitle: '',
       // 是否显示弹出层
       open: false,
+      sendOpen: false,
+      teamOpen: false,
+      // 选中数组
+      ids: [],
+      selectedTeamId: null,
+      selectedTeamDetails: [], // 存储选中的班组详细信息
+      // 非单个禁用
+      single: true,
+      // 非多个禁用
+      multiple: true,
       // 查询参数
       queryParams: {
         pageNo: 1,
@@ -384,25 +428,35 @@ export default {
         attr4: null,
         createTime: [],
       },
+      teamQueryParams: {
+        pageNo: 1,
+        pageSize: 10,
+      },
       // 表单参数
       form: {},
+      sendForm: {},
       // 表单校验
       rules: {
-        taskCode: [{ required: true, message: '任务编号不能为空', trigger: 'blur' }],
-        taskName: [{ required: true, message: '任务名称不能为空', trigger: 'blur' }],
-        workorderId: [{ required: true, message: '生产工单ID不能为空', trigger: 'blur' }],
-        workorderCode: [{ required: true, message: '生产工单编号不能为空', trigger: 'blur' }],
-        workorderName: [{ required: true, message: '工单名称不能为空', trigger: 'blur' }],
-        workstationId: [{ required: true, message: '工作站ID不能为空', trigger: 'blur' }],
-        workstationCode: [{ required: true, message: '工作站编号不能为空', trigger: 'blur' }],
-        workstationName: [{ required: true, message: '工作站名称不能为空', trigger: 'blur' }],
-        processId: [{ required: true, message: '工序ID不能为空', trigger: 'blur' }],
-        itemId: [{ required: true, message: '产品物料ID不能为空', trigger: 'blur' }],
-        itemCode: [{ required: true, message: '产品物料编码不能为空', trigger: 'blur' }],
-        itemName: [{ required: true, message: '产品物料名称不能为空', trigger: 'blur' }],
-        unitOfMeasure: [{ required: true, message: '单位不能为空', trigger: 'blur' }],
-        quantity: [{ required: true, message: '排产数量不能为空', trigger: 'blur' }],
+        taskCode: [{required: true, message: '任务编号不能为空', trigger: 'blur'}],
+        taskName: [{required: true, message: '任务名称不能为空', trigger: 'blur'}],
+        workorderId: [{required: true, message: '生产工单ID不能为空', trigger: 'blur'}],
+        workorderCode: [{required: true, message: '生产工单编号不能为空', trigger: 'blur'}],
+        workorderName: [{required: true, message: '工单名称不能为空', trigger: 'blur'}],
+        workstationId: [{required: true, message: '工作站ID不能为空', trigger: 'blur'}],
+        workstationCode: [{required: true, message: '工作站编号不能为空', trigger: 'blur'}],
+        workstationName: [{required: true, message: '工作站名称不能为空', trigger: 'blur'}],
+        processId: [{required: true, message: '工序ID不能为空', trigger: 'blur'}],
+        itemId: [{required: true, message: '产品物料ID不能为空', trigger: 'blur'}],
+        itemCode: [{required: true, message: '产品物料编码不能为空', trigger: 'blur'}],
+        itemName: [{required: true, message: '产品物料名称不能为空', trigger: 'blur'}],
+        unitOfMeasure: [{required: true, message: '单位不能为空', trigger: 'blur'}],
+        quantity: [{required: true, message: '排产数量不能为空', trigger: 'blur'}],
       },
+      //工序选项
+      processOptions: [],
+      workOrderProcessOptions: [],
+      // 行选中项
+      selectionObj: {},
     };
   },
   created() {
@@ -413,7 +467,8 @@ export default {
     getList() {
       this.loading = true;
       // 执行查询
-      getTaskPage(this.queryParams).then(response => {
+      listProtask(this.queryParams).then(response => {
+        console.log(response.data.list);
         this.list = response.data.list;
         this.total = response.data.total;
         this.loading = false;
@@ -483,6 +538,32 @@ export default {
       this.open = true;
       this.title = '添加生产任务';
     },
+    /*** 派工按钮操作 */
+    handleSend(row) {
+      this.sendTitle = '派工';
+      if (this.selectionObj[0].attr1) {
+        listTeam(this.selectionObj[0].attr1).then(response => {
+          if (response.data.list) {
+            const teamInfo = response.data.list[0];
+            console.log(teamInfo);
+            this.sendForm.teamCode = teamInfo.teamCode;
+            this.sendForm.teamName = teamInfo.teamName;
+            this.sendForm.principalName = teamInfo.principalName;
+          }
+        }).catch(error => {
+          console.error('获取班组信息失败:', error);
+        });
+      } else {
+        this.sendForm = {
+          taskId: null,
+          teamId: null,
+          teamCode: null,
+          teamName: null,
+          principalName: null,
+        };
+      }
+      this.sendOpen = true;
+    },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
@@ -509,7 +590,7 @@ export default {
           return;
         }
         // 添加的提交
-        createTask(this.form).then(response => {
+        addProtask(this.form).then(response => {
           this.$modal.msgSuccess('新增成功');
           this.open = false;
           this.getList();
@@ -528,12 +609,13 @@ export default {
           this.getList();
           this.$modal.msgSuccess('删除成功');
         })
-        .catch(() => {});
+        .catch(() => {
+        });
     },
     /** 导出按钮操作 */
     handleExport() {
       // 处理查询参数
-      let params = { ...this.queryParams };
+      let params = {...this.queryParams};
       params.pageNo = undefined;
       params.pageSize = undefined;
       this.$modal
@@ -546,8 +628,184 @@ export default {
           this.$download.excel(response, '生产任务.xls');
           this.exportLoading = false;
         })
-        .catch(() => {});
+        .catch(() => {
+        });
     },
+    //查询工序信息
+    getProcess() {
+      listAllProcess().then(response => {
+        this.processOptions = response.data;
+      });
+    },
+    // 弹出工作站选择框
+    handleWorkstationSelect() {
+      this.$refs.wsSelect.showFlag = true;
+    },
+    // 回显工作站信息
+    onWorkstationSelected(row) {
+      if (row != undefined && row != null) {
+        this.form.workstationId = row.id;
+        this.form.workstationCode = row.workstationCode;
+        this.form.workstationName = row.workstationName;
+        this.form.requestDate = row.requestDate;
+        this.$refs.form.validateField('workstationName')
+      }
+    },
+    //选择生产工单
+    handleWorkorderSelect() {
+      this.$refs.woSelect.showFlag = true;
+    },
+    onWorkorderSelected(row) {
+      if (row != undefined && row != null) {
+        this.form.workorderId = row.id;
+        this.form.workorderCode = row.workorderCode;
+        this.form.workorderName = row.workorderName;
+        this.form.clientId = row.clientId;
+        this.form.clientCode = row.clientCode;
+        this.form.clientName = row.clientName;
+        this.form.clientNick = row.clientNick;
+        this.form.itemCode = row.productCode; // 产品编码
+        this.form.itemName = row.productName; // 产品名称
+        this.form.specification = row.specification; // 规格
+        this.form.unitOfMeasure = row.unitOfMeasure; // 单位
+        this.form.quantity = row.quantity; // 需求数量
+      }
+      // 基于当前工单, 获取其工单下的所有工序信息, 并展示在工序下拉框中
+      listProductprocess(this.form.workorderId).then(response => {
+        console.log(response.data);
+        this.workOrderProcessOptions = response.data;
+      });
+    },
+    processChange(value) {
+      // TODO: 根据当前的工序ID初始化当前任务的工序名称, 工序编码
+      const selectedProcess = this.workOrderProcessOptions.find(item => item.processCode === value);
+      if (selectedProcess) {
+        this.form.processName = selectedProcess.processName;
+        this.form.processCode = selectedProcess.processCode;
+        this.form.processId = selectedProcess.id;
+      }
+
+
+    },
+    // 弹出物料选择框
+    handleSelectProduct() {
+      this.$refs.itemSelect.showFlag = true;
+    },
+    //物料选择弹出框
+    onItemSelected(obj) {
+      if (obj != undefined && obj != null) {
+        this.form.itemId = obj.id;
+        this.form.itemCode = obj.itemCode;
+        this.form.itemName = obj.itemName;
+        this.form.specification = obj.specification;
+        this.form.unitOfMeasure = obj.unitOfMeasure;
+      }
+    },
+    //计算结束时间
+    calculateEndTime(i) {
+      if (this.form.startTime) {
+        this.form.endTime = this.form.startTime + 3600000 * this.form.duration;
+      }
+      return;
+      if (this.form.startTime != null && this.form.duration != null) {
+        let parts = this.form.startTime.split(' ');
+        let startDate = new Date(parts[0]);
+        startDate = startDate.getFullYear() + '-' + (startDate.getMonth() + 1) + '-' + startDate.getDate() + ' ' + parts[1].split(':')[0] + ':' + '00' + ':' + '00';
+        this.form.startTime = startDate;
+        startDate = Date.parse(new Date(startDate)) / 1000;
+        // console.log(startDate)
+        this.startTime = startDate
+        startDate += 3600 * 8 * this.form.duration; //这里以8小时为一个单位
+        let endDate = new Date(parseInt(startDate) * 1000);
+        this.form.endTime = endDate.getFullYear() + '-' + (endDate.getMonth() + 1) + '-' + endDate.getDate() + ' ' + endDate.getHours() + ':' + endDate.getMinutes() + ':' + endDate.getSeconds();
+        // console.log(startDate);
+        this.endTime = startDate
+      }
+    },
+    // 多选框选中数据
+    handleSelectionChange(selection) {
+      this.selectionObj = selection; // 选中项
+      this.ids = selection.map(item => item.id);
+      this.single = selection.length !== 1;
+      this.multiple = !selection.length;
+    },
+    // 弹出班组选择框
+    handleTeamSelect() {
+      this.teamOpen = true;
+      this.teamTitle = '班组信息';
+      this.getTeamList();
+    },
+    getTeamList() {
+      // 获取班组信息
+      this.teamLoading = true;
+      listTeam(this.teamQueryParams).then(response => {
+        this.teamList = response.data.list;
+        this.teamTotal = response.data.total;
+        this.teamLoading = false;
+      });
+    },
+    handleTeamRadioChange(row) {
+      this.selectedTeamDetails = [row]; // 更新选中的班组详细信息为当前选中的行
+    },
+    teamSubmitForm() {
+      if (this.selectedTeamDetails.length > 0) {
+        // 将选中的班组详细信息赋值给 sendForm 对象
+        const team = this.selectedTeamDetails[0];
+        this.sendForm.teamId = team.id;
+        this.sendForm.teamCode = team.teamCode;
+        this.sendForm.teamName = team.teamName;
+        this.sendForm.principalName = team.principalName;
+        // 关闭班组选择对话框
+        this.teamOpen = false;
+      } else {
+        this.$message.warning('请选择一个班组');
+      }
+    },
+    teamCancel() {
+      // 关闭班组选择对话框
+      this.teamOpen = false;
+    },
+    // 提交派工
+    sendSubmitForm() {
+      // 修改当前单据状态
+      console.log(this.sendForm);
+      this.sendForm.taskId = this.ids[0];
+      updateTeamById(this.sendForm).then(response => {
+        this.$message.success('派工成功');
+        this.sendOpen = false;
+        this.getList();
+        // 清空派工弹出框数据
+        this.sendForm = {
+          taskId: null,
+          teamId: null,
+          teamCode: null,
+          teamName: null,
+          principalName: null,
+        };
+      });
+
+    },
+    //取消派工
+    sendCancel() {
+      this.sendOpen = false;
+      this.sendForm = {
+        taskId: null,
+        teamId: null,
+        teamCode: null,
+        teamName: null,
+        principalName: null,
+      };
+      this.getList();
+    }
+
   },
 };
 </script>
+<style>
+.my-dialog-class {
+  margin: 0 auto; /* 居中显示 */
+  position: fixed; /* 或 absolute，根据您的布局需求 */
+  left: 50%;
+  transform: translateX(-50%);
+}
+</style>

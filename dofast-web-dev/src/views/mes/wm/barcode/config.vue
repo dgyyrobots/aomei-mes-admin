@@ -28,7 +28,7 @@
     </el-table>
 
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList" />
-    <ReportSelect ref="reportRef" @onSelected="onReportSelected"></ReportSelect>
+<!--    <ReportSelect ref="reportRef" @onSelected="onReportSelected"></ReportSelect>-->
     <div slot="footer" class="dialog-footer">
       <el-button type="primary" @click="showFlag = false">确 定</el-button>
       <el-button @click="showFlag = false">取 消</el-button>

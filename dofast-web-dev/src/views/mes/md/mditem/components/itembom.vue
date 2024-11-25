@@ -18,6 +18,7 @@
       <el-table-column label="规格" align="center" prop="bomItemSpec" :show-overflow-tooltip="true" />
       <el-table-column label="单位" width="60px" align="center" prop="unitOfMeasure" />
       <el-table-column label="使用比例" width="90px" align="center" prop="quantity" />
+      <el-table-column label="倒扣料" width="90px" align="center" prop="inverted" />
       <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" v-if="optType != 'view'">
         <template slot-scope="scope">

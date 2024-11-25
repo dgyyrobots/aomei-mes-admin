@@ -14,7 +14,7 @@ export default {
   components: { iFrame },
   data() {
     return {
-      url: 'http://192.168.0.69:3000',
+      url: 'http://172.18.12.250:3000',
     };
   },
   async created() {

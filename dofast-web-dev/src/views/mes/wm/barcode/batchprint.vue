@@ -14,7 +14,7 @@
         <el-input v-model="queryParams.bussinessCode" placeholder="请选择打印模板" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item>
-        <el-button type="success" icon="el-icon-printer" size="mini" @click="handlePrint">打印</el-button>
+        <el-button type="success" icon="el-icon-printer" size="mini" @click="handlePrint" :disabled="multiple">打印</el-button>
       </el-form-item>
     </el-form>
 
@@ -63,7 +63,7 @@
 </template>
 
 <script>
-import { listBarcode } from '@/api/mes/wm/barcode';
+import { listBarcode , printBarcode} from '@/api/mes/wm/barcode';
 export default {
   name: 'BatchPrint',
   dicts: ['sys_yes_no', 'mes_barcode_type', 'mes_barcode_formart'],
@@ -136,7 +136,26 @@ export default {
       this.multiple = !selection.length;
     },
     //批量打印
-    handlePrint() {},
+    handlePrint() {
+      // 开始打印条码信息
+      let data = {};
+      data.id = "测试ID";
+      data.itemCode =    "测试条码";
+      data.itemContent = "测试内容";
+      data.itemType =    "测试类型";
+      data.itemUrl =     "测试图片";
+      // 调用API进行打印
+      printBarcode(data).then(response => {
+        console.log(response);
+        this.$message.success('打印成功！');
+      }).catch(error => {
+        console.error(error);
+        this.$message.error('打印失败！');
+      });
+
+    },
+
+
   },
 };
 </script>

@@ -42,3 +42,12 @@ export function delProroute(routeId) {
     method: 'delete',
   });
 }
+
+// 基于物料料号获取工艺编号
+export function getRouteCodeByItemCode(itemCode) {
+  return request({
+    url: '/mes/pro/route/initRouteCodeByItemCode?itemCode=' + itemCode,
+    method: 'get',
+  });
+}
+

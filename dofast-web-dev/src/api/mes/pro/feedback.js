@@ -57,3 +57,12 @@ export function executes(data) {
     // data: data
   });
 }
+
+// 产成品入库
+export function startWareHousing(data) {
+  return request({
+    url: '/mes/pro/feedback/wareHousing',
+    method: 'post',
+    data: data,
+  });
+}
