@@ -66,3 +66,29 @@ export function startWareHousing(data) {
     data: data,
   });
 }
+
+// 报工单拆分
+export function splitFeedback(data) {
+  return request({
+    url: '/mes/pro/feedback/splitFeedback',
+    method: 'post',
+    data: data,
+  })
+}
+
+// 获取条码打印数据
+export function checkWarehousing(recordId) {
+  return request({
+    url: '/mes/pro/feedback/checkWarehousing?id=' + recordId,
+    method: 'get',
+  });
+}
+
+// 撤销报工
+export function reFeedback(data) {
+  return request({
+    url: '/mes/pro/feedback/reFeedback',
+    method: 'post',
+    data: data,
+  });
+}

@@ -56,6 +56,8 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
+
+
     <!-- 添加或修改生产任务对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="1080px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">

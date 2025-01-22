@@ -101,6 +101,15 @@
             <UserSingleSelect ref="userSelect" @onSelected="userSelected"></UserSingleSelect>
           </el-col>
 
+          <el-col :span="8">
+            <el-form-item label="设备信息" prop="machineryCode">
+              <el-input v-model="form.machineryCode" placeholder="请选择设备信息" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleMachineryAdd"></el-button>
+              </el-input>
+            </el-form-item>
+            <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
+          </el-col>
+
         </el-row>
         <el-row>
           <el-col :span="24">
@@ -126,10 +135,10 @@ import { listTeam, getTeam, delTeam, listAllTeam, addTeam, updateTeam } from '@/
 import Teammember from './member';
 import { genCode } from '@/api/mes/autocode/rule';
 import UserSingleSelect from '@/components/userSelect/single.vue';
-
+import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
 export default {
   name: 'Team',
-  components: {UserSingleSelect, Teammember },
+  components: {MachinerySelectSingle, UserSingleSelect, Teammember },
   dicts: ['mes_calendar_type'],
   data() {
     return {
@@ -207,6 +216,7 @@ export default {
         createTime: null,
         updateBy: null,
         updateTime: null,
+        machineryCode: null,
       };
       this.resetForm('form');
     },
@@ -249,6 +259,7 @@ export default {
       this.reset();
       const teamId = row.id || this.ids;
       getTeam(teamId).then(response => {
+        console.log(response);
         this.form = response.data;
         this.open = true;
         this.title = '修改班组';
@@ -259,6 +270,7 @@ export default {
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
+          console.log(this.form);
           if (this.form.id != null) {
             updateTeam(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
@@ -320,7 +332,18 @@ export default {
         this.form.principalName = obj.nickname;
         this.form.principalId = obj.id;
       }
-    }
+    },
+    handleMachineryAdd() {
+      this.$refs.machinerySelect.showFlag = true;
+    },
+    //设备资源选择回调
+    onMachineryAdd(rows) {
+      if (rows != undefined && rows != null) {
+        this.form.machineryCode = rows.machineryCode;
+        this.form.machineryName = rows.machineryName;
+        this.form.machineryId = rows.id;
+      }
+    },
   },
 };
 </script>

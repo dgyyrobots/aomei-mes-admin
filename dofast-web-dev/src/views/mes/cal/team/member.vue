@@ -16,9 +16,28 @@
 
     <el-table v-loading="loading" :data="teammemberList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
+      <el-table-column label="用户ID" align="center" prop="userId" />
       <el-table-column label="用户名" align="center" prop="userName" />
       <el-table-column label="用户昵称" align="center" prop="nickName" />
-      <el-table-column label="电话" align="center" prop="tel" />
+<!--      <el-table-column label="班次" align="center" prop="shiftInfo" fixed="right">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.mes_shift_info" :value="scope.row.shiftInfo" />
+        </template>
+      </el-table-column>-->
+      <el-table-column label="班次" align="center" prop="shiftInfo" fixed="right">
+        <template slot-scope="scope">
+          <el-select v-model="scope.row.shiftInfo" placeholder="请选择班次" @change="handleShiftChange(scope.row)">
+            <el-option
+              v-for="dict in dict.type.mes_shift_info"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            />
+          </el-select>
+        </template>
+      </el-table-column>
+
+
       <el-table-column label="操作" align="center" v-if="optType != 'view'" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['cal:teammember:delete']">删除</el-button>
@@ -31,11 +50,12 @@
 </template>
 
 <script>
-import { listTeammember, getTeammember, delTeammember, addTeammember } from '@/api/mes/cal/teammember';
+import { listTeammember, getTeammember, delTeammember, addTeammember , updateTeammember} from '@/api/mes/cal/teammember';
 import UserMultiSelect from '@/components/userSelect/multi.vue';
 export default {
   name: 'Teammember',
   components: { UserMultiSelect },
+  dicts: ['mes_shift_info'],
   props: {
     teamId: null,
     optType: null,
@@ -126,7 +146,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.memberId);
+      this.ids = selection.map(item => item.id);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
     },
@@ -154,7 +174,7 @@ export default {
 
     /** 删除按钮操作 */
     handleDelete(row) {
-      const memberIds = row.memberId || this.ids;
+      const memberIds = row.id || this.ids;
       this.$modal
         .confirm('是否确认删除班组成员？')
         .then(function () {
@@ -175,6 +195,12 @@ export default {
         },
         `teammember_${new Date().getTime()}.xlsx`,
       );
+    },
+    /** 班次修改操作 */
+    handleShiftChange(row) {
+      updateTeammember(row).then(() => {
+        this.$modal.msgSuccess('修改成功');
+      });
     },
   },
 };

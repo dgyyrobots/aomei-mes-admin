@@ -5,11 +5,11 @@
       <el-col :span="4" :xs="24">
         <div class="head-container">
           <el-input v-model="itemTypeName" placeholder="请输入分类名称" clearable size="small" prefix-icon="el-icon-search"
-            style="margin-bottom: 20px" />
+                    style="margin-bottom: 20px"/>
         </div>
         <div class="head-container">
           <el-tree :data="itemTypeOptions" :props="defaultProps" :expand-on-click-node="false"
-            :filter-node-method="filterNode" ref="tree" default-expand-all @node-click="handleNodeClick" />
+                   :filter-node-method="filterNode" ref="tree" default-expand-all @node-click="handleNodeClick"/>
         </div>
       </el-col>
       <!--物料数据-->
@@ -17,11 +17,11 @@
         <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
           <el-form-item label="物料编码" prop="itemCode">
             <el-input v-model="queryParams.itemCode" placeholder="请输入物料编码" clearable style="width: 240px"
-              @keyup.enter.native="handleQuery" />
+                      @keyup.enter.native="handleQuery"/>
           </el-form-item>
           <el-form-item label="物料名称" prop="itemName">
             <el-input v-model="queryParams.itemName" placeholder="请输入物料名称" clearable style="width: 240px"
-              @keyup.enter.native="handleQuery" />
+                      @keyup.enter.native="handleQuery"/>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -32,59 +32,66 @@
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-              v-hasPermi="['mes:md-item:create']">新增</el-button>
+                       v-hasPermi="['mes:md-item:create']">新增
+            </el-button>
           </el-col>
           <el-col :span="1.5">
             <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-              v-hasPermi="['mes:md-item:update']">修改</el-button>
+                       v-hasPermi="['mes:md-item:update']">修改
+            </el-button>
           </el-col>
           <el-col :span="1.5">
             <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-              v-hasPermi="['mes:md-item:delete']">删除</el-button>
+                       v-hasPermi="['mes:md-item:delete']">删除
+            </el-button>
           </el-col>
           <el-col :span="1.5">
             <el-button type="info" plain icon="el-icon-upload2" size="mini" @click="handleImport"
-              v-hasPermi="['mes:md-item:import']">导入</el-button>
+                       v-hasPermi="['mes:md-item:import']">导入
+            </el-button>
           </el-col>
           <el-col :span="1.5">
             <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-              v-hasPermi="['mes:md-item:export']">导出</el-button>
+                       v-hasPermi="['mes:md-item:export']">导出
+            </el-button>
           </el-col>
           <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
         </el-row>
 
-        <el-table v-loading="loading" :data="itemList" @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="50" align="center" />
+        <el-table v-loading="loading" :data="itemList" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
+          <el-table-column type="selection" width="50" align="center"/>
           <el-table-column label="物料编码" width="120" align="center" key="itemCode" prop="itemCode"
-            v-if="columns[0].visible">
+                           v-if="columns[0].visible">
             <template slot-scope="scope">
               <el-button size="mini" type="text" @click="handleView(scope.row)" v-hasPermi="['mes:md-item:query']">{{
-                scope.row.itemCode }}</el-button>
+                  scope.row.itemCode
+                }}
+              </el-button>
             </template>
           </el-table-column>
           <el-table-column label="物料名称" min-width="120" align="left" key="itemName" prop="itemName"
-            v-if="columns[1].visible" :show-overflow-tooltip="true" />
+                           v-if="columns[1].visible" :show-overflow-tooltip="true"/>
           <el-table-column label="规格型号" align="left" key="specification" prop="specification" v-if="columns[2].visible"
-            :show-overflow-tooltip="true" />
+                           :show-overflow-tooltip="true"/>
           <el-table-column label="单位" align="center" key="unitOfMeasure" prop="unitOfMeasure" v-if="columns[3].visible"
-            :show-overflow-tooltip="true"> </el-table-column>
+                           :show-overflow-tooltip="true"></el-table-column>
           <el-table-column label="物料/产品" align="center" key="itemOrProduct" prop="itemOrProduct" v-if="columns[4].visible"
-            :show-overflow-tooltip="true">
+                           :show-overflow-tooltip="true">
             <template slot-scope="scope">
-              <dict-tag :options="dict.type.mes_item_product" :value="scope.row.itemOrProduct" />
+              <dict-tag :options="dict.type.mes_item_product" :value="scope.row.itemOrProduct"/>
             </template>
           </el-table-column>
 
           <el-table-column label="所属分类" align="center" key="itemTypeName" prop="itemTypeName" v-if="columns[5].visible"
-            width="120" />
+                           width="120"/>
           <el-table-column label="是否启用" align="center" key="enableFlag" v-if="columns[6].visible">
             <template slot-scope="scope">
-              <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.enableFlag" />
+              <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.enableFlag"/>
             </template>
           </el-table-column>
           <el-table-column label="设置安全库存" align="center" key="safeStockFlag" v-if="columns[7].visible">
             <template slot-scope="scope">
-              <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.safeStockFlag" />
+              <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.safeStockFlag"/>
             </template>
           </el-table-column>
           <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns[8].visible" width="160">
@@ -95,15 +102,17 @@
           <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
             <template slot-scope="scope">
               <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-                v-hasPermi="['mes:md-item:update']">修改</el-button>
+                         v-hasPermi="['mes:md-item:update']">修改
+              </el-button>
               <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-                v-hasPermi="['mes:md-item:delete']">删除</el-button>
+                         v-hasPermi="['mes:md-item:delete']">删除
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
 
         <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
-          @pagination="getList" />
+                    @pagination="getList"/>
       </el-col>
     </el-row>
 
@@ -113,20 +122,20 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="物料编码" prop="itemCode">
-              <el-input v-model="form.itemCode" readonly="readonly" maxlength="64" v-if="optType == 'view'" />
-              <el-input v-model="form.itemCode" placeholder="请输入物料编码" maxlength="64" v-else />
+              <el-input v-model="form.itemCode" readonly="readonly" maxlength="64" v-if="optType == 'view'"/>
+              <el-input v-model="form.itemCode" placeholder="请输入物料编码" maxlength="64" v-else/>
             </el-form-item>
           </el-col>
           <el-col :span="4">
             <el-form-item label-width="80">
               <el-switch v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成"
-                @change="handleAutoGenChange(autoGenFlag)" v-if="optType != 'view'"> </el-switch>
+                         @change="handleAutoGenChange(autoGenFlag)" v-if="optType != 'view'"></el-switch>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="物料名称" prop="itemName">
-              <el-input v-model="form.itemName" maxlength="255" readonly="readonly" v-if="optType == 'view'" />
-              <el-input v-model="form.itemName" placeholder="请输入物料名称" maxlength="255" v-else />
+              <el-input v-model="form.itemName" maxlength="255" readonly="readonly" v-if="optType == 'view'"/>
+              <el-input v-model="form.itemName" placeholder="请输入物料名称" maxlength="255" v-else/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -134,8 +143,8 @@
           <el-col :span="24">
             <el-form-item label="规格型号" prop="specification">
               <el-input v-model="form.specification" type="textarea" maxlength="500" readonly="readonly"
-                v-if="optType == 'view'" />
-              <el-input v-model="form.specification" type="textarea" placeholder="请输入规格型号" maxlength="500" v-else />
+                        v-if="optType == 'view'"/>
+              <el-input v-model="form.specification" type="textarea" placeholder="请输入规格型号" maxlength="500" v-else/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -144,26 +153,27 @@
             <el-form-item label="单位" prop="unitOfMeasure">
               <el-select v-model="form.unitOfMeasure" disabled v-if="optType == 'view'">
                 <el-option v-for="item in measureOptions" :key="item.measureCode" :label="item.measureName"
-                  :value="item.measureCode" :disabled="item.enableFlag == 'N'"></el-option>
+                           :value="item.measureCode" :disabled="item.enableFlag == 'N'"></el-option>
               </el-select>
 
               <el-select v-model="form.unitOfMeasure" placeholder="请选择单位" v-else>
                 <el-option v-for="item in measureOptions" :key="item.measureCode" :label="item.measureName"
-                  :value="item.measureCode" :disabled="item.enableFlag == 'N'"></el-option>
+                           :value="item.measureCode" :disabled="item.enableFlag == 'N'"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="线边仓" prop="warehouseId">
               <el-cascader v-model="warehouseInfo" :options="warehouseOptions" :props="warehouseProps"
-                @change="handleWarehouseChanged"></el-cascader>
-            </el-form-item></el-col>
+                           @change="handleWarehouseChanged"></el-cascader>
+            </el-form-item>
+          </el-col>
           <el-col :span="8">
             <el-form-item label="物料/产品分类" prop="itemTypeId">
               <treeselect v-model="form.itemTypeId" :options="itemTypeOptions" :show-count="true" disabled
-                v-if="optType == 'view'" />
+                          v-if="optType == 'view'"/>
               <treeselect v-model="form.itemTypeId" :options="itemTypeOptions" :show-count="true" placeholder="请选择所属分类"
-                v-else :disable-branch-nodes="true" />
+                          v-else :disable-branch-nodes="true"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -171,25 +181,33 @@
           <el-col :span="12">
             <el-form-item label="是否启用">
               <el-radio-group v-model="form.enableFlag" disabled v-if="optType == 'view'">
-                <el-radio v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.value">{{ dict.label
-                }}</el-radio>
+                <el-radio v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.value">{{
+                    dict.label
+                  }}
+                </el-radio>
               </el-radio-group>
               <el-radio-group v-model="form.enableFlag" v-else>
-                <el-radio v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.value">{{ dict.label
-                }}</el-radio>
+                <el-radio v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.value">{{
+                    dict.label
+                  }}
+                </el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="安全库存">
               <el-radio-group v-model="form.safeStockFlag" disabled v-if="optType == 'view'">
-                <el-radio v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.value">{{ dict.label
-                }}</el-radio>
+                <el-radio v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.value">{{
+                    dict.label
+                  }}
+                </el-radio>
               </el-radio-group>
 
               <el-radio-group v-model="form.safeStockFlag" v-else>
-                <el-radio v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.value">{{ dict.label
-                }}</el-radio>
+                <el-radio v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.value">{{
+                    dict.label
+                  }}
+                </el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -197,14 +215,14 @@
         <el-row v-if="form.safeStockFlag == 'Y'">
           <el-col :span="12">
             <el-form-item label="最小库存量">
-              <el-input-number v-model="form.minStock" :percision="2" :step="1" disabled v-if="optType == 'view'" />
-              <el-input-number v-model="form.minStock" :percision="2" :step="1" placeholder="请输入最小安全库存量" v-else />
+              <el-input-number v-model="form.minStock" :percision="2" :step="1" disabled v-if="optType == 'view'"/>
+              <el-input-number v-model="form.minStock" :percision="2" :step="1" placeholder="请输入最小安全库存量" v-else/>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="最大库存量">
-              <el-input-number v-model="form.maxStock" :percision="2" :step="1" disabled v-if="optType == 'view'" />
-              <el-input-number v-model="form.maxStock" :percision="2" :step="1" placeholder="请输入最大安全库存量" v-else />
+              <el-input-number v-model="form.maxStock" :percision="2" :step="1" disabled v-if="optType == 'view'"/>
+              <el-input-number v-model="form.maxStock" :percision="2" :step="1" placeholder="请输入最大安全库存量" v-else/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -218,23 +236,24 @@
           </el-col>
         </el-row>
 
-        <el-col :span="24">
-          <el-form-item label="附件" prop="adjuncts">
-            <file-upload v-model="form.adjuncts" :file-type="adjunctTypes" :limit="20" :file-size="100"></file-upload>
-          </el-form-item>
-        </el-col>
-
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="附件" prop="adjuncts">
+              <file-upload :isShowTips="isShowDelete" v-model="form.adjuncts" :file-type="adjunctTypes" :limit="20" :file-size="100"></file-upload>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <el-tabs type="border-card" v-if="form.id != null">
         <el-tab-pane label="BOM组成">
           <ItemBom :optType="optType" :itemId="form.id"></ItemBom>
         </el-tab-pane>
-<!--        <el-tab-pane label="供应商"></el-tab-pane>
-        <el-tab-pane label="替代品"></el-tab-pane>
-        <el-tab-pane label="SIP"></el-tab-pane>
-        <el-tab-pane label="SOP">
-          <SOPTab :itemId="form.id" :optType="optType"></SOPTab>
-        </el-tab-pane>-->
+        <!--        <el-tab-pane label="供应商"></el-tab-pane>
+                <el-tab-pane label="替代品"></el-tab-pane>
+                <el-tab-pane label="SIP"></el-tab-pane>
+                <el-tab-pane label="SOP">
+                  <SOPTab :itemId="form.id" :optType="optType"></SOPTab>
+                </el-tab-pane>-->
       </el-tabs>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="cancel" v-if="optType == 'view'">返回</el-button>
@@ -246,15 +265,19 @@
     <!-- 物料导入对话框 -->
     <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
       <el-upload ref="upload" :limit="1" accept=".xlsx, .xls" :headers="upload.headers"
-        :action="upload.url + '?updateSupport=' + upload.updateSupport" :disabled="upload.isUploading"
-        :on-progress="handleFileUploadProgress" :on-success="handleFileSuccess" :auto-upload="false" drag>
+                 :action="upload.url + '?updateSupport=' + upload.updateSupport" :disabled="upload.isUploading"
+                 :on-progress="handleFileUploadProgress" :on-success="handleFileSuccess" :auto-upload="false" drag>
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
         <div class="el-upload__tip text-center" slot="tip">
-          <div class="el-upload__tip" slot="tip"><el-checkbox v-model="upload.updateSupport" /> 是否更新已经存在的用户数据</div>
+          <div class="el-upload__tip" slot="tip">
+            <el-checkbox v-model="upload.updateSupport"/>
+            是否更新已经存在的用户数据
+          </div>
           <span>仅允许导入xls、xlsx格式文件。</span>
           <el-link type="primary" :underline="false" style="font-size: 12px; vertical-align: baseline"
-            @click="importTemplate">下载模板</el-link>
+                   @click="importTemplate">下载模板
+          </el-link>
         </div>
       </el-upload>
       <div slot="footer" class="dialog-footer">
@@ -266,23 +289,23 @@
 </template>
 
 <script>
-import { listMdItem, getMdItem, delMdItem, addMdItem, updateMdItem } from '@/api/mes/md/mdItem';
+import {listMdItem, getMdItem, delMdItem, addMdItem, updateMdItem, updateMdItemAdjuncts} from '@/api/mes/md/mdItem';
 
 import ItemBom from './components/itembom.vue';
 import SOPTab from './components/sop.vue';
-import { listAllUnitmeasure } from '@/api/mes/md/unitmeasure';
-import { genCode } from '@/api/mes/autocode/rule';
-import { getAccessToken as getToken } from '@/utils/auth';
-import { treeselect } from '@/api/mes/md/itemtype';
+import {listAllUnitmeasure} from '@/api/mes/md/unitmeasure';
+import {genCode} from '@/api/mes/autocode/rule';
+import {getAccessToken as getToken} from '@/utils/auth';
+import {treeselect} from '@/api/mes/md/itemtype';
 import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
-import { getTreeList } from '@/api/mes/wm/warehouse';
+import {getTreeList} from '@/api/mes/wm/warehouse';
 import FileUpload from '@/components/FileUpload/index3.vue';
 
 export default {
   name: 'MdItem',
   dicts: ['sys_yes_no', 'mes_item_product'],
-  components: {FileUpload, Treeselect, ItemBom, SOPTab },
+  components: {FileUpload, Treeselect, ItemBom, SOPTab},
   data() {
     return {
       adjunctTypes: null,
@@ -340,7 +363,7 @@ export default {
         // 是否更新已经存在的用户数据
         updateSupport: 0,
         // 设置上传的请求头部
-        headers: { Authorization: 'Bearer ' + getToken() },
+        headers: {Authorization: 'Bearer ' + getToken()},
         // 上传的地址
         url: process.env.VUE_APP_BASE_API + '/mes/md/mditem/importData',
       },
@@ -354,26 +377,28 @@ export default {
       },
       // 列信息
       columns: [
-        { key: 0, label: `物料/产品编码`, visible: true },
-        { key: 1, label: `物料/产品名称`, visible: true },
-        { key: 2, label: `规格型号`, visible: true },
-        { key: 3, label: `单位`, visible: true },
-        { key: 4, label: `物料/产品`, visible: true },
-        { key: 5, label: `物料分类`, visible: true },
-        { key: 6, label: `是否启用`, visible: true },
-        { key: 7, label: `是否设置安全库存`, visible: true },
-        { key: 8, label: `创建时间`, visible: true },
+        {key: 0, label: `物料/产品编码`, visible: true},
+        {key: 1, label: `物料/产品名称`, visible: true},
+        {key: 2, label: `规格型号`, visible: true},
+        {key: 3, label: `单位`, visible: true},
+        {key: 4, label: `物料/产品`, visible: true},
+        {key: 5, label: `物料分类`, visible: true},
+        {key: 6, label: `是否启用`, visible: true},
+        {key: 7, label: `是否设置安全库存`, visible: true},
+        {key: 8, label: `创建时间`, visible: true},
       ],
       // 表单校验
       rules: {
         itemCode: [
-          { required: true, message: '物料/产品编码不能为空', trigger: 'blur' },
-          { max: 64, message: '物料/产品编码长度必须小于64个字符', trigger: 'blur' },
+          {required: true, message: '物料/产品编码不能为空', trigger: 'blur'},
+          {max: 64, message: '物料/产品编码长度必须小于64个字符', trigger: 'blur'},
         ],
-        itemName: [{ required: true, message: '物料/产品名称不能为空', trigger: 'blur' }],
-        unitOfMeasure: [{ required: true, message: '单位不能为空', trigger: 'blur' }],
-        itemTypeId: [{ required: true, message: '物料分类不能为空', trigger: 'blur' }],
+        itemName: [{required: true, message: '物料/产品名称不能为空', trigger: 'blur'}],
+        unitOfMeasure: [{required: true, message: '单位不能为空', trigger: 'blur'}],
+        itemTypeId: [{required: true, message: '物料分类不能为空', trigger: 'blur'}],
       },
+      // 用于管控图片删除按钮
+      isShowDelete: true,
     };
   },
   watch: {
@@ -381,6 +406,21 @@ export default {
     itemTypeName(val) {
       this.$refs.tree.filter(val);
     },
+    'form.adjuncts': {
+      handler(newVal, oldVal) {
+        //若当前为修改页面， 则图片更改就进行数据的更新
+        if (this.optType !== 'view' && this.form.id !== undefined) {
+        console.log(newVal, oldVal);
+          this.form.adjuncts = newVal;
+          // 开始更新附件
+          updateMdItemAdjuncts(this.form).then(response => {
+            this.$modal.msgSuccess('附件修改成功');
+            return;
+          });
+        }
+      },
+      immediate: false
+    }
   },
   created() {
     this.getList();
@@ -446,7 +486,7 @@ export default {
         itemName: undefined,
         specification: undefined,
         unitOfMeasrue: undefined,
-        enableFlag: undefined,
+        //enableFlag: undefined,
         itemOrProduct: undefined,
         enableFlag: 'Y',
         safeStockFlag: 'N',
@@ -456,7 +496,8 @@ export default {
         remark: undefined,
         warehouseId: undefined,
         locationId: undefined,
-        areaId: undefined
+        areaId: undefined,
+        adjuncts: '',
       };
       this.warehouseInfo = [];
       this.autoGenFlag = false;
@@ -484,9 +525,11 @@ export default {
       this.getTreeselect();
       const itemId = row.id || this.ids;
       getMdItem(itemId).then(response => {
+        console.log(response);
         this.warehouseInfo = [response.data.warehouseId, response.data.locationId, response.data.areaId];
         this.form = response.data;
         this.open = true;
+        this.isShowDelete = true;
         this.title = '查看物料/产品';
         this.optType = 'view';
       });
@@ -500,20 +543,23 @@ export default {
       }
       this.optType = 'add';
       this.open = true;
+      this.isShowDelete = true;
       this.title = '新增物料/产品';
     },
     /** 修改按钮操作 */
-    handleUpdate(row) {
+    async handleUpdate(row) {
       this.reset();
       this.getTreeselect();
       const itemId = row.id || this.ids;
-      getMdItem(itemId).then(response => {
+      await getMdItem(itemId).then(response => {
         this.warehouseInfo = [response.data.warehouseId, response.data.locationId, response.data.areaId];
         this.form = response.data;
         this.open = true;
         this.optType = 'edit';
+        this.isShowDelete = true;
         this.title = '修改物料/产品';
       });
+
     },
     /** 提交按钮 */
     submitForm: function () {
@@ -547,7 +593,8 @@ export default {
           this.getList();
           this.$modal.msgSuccess('删除成功');
         })
-        .catch(() => { });
+        .catch(() => {
+        });
     },
     /** 导出按钮操作 */
     handleExport() {
@@ -577,7 +624,7 @@ export default {
       this.upload.open = false;
       this.upload.isUploading = false;
       this.$refs.upload.clearFiles();
-      this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + '</div>', '导入结果', { dangerouslyUseHTMLString: true });
+      this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + '</div>', '导入结果', {dangerouslyUseHTMLString: true});
       this.getList();
     },
     // 提交上传文件
@@ -593,6 +640,10 @@ export default {
       } else {
         this.form.itemCode = null;
       }
+    },
+    handleRowClick(row) {
+      // 切换行的选中状态
+      this.$refs.multipleTable.toggleRowSelection(row);
     },
   },
 };

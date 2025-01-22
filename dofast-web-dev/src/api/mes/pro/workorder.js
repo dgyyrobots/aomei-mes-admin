@@ -67,3 +67,12 @@ export function mixinItems(query) {
     params: query,
   });
 }
+
+// 修改工单附件信息
+export function updateWorkorderAdjuncts(data){
+  return request({
+    url: '/mes/pro/workorder/updateAdjuncts',
+    method: 'put',
+    data: data,
+  });
+}

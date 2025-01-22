@@ -14,6 +14,9 @@ export default {
       isFullscreen: false,
     };
   },
+  created() {
+    this.enterFullscreen();
+  },
   mounted() {
     this.init();
   },
@@ -39,6 +42,11 @@ export default {
     destroy() {
       if (screenfull.isEnabled) {
         screenfull.off('change', this.change);
+      }
+    },
+    enterFullscreen() {
+      if (screenfull.isEnabled) {
+        screenfull.request();
       }
     },
   },

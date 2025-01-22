@@ -53,6 +53,14 @@ export function getFeedLine(id) {
   })
 }
 
+export function getByTaskId(id) {
+  return request({
+    url: '/wms/feed-line/getByTaskId?id=' + id,
+    method: 'get'
+  })
+}
+
+
 // 获得上料详情
 export function getByIssueId(id) {
   return request({

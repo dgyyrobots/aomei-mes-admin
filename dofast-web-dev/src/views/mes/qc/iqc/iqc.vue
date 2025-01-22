@@ -95,7 +95,7 @@
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" v-if="scope.row.status == 'PREPARE'" @click="handleUpdate(scope.row)" v-hasPermi="['qms:iqc:update']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status == 'PREPARE'" @click="handleDelete(scope.row)" v-hasPermi="['qms:iqc:delete']">删除</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="viewReport"> 查看报表 </el-button>
+<!--          <el-button size="mini" type="text" icon="el-icon-delete" @click="viewReport"> 查看报表 </el-button>-->
         </template>
       </el-table-column>
     </el-table>
@@ -213,14 +213,14 @@
               <el-date-picker clearable v-model="form.inspectDate" type="date" value-format="timestamp" placeholder="请选择检测日期"> </el-date-picker>
             </el-form-item>
           </el-col>
-              <<!--   检验结果基于物料的检测项       -->
-<!--          <el-col :span="8">-->
-<!--            <el-form-item label="检测结果" prop="checkResult">-->
-<!--              <el-select v-model="form.checkResult" placeholder="请选择检测结果">-->
-<!--                <el-option v-for="dict in dict.type.mes_qc_result" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>-->
-<!--              </el-select>-->
-<!--            </el-form-item>-->
-<!--          </el-col>-->
+              <!--   检验结果基于物料的检测项       -->
+          <el-col :span="8">
+            <el-form-item label="检测结果" prop="checkResult">
+              <el-select v-model="form.checkResult" placeholder="请选择检测结果">
+                <el-option v-for="dict in dict.type.mes_qc_result" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">

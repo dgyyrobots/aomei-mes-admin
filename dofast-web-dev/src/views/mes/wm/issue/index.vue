@@ -13,6 +13,17 @@
       <el-form-item label="领料日期" prop="issueDate">
         <el-date-picker clearable v-model="queryParams.issueDate" type="date" value-format="timestamp" placeholder="请选择领料日期"></el-date-picker>
       </el-form-item>
+      <el-form-item label="任务单号" prop="taskCode">
+        <el-input v-model="queryParams.taskCode" placeholder="请输入任务单号" clearable @keyup.enter.native="handleQuery"/>
+      </el-form-item>
+
+      <el-form-item label="生产工序" prop="processCode">
+        <el-select v-model="queryParams.processCode" placeholder="请选择生产工序" clearable>
+          <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"/>
+        </el-select>
+      </el-form-item>
+
+
       <el-form-item label="单据状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择单据状态" clearable>
           <el-option v-for="dict in dict.type.mes_order_status" :key="dict.value" :label="dict.label" :value="dict.value"/>
@@ -45,7 +56,7 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="issueheaderList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="issueheaderList" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="领料单编号" align="center" width="150px" prop="issueCode">
         <template slot-scope="scope">
@@ -56,6 +67,8 @@
       </el-table-column>
       <el-table-column label="领料单名称" align="center" prop="issueName" :show-overflow-tooltip="true"/>
       <el-table-column label="生产工单" align="center" prop="workorderCode"/>
+      <el-table-column label="生产工序" align="center" prop="processName"/>
+      <el-table-column label="生产工序" align="center" prop="taskCode"/>
       <el-table-column label="客户编号" align="center" prop="clientCode"/>
       <el-table-column label="客户名称" align="center" prop="clientName"/>
       <el-table-column label="领料日期" align="center" prop="issueDate" width="180">
@@ -350,11 +363,15 @@ import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
 import {createFeedLine, getByIssueId, createFeedLineList, createFeedLineListByIssueId} from "@/api/wms/feedLine";
 import jsQR from "jsqr";
 import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
+import { listProcess } from '@/api/mes/pro/process';
+import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
+
+
 
 export default {
   name: 'Issueheader',
   dicts: ['mes_order_status'],
-  components: {MachinerySelectSingle, Issueline, WorkstationSelect, WorkorderSelect, TaskSelectSingle},
+  components: {ProtaskSelect, MachinerySelectSingle, Issueline, WorkstationSelect, WorkorderSelect, TaskSelectSingle},
   data() {
     return {
       autoGenFlag: false,
@@ -433,11 +450,26 @@ export default {
       scanResult: '', // 存储扫描结果
       purchaseId: '', // 采购单ID
       feedLineList: [], // 上料明细数据
+      processOptions: [], // 工序选项
     };
   },
   created() {
     this.getList();
     this.getWarehouseList();
+    // 初始化工序选项
+    this.processOptions = [];
+    listProcess().then(response => {
+       this.processOptions = response.data.list;
+       console.log(this.processOptions)
+    });
+
+  },
+  watch: {
+    cameraPreviewVisible(newVal) {
+      if (!newVal) {
+        this.stopScanning();
+      }
+    }
   },
   methods: {
     /** 查询生产领料单头列表 */
@@ -614,10 +646,10 @@ export default {
           return execute(issueIds); //执行入库
         })
         .then(() => {
-          // 追加上料记录
+          /*// 追加上料记录
           createFeedLineListByIssueId(issueIds).then(response => {
             console.log(response.data);
-          });
+          });*/
           this.getList();
           this.$modal.msgSuccess('出库成功');
         })
@@ -717,8 +749,10 @@ export default {
     },
     handleTaskSelect() {
       this.$refs.taskSelect.showFlag = true;
+      this.$refs.taskSelect.getList();
     },
     onTaskSelected(row) {
+      console.log(row)
       if (row != undefined && row != null) {
         this.form.taskName = row.taskName;
         this.form.taskCode = row.taskCode;
@@ -915,7 +949,7 @@ export default {
         }
       }
       let obj = {
-        'id': this.purchaseId,
+        'id': Number.parseInt(this.purchaseId),
         'type': finType
       }
       // 获取当前采购单身信息
@@ -924,6 +958,7 @@ export default {
         let obj = response.data;
         // 追加生产领料表单身信息
         obj.quantityIssued = obj.quantityOnhand;
+
         const isItemExists = this.feedLineList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
         // 如果物料Id不存在，则添加到this.allocatedList
         if (!isItemExists) {
@@ -936,7 +971,7 @@ export default {
       });
     },
     handleFeedDelete() {
-      const ids = this.ids; // 确保 this.ids 是一个有效的 ID 数组
+      const ids = this.ids;
       this.feedLineList = this.feedLineList.filter(item => {
         return !ids.includes(item.id) || item.status === 'Y';
       });
@@ -1000,6 +1035,10 @@ export default {
         console.log(this.form.machineryName);
         console.log(this.form.machineryCode);
       }
+    },
+    handleRowClick(row) {
+      // 切换行的选中状态
+      this.$refs.multipleTable.toggleRowSelection(row);
     },
   },
 };

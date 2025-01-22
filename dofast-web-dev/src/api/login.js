@@ -144,3 +144,4 @@ export function reqCheck(data) {
 }
 
 export class socialBindLogin {}
+

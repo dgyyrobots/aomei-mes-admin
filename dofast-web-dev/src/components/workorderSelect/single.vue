@@ -123,6 +123,7 @@ export default {
       listWorkorder(this.queryParams).then(response => {
         this.workorderList = response.data.list;
         console.log('workorderList', this.workorderList);
+        this.total = response.data.total;
         this.loading = false;
       });
     },

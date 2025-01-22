@@ -32,7 +32,7 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="processList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="processList" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="工序编码" align="center" prop="processCode">
         <template slot-scope="scope">
@@ -294,6 +294,10 @@ export default {
       } else {
         this.form.processCode = null;
       }
+    },
+    handleRowClick(row) {
+      // 切换行的选中状态
+      this.$refs.multipleTable.toggleRowSelection(row);
     },
   },
 };

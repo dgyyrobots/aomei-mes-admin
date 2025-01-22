@@ -78,3 +78,12 @@ export function finshAllocatedHeader(id) {
     method: 'get',
   })
 }
+
+// 绑定调拨信息
+export function updateAllocatedLine(data) {
+  return request({
+    url: '/wms/allocated-line/updateLine',
+    method: 'post',
+    data: data
+  })
+}

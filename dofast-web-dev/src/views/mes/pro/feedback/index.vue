@@ -15,18 +15,25 @@
         <el-input v-model="queryParams.workorderCode" placeholder="请输入生产工单编号" clearable
                   @keyup.enter.native="handleQuery"/>
       </el-form-item>
+
+      <el-form-item label="报工单号" prop="feedbackCode">
+        <el-input v-model="queryParams.feedbackCode" placeholder="请输入报工单号" clearable
+                  @keyup.enter.native="handleQuery"/>
+      </el-form-item>
+
       <el-form-item label="产品物料编码" prop="itemCode">
         <el-input v-model="queryParams.itemCode" placeholder="请输入产品物料编码" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="产品物料名称" prop="itemName">
         <el-input v-model="queryParams.itemName" placeholder="请输入产品物料名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
-      <el-form-item label="报工人" prop="userName">
-        <el-input v-model="queryParams.userName" placeholder="请输入报工人名称" clearable @keyup.enter.native="handleQuery"/>
+      <el-form-item label="生产工序" prop="processCode">
+        <el-select v-model="queryParams.processCode" placeholder="请选择生产工序" clearable>
+          <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"/>
+        </el-select>
       </el-form-item>
-      <el-form-item label="记录人" prop="recordUser">
-        <el-input v-model="queryParams.recordUser" placeholder="请输入记录人" clearable @keyup.enter.native="handleQuery"/>
-      </el-form-item>
+
+
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
           <el-option v-for="dict in dict.type.mes_order_status" :key="dict.value" :label="dict.label"
@@ -61,17 +68,26 @@
       </el-col>
 
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-success" size="mini" @click="warehousing">入库</el-button>
+        <el-button type="success" plain icon="el-icon-edit" :disabled="multiple" size="mini" @click="handleBatchPrint"
+                   v-hasPermi="['pro:feedback:create']"> 批量打印
+        </el-button>
       </el-col>
 
-      <el-col :span="1.5"><!--v-hasPermi="['pro:feedback:split']"-->
-        <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="single" @click="split">拆分</el-button>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-success" size="mini" @click="warehousing" v-hasPermi="['pro:feedback:warehousing']">入库</el-button>
       </el-col>
 
+      <el-col :span="1.5">
+        <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="single" @click="split" v-hasPermi="['pro:feedback:split']">拆分</el-button>
+      </el-col>
+
+      <el-col :span="1.5"><!---->
+        <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="single" @click="cancelReport" v-hasPermi="['pro:feedback:reFeedback']">撤销报工</el-button>
+      </el-col>
 
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
-    <el-table v-loading="loading" :data="feedbackList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="feedbackList" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="报工类型" align="center" prop="feedbackType">
         <template slot-scope="scope">
@@ -79,10 +95,12 @@
         </template>
       </el-table-column>
       <el-table-column label="工作站" width="120px" align="center" prop="workstationName"/>
+      <el-table-column label="报工单号" width="210px" align="center" prop="feedbackCode"/>
       <el-table-column label="生产工单编号" width="150px" align="center" prop="workorderCode"/>
       <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode"/>
       <el-table-column label="产品物料名称" width="150px" align="center" prop="itemName"/>
       <el-table-column label="规格型号" align="center" prop="specification"/>
+      <el-table-column label="生产工序" align="center" prop="processName"/>
       <el-table-column label="报工数量" align="center" prop="quantityFeedback"/>
       <el-table-column label="报工人" align="center" prop="nickName"/>
       <el-table-column label="报工价格" align="center" prop="reportFee"/>
@@ -219,59 +237,116 @@
 
           <el-col :span="8">
             <el-form-item label="报工班组" prop="teamCode">
-              <el-input v-model="form.teamCode" placeholder="请输入报工班组"></el-input>
+              <el-input v-model="form.teamCode" disabled placeholder="请输入报工班组"></el-input>
             </el-form-item>
           </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="班组负责人" prop="principalName">
+              <el-input v-model="form.principalName" placeholder="请选择班组负责人" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleUser2Select"></el-button>
+              </el-input>
+            </el-form-item>
+            <UserSingleSelect ref="user2Select" @onSelected="onUser2Selected"></UserSingleSelect>
+          </el-col>
+
           <el-col :span="8">
             <el-form-item label="报工时间" prop="feedbackTime">
-              <el-date-picker clearable v-model="form.feedbackTime" type="date" value-format="timestamp"
+              <el-date-picker style="width: 100%" clearable v-model="form.feedbackTime" type="date" value-format="timestamp"
                               placeholder="请选择报工时间"></el-date-picker>
             </el-form-item>
           </el-col>
 
         </el-row>
 
+<!--        <el-row>
+
+          <el-col :span="8">
+            <el-form-item label="班次信息" prop="shiftInfo">
+              <el-select v-model="form.shiftInfo" placeholder="请选择班次信息" @change="handleShiftChange">
+                <el-option v-for="dict in dict.type.mes_shift_info" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+
+          &lt;!&ndash;          <el-col :span="8">
+                      <el-form-item label="异常缺陷" prop="defectId">
+                        <el-select v-model="form.defectId" placeholder="请选择" multiple @change="defectChange">
+                          <el-option v-for="item in processDefectList" :key="item.id" :label="item.defectName" :value="item.id"></el-option>
+                        </el-select>
+                      </el-form-item>
+                    </el-col>&ndash;&gt;
+          <el-col :span="8">
+            <el-form-item label="异常缺陷" prop="defectId">
+&lt;!&ndash;              <el-cascader
+                ref="cascader"
+                v-model="form.cascaderValues"
+                :options="cascaderOptions"
+                :props="cascaderProps"
+                placeholder="请选择缺陷问题及区间"
+                @change="handleChange"
+                filterable
+                multiple
+                :loading="loadingMore">
+              </el-cascader>&ndash;&gt;
+              <el-cascader
+                ref="cascader"
+                v-model="form.cascaderValues"
+                :options="cascaderOptions"
+                :props="cascaderProps"
+                placeholder="请选择缺陷问题及区间"
+                filterable
+                multiple
+                :lazy="true"
+                @lazy-load="lazyLoad"
+                style="width: 100%"
+              ></el-cascader>
+            </el-form-item>
+          </el-col>
+        </el-row>-->
+
         <el-divider>班组成员信息</el-divider>
 
         <el-row>
           <el-col :span="24">
             <div style="text-align: right; margin-top: 20px;">
-            <el-button type="primary" @click="addTeamMember()">新增</el-button>
+              <el-button type="primary" @click="addTeamMember()">新增</el-button>
             </div>
           </el-col>
         </el-row>
         <el-card class="box-card">
-        <el-table :data="teamMembers" style="width: 100%">
-          <el-table-column prop="id" label="成员ID" width="180"/>
-          <el-table-column prop="nickname" label="成员昵称" width="180"/>
-          <el-table-column prop="username" label="成员名称" width="180"/>
-          <el-table-column prop="position" label="职位"/>
-          <el-table-column label="操作">
-            <template slot-scope="scope">
-              <el-button size="mini" type="text" icon="el-icon-delete" @click="deleteTeamMember(scope.row.id)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-          </el-card>
+          <el-table :data="teamMembers" style="width: 100%">
+            <el-table-column prop="id" label="成员ID" width="180"/>
+            <el-table-column prop="nickname" label="成员昵称" width="180"/>
+            <el-table-column prop="username" label="成员名称" width="180"/>
+            <!--            <el-table-column prop="position" label="职位"/>-->
+            <el-table-column label="操作">
+              <template slot-scope="scope">
+                <el-button size="mini" type="text" icon="el-icon-delete" @click="deleteTeamMember(scope.row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
         <UserSingleSelect ref="userSelect" @onSelected="onUserSelected"></UserSingleSelect>
 
-<!--        <el-row>
-          <el-col :span="24">
-            <el-form-item label="备注" prop="remark">
-              <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"/>
-            </el-form-item>
-          </el-col>
-        </el-row>-->
+        <!--        <el-row>
+                  <el-col :span="24">
+                    <el-form-item label="备注" prop="remark">
+                      <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"/>
+                    </el-form-item>
+                  </el-col>
+                </el-row>-->
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="cancel" v-if="optType == 'view' || form.status != 'PREPARE'">返回</el-button>
         <el-button type="primary" @click="submitForm" v-if="form.status == 'PREPARE' && optType != 'view'">保 存
         </el-button>
-        <el-button type="primary" @click="handleSubmit" v-if="form.status == 'PREPARE' && optType != 'view'">提交审批
+        <el-button type="primary" @click="handleSubmit" v-if="form.status == 'PREPARE' && optType != 'view'" v-hasPermi="['pro:feedback:submit']">提交审批
         </el-button>
-        <el-button type="success" @click="handleExecute" v-if="form.status == 'APPROVING' && form.id != null">审批通过
+        <el-button type="success" @click="handleExecute" v-if="form.status == 'APPROVING' && form.id != null" v-hasPermi="['pro:feedback:approval']" >审批通过
         </el-button>
-        <el-button type="danger" @click="handleReject" v-if="form.status == 'APPROVING' && form.id != null">审批不通过
+        <el-button type="danger" @click="handleReject" v-if="form.status == 'APPROVING' && form.id != null" v-hasPermi="['pro:feedback:approval']" >审批不通过
         </el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
@@ -350,7 +425,7 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="入库数量" prop="quantityFeedback">
-              <el-input disabled v-model="splitForm.quantityFeedback" placeholder="请输入入库数量"/>
+              <el-input disabled v-model="splitForm.quantityFeedback" placeholder="请输入报工数量"/>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -362,12 +437,13 @@
       </el-form>
 
       <div style="text-align: right; margin-top: 20px;">
+        <el-button type="primary" @click="addSplitDetailByQuantity">按数量拆分</el-button>
         <el-button type="primary" @click="addSplitDetail">新增</el-button>
       </div>
 
       <!-- 拆分表格 -->
       <el-table :data="splitDetails" style="width: 100%;" max-height="400">
-        <el-table-column prop="workorderCode" label="报工单号" width="180"/>
+        <el-table-column prop="workorderCode" label="工单号" width="180"/>
         <el-table-column prop="itemCode" label="物料料号" width="180"/>
         <el-table-column prop="unitOfMeasure" label="物料单位" width="180"/>
         <el-table-column prop="quantity" label="数量">
@@ -392,7 +468,7 @@
 </template>
 
 <script>
-import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing} from '@/api/mes/pro/feedback';
+import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback} from '@/api/mes/pro/feedback';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import UserSingleSelect from '@/components/userSelect/single.vue';
@@ -402,12 +478,15 @@ import {getAccessToken} from '@/utils/auth';
 import {getTreeList} from '@/api/mes/wm/warehouse';
 import {createPrintLog, getPrintLogPage} from "@/api/report/printLog";
 import jsQR from "jsqr";
-import { getTeammemberByTeamCode } from '@/api/mes/cal/teammember';
+import {getByTeamCodeAndShiftInfo, getTeammemberByTeamCode} from '@/api/mes/cal/teammember';
+import '@/utils/CLodopfuncs2.js';
+import { getByCode } from '@/api/mes/pro/processDefect';
+import {listProcess} from "@/api/mes/pro/process";
 
 export default {
   name: 'Feedback',
   components: {WorkorderSelect, WorkstationSelect, UserSingleSelect, ProtaskSelect},
-  dicts: ['mes_order_status', 'mes_feedback_type'],
+  dicts: ['mes_order_status', 'mes_feedback_type', 'mes_shift_info'],
   data() {
     return {
       optType: undefined,
@@ -503,10 +582,37 @@ export default {
       // 拆分详情列表
       splitDetails: [],
       teamMembers: [],
+      // 缺陷列表
+      processDefectList: [],
+      // 测试缺陷级联选择器
+      cascaderOptions: [],
+      cascaderProps: {
+        value: 'value',
+        label: 'label',
+        children: 'children',
+        multiple: true,
+        lazy: true,
+        lazyLoad: this.lazyLoad
+      },
+      upperLimit: 100,  // 米数区间的上限
+      lowerLimit: 5000, // 米数区间的下限
+      step: 100,        // 步长
+      loadingMore: false, // 控制加载更多的状态
+      currentMaxLimit: 5000,  // 当前加载的最大下限
+      loadingStatus: {},
+      processOptions: [], // 工序选项
+
     };
   },
   created() {
     this.getList();
+    this.changeDefectList();
+    // 初始化工序选项
+    this.processOptions = [];
+    listProcess().then(response => {
+      this.processOptions = response.data.list;
+      console.log(this.processOptions)
+    });
   },
   methods: {
     /** 查询生产报工记录列表 */
@@ -522,6 +628,10 @@ export default {
     cancel() {
       this.open = false;
       this.wareOpen = false;
+      this.teamMembers = []; // 清空班组成员
+      this.processDefectList = []; // 清空缺陷列表
+      this.cascaderOptions = []; // 清空缺陷级联选择器
+      //this.removeScrollListener();
       this.reset();
     },
     // 表单重置
@@ -564,11 +674,19 @@ export default {
         createTime: null,
         updateBy: null,
         updateTime: null,
+        defectId: null,
+        principalName: null,
+        principalId: null,
+        cascaderValues: []  // 存储级联选择的值
       };
       this.resetForm('form');
+      this.teamMembers = []; // 清空班组成员
+      this.processDefectList = []; // 清空缺陷列表
+      this.cascaderOptions = []; // 清空缺陷级联选择器
     },
     handleQuantityChanged() {
       this.form.quantityFeedback = this.form.quantityQualified + this.form.quantityUnquanlified;
+      //this.currentMaxLimit = this.form.quantityFeedback;
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -602,11 +720,19 @@ export default {
       getFeedback(recordId).then(response => {
         this.form = response.data;
         console.log(this.form);
-        for(let i=0;i<this.form.memberList.length;i++){
-           this.form.memberList[i].nickname = this.form.memberList[i].nickName;
+        for (let i = 0; i < this.form.memberList.length; i++) {
+          this.form.memberList[i].nickname = this.form.memberList[i].nickName;
           this.form.memberList[i].username = this.form.memberList[i].userName;
         }
         this.teamMembers = this.form.memberList;
+        if (this.form.processCode) {
+          // 追加缺陷下拉框
+          getByCode(this.form.processCode).then(response => {
+            this.processDefectList = response.data;
+            this.changeDefectList();
+          });
+        }
+
         this.open = true;
         this.title = '修改生产报工记录';
         this.optType = 'edit';
@@ -619,7 +745,20 @@ export default {
       getFeedback(recordId).then(response => {
         // 在此处更改 审核人
         // response.data.recordNick = response.data.recordNick ? response.data.recordNick : this.$store.state.user.nickname;
+        console.log(response.data);
         this.form = response.data;
+        for (let i = 0; i < this.form.memberList.length; i++) {
+          this.form.memberList[i].nickname = this.form.memberList[i].nickName;
+          this.form.memberList[i].username = this.form.memberList[i].userName;
+        }
+        this.teamMembers = this.form.memberList;
+        if (this.form.processCode) {
+          // 追加缺陷下拉框
+          getByCode(this.form.processCode).then(response => {
+            this.processDefectList = response.data;
+            this.changeDefectList();
+          });
+        }
         this.open = true;
         this.title = '查看生产报工单信息';
         this.optType = 'view';
@@ -633,12 +772,19 @@ export default {
           if (this.form.id != null) {
             updateFeedback(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
+              this.teamMembers = []; // 清空班组成员
+              this.processDefectList = []; // 清空缺陷列表
+              this.cascaderOptions = []; // 清空缺陷级联选择器
               this.open = false;
               this.getList();
             });
           } else {
+            console.log(this.form);
             addFeedback(this.form).then(response => {
               this.$modal.msgSuccess('新增成功');
+              this.teamMembers = []; // 清空班组成员
+              this.processDefectList = []; // 清空缺陷列表
+              this.cascaderOptions = []; // 清空缺陷级联选择器
               this.open = false;
               this.getList();
             });
@@ -651,10 +797,11 @@ export default {
       this.$refs['form'].validate(valid => {
         if (valid) {
           if (this.form.id != null) {
+            this.form.feedbackMemberList = this.teamMembers;
             updateFeedback(this.form).then(response => {
               this.$modal.msgSuccess('提交成功');
-              this.open = false;
-              this.getList();
+              //this.open = false;
+              //this.getList();
             });
           }
         }
@@ -670,8 +817,10 @@ export default {
         })
         .then(() => {
           this.getList();
+          //this.removeScrollListener();
           this.$modal.msgSuccess('执行成功');
           this.open = false;
+
         })
         .catch(() => {
         });
@@ -686,6 +835,7 @@ export default {
         })
         .then(() => {
           this.getList();
+          //this.removeScrollListener();
           this.$modal.msgSuccess('拒审成功');
           this.open = false;
         })
@@ -739,6 +889,7 @@ export default {
     },
     onTaskSelected(row) {
       if (row != undefined && row != null) {
+        console.log("开始获取班组信息");
         console.log(row);
         this.form.taskId = row.id;
         this.form.taskCode = row.taskCode;
@@ -751,20 +902,40 @@ export default {
         this.form.processName = row.processName;
         this.form.teamCode = row.attr1;
       }
-      if(this.form.teamCode){
+      if (this.form.teamCode) {
         // 基于当前班组编码获取班组人员
-        getTeammemberByTeamCode(this.form.teamCode).then(response => {
-          console.log(response);
-          for(let i=0;i<response.data.length;i++){
-            let obj = response.data[i];
+        const shiftInfo = this.form.shiftInfo || 'default'; // 使用默认班次或当前选择的班次
+        getByTeamCodeAndShiftInfo(this.form.teamCode, shiftInfo).then(response => {
+          let teamInfo = response.data;
+          console.log("teamInfo: " + teamInfo);
+          this.form.principalName = teamInfo[0].principalName;
+          this.form.principalId = teamInfo[0].principalId;
+          this.teamMembers = []; // 清空当前班组成员列表
+          for (let i = 0; i < teamInfo.length; i++) {
+            let obj = teamInfo[i];
             obj.username = obj.userName; // 用户名
             obj.nickname = obj.nickName; // 昵称
             this.teamMembers.push(obj);
           }
+        }).catch(error => {
+          console.error('获取班组人员失败:', error);
+          this.$message.error('获取班组人员失败');
         });
       }
+      console.log(this.form);
+      // 追加问题缺陷
+      if (this.form.processCode) {
+        // 基于工序获取对应的缺陷问题
+        getByCode(this.form.processCode).then(response => {
+          console.log(response.data);
+          this.processDefectList = response.data;
+          this.changeDefectList();
+        });
+      }
+
+
     },
-//点击人员选择按钮
+    //点击人员选择按钮
     handleUserSelect() {
       this.$refs.userSelect.showFlag = true;
     },
@@ -778,17 +949,22 @@ export default {
       this.$refs.user2Select.showFlag = true;
     },
     //人员选择返回
-    onUser2Selected(row) {
-      this.form.recordUser = row.username;
-      this.form.recordNick = row.nickname;
+    onUser2Selected(obj) {
+      console.log(obj);
+      if (obj != undefined && obj != null) {
+        this.form.principalName = obj.nickname;
+        this.form.principalId = obj.id;
+      }
+      console.log(this.form);
     },
     // 打印按钮
     async handlePrint(row) {
       const recordId = row.id || this.ids;
-      let status = row.status;
-      /*if(status !='FINISHED'){
-        this.$modal.msgError('只有完成状态才能打印');
-      }*/
+      let status = this.selectedRows[0].status;
+      if(status ==='PREPARE' || status === 'APPROVING'){
+        this.$modal.msgError('无法打印未完成或审批中的单据!');
+        return;
+      }
 
       await this.$modal.confirm('确认打印？')
       let datas = await createPrintLog({printName: this.$store.state.user.nickname, printType: this.$route.meta.title + '-报工单号', printCode: '报工单'});
@@ -796,18 +972,124 @@ export default {
         this.$message.error(datas.msg);
         return
       }
-      // 测试打印功能
-      let res = await getConfigKey('CP2');
-      if (!res.data && res.code == 0) {
-        this.$message.error('请先配置产成品标签id');
-        return
+      /*  // 测试打印功能
+        let res = await getConfigKey('CP2');
+        if (!res.data && res.code == 0) {
+          this.$message.error('请先配置产成品标签id');
+          return
+        }
+        let id = res.data.value;
+        console.log(this.$route.query.id);
+        if (id) {
+          window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/${id}?token=${getAccessToken()}&id=${this.ids[0]}`);
+          //this.getDetail()
+        }*/
+      let obj = {};
+      await getFeedback(recordId).then(response => {
+        obj = response.data;
+      });
+      // 开始追加打印信息
+      LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
+      LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
+      // 添加整体边框
+      LODOP.ADD_PRINT_RECT(8, 5, 150 * 3.71 - 10, 100 * 3.71 - 10, 0, 1); // 整体边框
+
+      // 添加标题及标题边框
+      LODOP.SET_PRINT_STYLE("FontSize", 18);
+      LODOP.SET_PRINT_STYLE("FontName", "Microsoft YaHei");
+      LODOP.SET_PRINT_STYLE("Bold", 1);
+      LODOP.SET_PRINT_STYLE("Horient", 2); // 居中
+      LODOP.ADD_PRINT_TEXT(13, 0, 150, 30, "产成品标签");
+
+      // 内容样式及分块边框
+      LODOP.SET_PRINT_STYLE("FontSize", 16);
+      LODOP.SET_PRINT_STYLE("Bold", 0);
+      LODOP.SET_PRINT_STYLE("Horient", 0); // 取消居中
+      LODOP.ADD_PRINT_TEXT(70, 15, 120, 35, "生产车间:"); // 标签部分，距离左边10px
+      LODOP.ADD_PRINT_TEXT(70, 120, 280, 35, obj.workstationName); // 内容部分
+
+      LODOP.ADD_PRINT_TEXT(120, 15, 120, 35, "物料名称:");
+      LODOP.ADD_PRINT_TEXT(120, 120, 280, 35, obj.itemName);
+
+      LODOP.ADD_PRINT_TEXT(170, 15, 120, 35, "工单号:");
+      LODOP.ADD_PRINT_TEXT(170, 120, 280, 35, obj.workorderCode);
+
+      LODOP.ADD_PRINT_TEXT(220, 15, 120, 35, "合格数量:");
+      LODOP.ADD_PRINT_TEXT(220, 120, 280, 35, obj.quantityQualified);
+
+      LODOP.ADD_PRINT_TEXT(270, 15, 120, 35, "单位:");
+      LODOP.ADD_PRINT_TEXT(270, 120, 280, 35, obj.unitOfMeasure);
+
+      LODOP.ADD_PRINT_TEXT(320, 15, 120, 35, "日期:");
+      LODOP.ADD_PRINT_TEXT(320, 120, 280, 35, new Date(obj.createTime).toISOString().slice(0, 19).replace('T', ' '));
+
+      let jsonQc = {
+        "id": obj.id,
+        "type": "feedback"
       }
-      let id = res.data.value;
-      console.log(this.$route.query.id);
-      if (id) {
-        window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/${id}?token=${getAccessToken()}&id=${this.ids[0]}`);
-        //this.getDetail()
+      LODOP.ADD_PRINT_BARCODE(220, 390, 170, 170, "QRCode", JSON.stringify(jsonQc));
+      LODOP.PREVIEW();
+
+    },
+    async handleBatchPrint() {
+      for (let i = 0; i < this.selectedRows.length; i++) {
+        let status = this.selectedRows[i].status;
+        if(status ==='PREPARE' || status === 'APPROVING'){
+          this.$message.error('第' + (i + 1) + '行选中的报工单未完成');
+          return;
+        }
       }
+      await this.$modal.confirm('确认批量打印？');
+      LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
+      LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
+      for (const queryId of this.ids) {
+        let obj = {};
+        await getFeedback(queryId).then(response => {
+          obj = response.data;
+        });
+        LODOP.NEWPAGE();
+        // 添加整体边框
+        LODOP.ADD_PRINT_RECT(8, 5, 150 * 3.71 - 10, 100 * 3.71 - 10, 0, 1); // 整体边框
+
+        // 添加标题及标题边框
+        LODOP.SET_PRINT_STYLE("FontSize", 18);
+        LODOP.SET_PRINT_STYLE("FontName", "Microsoft YaHei");
+        LODOP.SET_PRINT_STYLE("Bold", 1);
+        LODOP.SET_PRINT_STYLE("Horient", 2); // 居中
+        LODOP.ADD_PRINT_TEXT(13, 0, 150, 30, "产成品标签");
+
+        // 内容样式及分块边框
+        LODOP.SET_PRINT_STYLE("FontSize", 16);
+        LODOP.SET_PRINT_STYLE("Bold", 0);
+        LODOP.SET_PRINT_STYLE("Horient", 0); // 取消居中
+        LODOP.ADD_PRINT_TEXT(70, 15, 120, 35, "生产车间:"); // 标签部分，距离左边10px
+        LODOP.ADD_PRINT_TEXT(70, 120, 280, 35, obj.workstationName); // 内容部分
+
+        LODOP.ADD_PRINT_TEXT(120, 15, 120, 35, "物料名称:");
+        LODOP.ADD_PRINT_TEXT(120, 120, 280, 35, obj.itemName);
+
+        LODOP.ADD_PRINT_TEXT(170, 15, 120, 35, "工单号:");
+        LODOP.ADD_PRINT_TEXT(170, 120, 280, 35, obj.workorderCode);
+
+        LODOP.ADD_PRINT_TEXT(220, 15, 120, 35, "合格数量:");
+        LODOP.ADD_PRINT_TEXT(220, 120, 280, 35, obj.quantityQualified);
+
+        LODOP.ADD_PRINT_TEXT(270, 15, 120, 35, "单位:");
+        LODOP.ADD_PRINT_TEXT(270, 120, 280, 35, obj.unitOfMeasure);
+
+        LODOP.ADD_PRINT_TEXT(320, 15, 120, 35, "日期:");
+        LODOP.ADD_PRINT_TEXT(320, 120, 280, 35, new Date(obj.createTime).toISOString().slice(0, 19).replace('T', ' '));
+
+        let jsonQc = {
+          "id": obj.id,
+          "type": "feedback"
+        }
+        LODOP.ADD_PRINT_BARCODE(220, 390, 170, 170, "QRCode", JSON.stringify(jsonQc));
+
+      }
+      LODOP.SET_PRINT_MODE('AUTO_CLOSE_PREWINDOW', 1); //打印后自动关闭预览窗口
+      LODOP.PREVIEW();
+
     },
     // 初始化仓库数据
     getWarehouseList() {
@@ -1039,25 +1321,41 @@ export default {
         this.$message.warning('请选择至少一项进行拆分');
         return;
       }
-
-      const firstRow = this.selectedRows[0]; // 安全访问第一行
+      const firstRow = this.selectedRows[0]; // 访问第一行
+      if (firstRow.status != 'FINISHED') {
+        this.$message.warning('仅允许拆分已完成的报工单!');
+        return;
+      }
       this.splitForm = {
+        id: firstRow.id,
         workorderCode: firstRow.workorderCode,
         itemCode: firstRow.itemCode,
         quantityFeedback: firstRow.quantityFeedback,
         unitOfMeasure: firstRow.unitOfMeasure
       };
-
+      console.log(this.splitForm);
       this.splitDetails = this.selectedRows.map(row => ({
         workorderCode: row.workorderCode,
         itemCode: row.itemCode,
         unitOfMeasure: row.unitOfMeasure,
         quantity: '' // 用户需要填写的数量
       }));
+      console.log(this.splitDetails);
       this.splitDialogVisible = true;
     },
     // 新增拆分行
     addSplitDetail() {
+      // 校验当前数量是否允许拆分
+      // 判定当前数量是否允许再次拆分
+      let quantityFeedback = parseFloat(this.splitForm.quantityFeedback); // 当前拆分数量
+      let totalQuantity = this.splitDetails.reduce((sum, detail) => {
+        return sum + (parseFloat(detail.quantity) || 0);
+      }, 0); // 拆分详情中已填写的数量总和
+      if (totalQuantity >= quantityFeedback) {
+        this.$message.error('拆分数量总和不能超过报工数量');
+        return;
+      }
+
       const newRow = {
         workorderCode: this.splitForm.workorderCode,
         itemCode: this.splitForm.itemCode,
@@ -1065,6 +1363,20 @@ export default {
         quantity: ''
       };
       this.splitDetails.push(newRow);
+    },
+    addSplitDetailByQuantity() {
+      let feedbackNum = parseFloat(this.splitForm.quantityFeedback);
+      let finList = [];
+      for (let i = 0; i < feedbackNum; i++) {
+        const newRow = {
+          workorderCode: this.splitForm.workorderCode,
+          itemCode: this.splitForm.itemCode,
+          unitOfMeasure: this.splitForm.unitOfMeasure,
+          quantity: 1
+        }
+        finList.push(newRow);
+      }
+      this.splitDetails = finList;
     },
     // 删除拆分行
     removeSplitDetail(index) {
@@ -1090,8 +1402,23 @@ export default {
         }
       }
       // 这里添加提交拆分逻辑
-      this.splitDialogVisible = false;
-      this.$message.success('拆分成功');
+
+      // 这里添加提交拆分逻辑
+      let obj = {
+        'id': this.splitForm.id,
+        'workorderCode': this.splitForm.workorderCode,
+        'itemCode': this.splitForm.itemCode,
+        'quantityFeedback': this.splitForm.quantityFeedback,
+        'unitOfMeasure': this.splitForm.unitOfMeasure,
+        'splitDetails': this.splitDetails
+      }
+
+      splitFeedback(obj).then(response => {
+        this.splitDialogVisible = false;
+        this.$message.success('拆分成功');
+        this.getList();
+      });
+
     },
     addTeamMember() {
       // 实现新增班组成员的逻辑
@@ -1102,6 +1429,218 @@ export default {
       // 实现删除班组成员的逻辑
       this.teamMembers = this.teamMembers.filter(member => member.id !== id);
     },
+    // 撤销报工
+    async cancelReport() {
+      console.log(this.selectedRows);
+      // 校验当前报工产成品是否入库, 入库不允许进行撤销
+      await checkWarehousing(this.selectedRows[0].id).then(response => {
+        if (response.data === "Y") {// 入库不允许进行撤销
+          this.$message.error('该报工产成品已入库, 不能进行撤销!');
+          return;
+        }
+      });
+      // 校验当前选中行状态是否为已完成, 已完成才允许进行撤销
+      if (this.selectedRows[0].status != 'FINISHED') {
+        this.$message.error('该单据未报工!');
+        return;
+      }
+
+      // 开始进行撤销报工操作
+      // 追加弹出框, 当用户点击确认后在执行reFeedback方法
+      this.$confirm('确定要撤销)?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        reFeedback(this.selectedRows[0].id).then(response => {
+          this.$message.success('撤销成功');
+        });
+      }).catch(() => {
+        this.$message.info('已取消');
+      });
+    },
+
+    defectChange(value) {
+      // TODO: 根据任务单获取对应的工序信息, 根据工序信息带出对应的缺陷
+      const selectedProcess = this.workOrderProcessOptions.find(item => item.processCode === value);
+      if (selectedProcess) {
+        this.form.processName = selectedProcess.processName;
+        this.form.processCode = selectedProcess.processCode;
+        this.form.processId = selectedProcess.id;
+      }
+    },
+    handleRowClick(row) {
+      // 切换行的选中状态
+      this.$refs.multipleTable.toggleRowSelection(row);
+    },
+    // 缺陷列表
+    /*  changeDefectList() {
+        this.cascaderOptions = this.processDefectList.map(defect => ({
+          value: defect.id,
+          label: defect.defectName,
+          children: this.generateRanges(100, 10000, 100), // 初始时生成100到10000的区间，步长为100
+          leaf: false, // 标记为非叶子节点，表示还有子节点
+        }));
+      },*/
+
+
+    /*changeDefectList() {
+      this.cascaderOptions = this.processDefectList.map(defect => {
+        let upperRanges = [];
+        let lowerRanges = [];
+
+        // 生成米数区间
+        this.generateRanges(upperRanges);
+
+        // 对于每个上沿，生成对应的下沿
+        upperRanges.forEach(range => {
+          let lowerStart = range.value + 10;  // 假设下沿的起点比上沿大10米
+          let lowerEnd = range.value + 50;    // 假设下沿的终点比上沿大50米
+          let stepLower = 10; // 下沿的步长
+
+          let lowerRange = [];
+          for (let i = lowerStart; i <= lowerEnd; i += stepLower) {
+            lowerRange.push({value: i, label: `${i}米`});
+          }
+
+          range.children = lowerRange;  // 将下沿区间作为上沿的子级
+        });
+
+        return {
+          value: defect.id,
+          label: defect.defectName,
+          children: upperRanges  // 上沿区间作为缺陷问题的子级
+        };
+      });
+    },
+    // 生成米数区间
+    generateRanges(upperRanges) {
+      for (let i = this.upperLimit; i <= this.currentMaxLimit; i += this.step) {
+        upperRanges.push({value: i, label: `${i}米`});
+      }
+    },*/
+
+    // 监听滚动事件，判断是否滚动到最底部
+    /*onScroll(event) {
+      console.log("滚动事件: loadingMore=> " + this.loadingMore);
+      const el = event.target;
+      const bottom = el.scrollHeight === el.scrollTop + el.clientHeight;
+
+      if (bottom && !this.loadingMore) {
+        this.loadingMore = true;  // 开始加载更多
+        this.loadMoreRanges();
+      }
+    },*/
+
+    // 动态加载更多的米数区间
+    loadMoreRanges() {
+      console.log("加载更多米数");
+      setTimeout(() => {
+        // 更新 currentMaxLimit，增加米数区间的范围
+        this.currentMaxLimit += 1000;  // 每次增加 5000 米的区间范围
+
+        // 将新的米数区间加入到 cascaderOptions 中
+        this.changeDefectList();
+
+        // 加载完成后设置 loadingMore 为 false
+        this.loadingMore = false;
+      }, 1000); // 模拟异步加载的延迟
+    },
+    /*addScrollListener() {
+      // 获取第二个 .el-scrollbar el-cascader-menu 下的 .el-scrollbar__bar.is-vertical
+      const verticalScrollBar = this.$refs.cascader?.$el?.querySelector('.el-cascader-panel .el-scrollbar.el-cascader-menu:nth-child(2) .el-scrollbar__bar.is-vertical');
+      if (verticalScrollBar) {
+        verticalScrollBar.addEventListener('scroll', this.onScroll);
+      } else {
+        console.error('未找到第二个 .el-scrollbar el-cascader-menu 下的垂直滚动条');
+      }
+    },
+    removeScrollListener() {
+      // 获取第二个 .el-scrollbar el-cascader-menu 下的 .el-scrollbar__bar.is-vertical
+      const verticalScrollBar = this.$refs.cascader?.$el?.querySelector('.el-cascader-panel .el-scrollbar.el-cascader-menu:nth-child(2) .el-scrollbar__bar.is-vertical');
+      if (verticalScrollBar) {
+        verticalScrollBar.removeEventListener('scroll', this.onScroll);
+      }
+    },*/
+
+    /* onCascaderChange(value) {
+       console.log('级联选择器变化', value);
+       // 重新添加滚动监听器，因为级联选择器的内容可能发生变化
+       this.removeScrollListener();
+       this.addScrollListener();
+     },*/
+
+    // 班次信息变化时的处理方法
+    handleShiftChange() {
+      // 确保 form.teamCode 和 form.shiftInfo 都有值
+      if (this.form.teamCode && this.form.shiftInfo) {
+        // 基于当前班组编码和班次信息获取对应班组人员
+        getByTeamCodeAndShiftInfo(this.form.teamCode, this.form.shiftInfo).then(response => {
+          let teamInfo = response.data;
+          this.teamMembers = []; // 清空当前班组成员列表
+          for (let i = 0; i < teamInfo.length; i++) {
+            let obj = teamInfo[i];
+            obj.username = obj.userName; // 用户名
+            obj.nickname = obj.nickName; // 昵称
+            this.teamMembers.push(obj);
+          }
+        }).catch(error => {
+          console.error('获取班组人员失败:', error);
+          this.$message.error('获取班组人员失败');
+        });
+      }
+    },
+    changeDefectList() {
+      this.cascaderOptions = this.processDefectList.map(defect => ({
+        value: defect.id,
+        label: defect.defectName,
+        children: [], // 初始时不加载子节点
+        leaf: false, // 标记为非叶子节点，表示还有子节点
+        loading: false, // 当前节点的加载状态
+      }));
+    },
+    lazyLoad(node, resolve) {
+      const { value } = node;
+      // 如果是根节点，则直接返回
+      if (!value) {
+        resolve(this.cascaderOptions);
+        return;
+      }
+
+      // 如果已经在加载中，则直接返回
+      if (this.loadingStatus[value]) {
+        return;
+      }
+
+      // 设置当前节点的加载状态为 true
+      this.loadingStatus[value] = true;
+      node.loading = true;
+
+      // 模拟异步加载数据
+      setTimeout(() => {
+        // 生成新的米数区间
+        const newRanges = [];
+        this.generateRanges(newRanges, this.currentMaxLimit, this.currentMaxLimit + 1000, this.step);
+        this.currentMaxLimit += 1000;
+
+        // 将新的米数区间作为子节点添加到当前节点
+        node.children = newRanges;
+
+        // 设置当前节点的加载状态为 false
+        this.loadingStatus[value] = false;
+        node.loading = false;
+
+        // 调用 resolve 函数，表示数据加载完成
+        resolve(newRanges); // 确保传递正确的参数
+      }, 1000);
+    },
+    generateRanges(ranges, start, end, step) {
+      for (let i = start; i <= end; i += step) {
+        ranges.push({ value: i, label: `${i}米` });
+      }
+    },
+
+
 
   },
 

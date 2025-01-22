@@ -32,7 +32,7 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="prorouteList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="prorouteList" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="工艺路线编号" align="center" prop="routeCode">
         <template slot-scope="scope">
@@ -304,6 +304,11 @@ export default {
         this.form.routeCode = null;
       }
     },
+    handleRowClick(row) {
+      // 切换行的选中状态
+      this.$refs.multipleTable.toggleRowSelection(row);
+    },
+
   },
 };
 </script>

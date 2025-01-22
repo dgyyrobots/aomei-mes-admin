@@ -62,12 +62,19 @@
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['pro:feedback:export']">导出 </el-button>
       </el-col>
+<!--      <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-edit" size="mini" @click="handleCirculation"
+                   v-hasPermi="['pro:feedback:update']">流转卡 </el-button>
+      </el-col>-->
+
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="workorderList" row-key="id" default-expand-all
-      :tree-props="{ children: 'workorderDOList' }">
+      :tree-props="{ children: 'workorderDOList' }" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <!-- hasChildren: 'hasChildren' -->
+
+      <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="工单编码" width="180" prop="workorderCode">
         <template slot-scope="scope">
           <el-button size="mini" type="text" @click="handleView(scope.row)" v-hasPermi="['pro:workorder:query']">
@@ -119,6 +126,8 @@
             @click="handleAdd(scope.row)" v-hasPermi="['pro:workorder:create']">新增 </el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status == 'PREPARE'"
             @click="handleDelete(scope.row)" v-hasPermi="['pro:workorder:delete']">删除 </el-button>
+
+
         </template>
       </el-table-column>
     </el-table>
@@ -276,7 +285,7 @@
           </el-col>
           <el-col :span="24">
             <el-form-item label="附件" prop="adjuncts">
-              <file-upload v-model="form.adjuncts" :file-type="adjunctTypes" :limit="20" :file-size="100"></file-upload>
+              <file-upload :isShowTips="isShowDelete" v-model="form.adjuncts" :file-type="adjunctTypes" :limit="20" :file-size="100"></file-upload>
             </el-form-item>
           </el-col>
         </el-row>
@@ -318,7 +327,7 @@ import { createPrintLog } from "@/api/report/printLog";
 import { listProductprocess } from '@/api/mes/pro/routeprocess';
 import { getRouteCodeByItemCode } from '@/api/mes/pro/proroute';
 import ProTask from '../schedule/proTask.vue';
-import { listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder } from '@/api/mes/pro/workorder';
+import { listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder , updateWorkorderAdjuncts } from '@/api/mes/pro/workorder';
 import Workorderbom from './bom/bom.vue';
 import WorkorderItemList from './items/item.vue';
 import ItemSelect from '@/components/itemSelect/single.vue';
@@ -330,6 +339,7 @@ import FileUpload from '@/components/FileUpload/index3.vue';
 import { getConfigKey } from '@/api/system/config';
 import { SystemConfigKeys } from '@/utils/constants';
 import { getAccessToken } from '@/utils/auth';
+import '@/utils/CLodopfuncs2.js';
 
 export default {
   name: 'Workorder',
@@ -406,28 +416,32 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        workorderCode: [{ required: true, message: '工单编码不能为空', trigger: 'blur' }],
-        workorderName: [{ required: true, message: '工单名称不能为空', trigger: 'blur' }],
-        orderSource: [{ required: true, message: '来源类型不能为空', trigger: 'blur' }],
-        productId: [{ required: true, message: '产品不能为空', trigger: 'blur' }],
-        productSpc: [{ required: true, message: '规格型号不能为空', trigger: 'blur' }],
-        productCode: [{ required: true, message: '产品编号不能为空', trigger: 'blur' }],
-        productName: [{ required: true, message: '产品名称不能为空', trigger: 'blur' }],
-        quantity: [{ required: true, message: '生产数量不能为空', trigger: 'blur' }],
-        requestDate: [{ required: true, message: '需求日期不能为空', trigger: 'blur' }],
+        workorderCode: [{required: true, message: '工单编码不能为空', trigger: 'blur'}],
+        workorderName: [{required: true, message: '工单名称不能为空', trigger: 'blur'}],
+        orderSource: [{required: true, message: '来源类型不能为空', trigger: 'blur'}],
+        productId: [{required: true, message: '产品不能为空', trigger: 'blur'}],
+        productSpc: [{required: true, message: '规格型号不能为空', trigger: 'blur'}],
+        productCode: [{required: true, message: '产品编号不能为空', trigger: 'blur'}],
+        productName: [{required: true, message: '产品名称不能为空', trigger: 'blur'}],
+        quantity: [{required: true, message: '生产数量不能为空', trigger: 'blur'}],
+        requestDate: [{required: true, message: '需求日期不能为空', trigger: 'blur'}],
       },
       printReportIds: {
         level0: '',
         level1: '',
       },
+      isShowDelete: true,
+      ids: [],
+      // 行选中项
+      selectionObj: {},
     };
   },
   created() {
     this.getList();
-    getConfigKey(SystemConfigKeys.mixin_order_report).then(({ data }) => {
+    getConfigKey(SystemConfigKeys.mixin_order_report).then(({data}) => {
       this.printReportIds.level0 = data ? data.value : '';
     });
-    getConfigKey(SystemConfigKeys.work_order_report).then(({ data }) => {
+    getConfigKey(SystemConfigKeys.work_order_report).then(({data}) => {
       this.printReportIds.level1 = data ? data.value : '';
     });
   },
@@ -447,7 +461,7 @@ export default {
       this.loading = true;
       listWorkorder({
         ...this.queryParams,
-        ...(this.isMine ? {} : { isMine: 1 }),
+        ...(this.isMine ? {} : {isMine: 1}),
       }).then(response => {
         // this.workorderList = this.handleTree(response.data.list, 'id', 'parentId');
         this.workorderList = response.data.list;
@@ -470,7 +484,7 @@ export default {
     getTreeselect() {
       listWorkorder().then(response => {
         this.workorderOptions = [];
-        const data = { id: 0, workorderName: '顶级节点', children: [] };
+        const data = {id: 0, workorderName: '顶级节点', children: []};
         data.children = this.handleTree(response.data.list, 'id', 'parentId');
         this.workorderOptions.push(data);
       });
@@ -552,7 +566,7 @@ export default {
     },
     async handlePrint(row) {
       await this.$modal.confirm('确认打印？')
-      let datas = await createPrintLog({ printName: this.$store.state.user.nickname, printType: this.$route.meta.title + '-工单编码', printCode: row.workorderCode });
+      let datas = await createPrintLog({printName: this.$store.state.user.nickname, printType: this.$route.meta.title + '-工单编码', printCode: row.workorderCode});
       if (!datas.data) {
         this.$message.error(datas.msg);
         return
@@ -588,6 +602,7 @@ export default {
       } else {
         this.form.parentId = 0;
       }
+      this.isShowDelete = true;
       this.title = '添加生产工单';
       this.optType = 'add';
       setTimeout(() => {
@@ -614,6 +629,7 @@ export default {
         console.log(response.data);
         this.form.routeList = response.data;
         this.open = true;
+        this.isShowDelete = true;
         this.title = '查看工单信息';
         this.optType = 'view';
       });
@@ -622,13 +638,20 @@ export default {
     async handleUpdate(row) {
       this.reset();
       this.getTreeselect();
+      // 若当前选中行为已确认, 禁止修改
+      if(this.selectionObj[0].status != 'PREPARE'){
+        this.$modal.msgError('已确认的工单禁止修改');
+        return;
+      }
+
       if (row != null) {
         this.form.parentId = row.id;
       }
-     await getWorkorder(row.id).then(response => {
+      let id = row.id || this.ids[0];
+      await getWorkorder(id).then(response => {
         this.form = response.data;
         // 根据当前选中的物料, 获取工艺路线编号
-      /*  this.initRouteList(this.form.productCode)
+        /*  this.initRouteList(this.form.productCode)
         console.log("BBB: " + this.form.routeList);*/
         this.getProcess();
       });
@@ -639,6 +662,7 @@ export default {
         this.title = '修改生产工单';
         this.optType = 'edit';
       });
+      this.isShowDelete = true;
     },
 
     /** 提交按钮 */
@@ -674,7 +698,8 @@ export default {
           this.getList();
           this.$modal.msgSuccess('删除成功');
         })
-        .catch(() => { });
+        .catch(() => {
+        });
     },
     handleSelectProduct() {
       this.$refs.itemSelect.showFlag = true;
@@ -730,6 +755,76 @@ export default {
         this.form.workorderCode = null;
       }
     },
+    handleCirculation(row){
+      // 获取当前选中Id
+      let id = row.id;
+      // TODO: 根据当前的Id获取工单信息
+
+      LODOP.PRINT_INIT("流转卡打印");
+
+      // 页面设置
+      LODOP.SET_PRINT_PAGESIZE(1, 2100, 2970, "A4");
+
+      // 标题部分（根据需要调整位置和大小）
+      LODOP.ADD_PRINT_TEXT(20, 200, 400, 30, "江苏澳美镭射包装材料有限公司");
+      LODOP.SET_PRINT_STYLEA(0, "FontSize", 14);
+      LODOP.SET_PRINT_STYLEA(0, "Bold", 1);
+
+      // 表格框架
+      LODOP.ADD_PRINT_RECT(60, 50, 700, 900, 0, 1);
+
+      // 表格内容（根据表头信息，构建表格的每一行）
+
+      // 第一行标题
+      LODOP.ADD_PRINT_TEXT(70, 60, 200, 20, "流转卡编号");
+      LODOP.ADD_PRINT_TEXT(70, 260, 200, 20, "母工单号+X张（X张是要打印的张数）");
+
+      // 第二行标题
+      LODOP.ADD_PRINT_TEXT(100, 60, 200, 20, "工单号");
+      LODOP.ADD_PRINT_TEXT(100, 260, 200, 20, "母工单单号");
+
+      // 第三行标题
+      LODOP.ADD_PRINT_TEXT(130, 60, 200, 20, "产品类型");
+      LODOP.ADD_PRINT_TEXT(130, 260, 200, 20, "料号对应的产品分类说明");
+
+// 添加更多工序信息
+// 重复上述步骤，为其他工序添加信息
+
+// 预览
+      LODOP.PREVIEW();
+
+
+    },
+    handleRowClick(row) {
+      // 切换行的选中状态
+      this.$refs.multipleTable.toggleRowSelection(row);
+    },
+    // 多选框选中数据
+    handleSelectionChange(selection) {
+      this.selectionObj = selection; // 选中项
+      this.ids = selection.map(item => item.id);
+      this.single = selection.length !== 1;
+      this.multiple = !selection.length;
+    },
+  },
+  watch: {
+    'form.adjuncts': {
+      handler(newVal, oldVal) {
+       /* if (newVal == this.form.adjuncts) {
+          return;
+        }*/
+        //若当前为修改页面， 则图片更改就进行数据的更新
+        if (this.optType == 'edit' || this.optType == 'view') {
+          this.form.adjuncts = newVal;
+          // 开始更新工单附件
+          updateWorkorderAdjuncts(this.form).then(response => {
+            //this.$modal.msgSuccess('附件修改成功');
+            return;
+          });
+        }
+
+      }
+    }
   },
 };
 </script>

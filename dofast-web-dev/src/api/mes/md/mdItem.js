@@ -42,3 +42,12 @@ export function delMdItem(itemId) {
     method: 'delete',
   });
 }
+
+// 修改工单附件
+export function updateMdItemAdjuncts(data) {
+  return request({
+    url: '/mes/md-item/updateMdItemAdjuncts',
+    method: 'put',
+    data: data,
+  });
+}

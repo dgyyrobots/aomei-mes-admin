@@ -1,9 +1,9 @@
 import request from '@/utils/request';
 
 // 删除文件
-export function deleteFile(id) {
+export function deleteFile(fileName) {
   return request({
-    url: '/infra/file/delete?id=' + id,
+    url: '/infra/file/delete?fileName=' + fileName,
     method: 'delete',
   });
 }
@@ -16,3 +16,15 @@ export function getFilePage(query) {
     params: query,
   });
 }
+
+// 获取文件实际路径
+export function getFullUrl(url) {
+  return request({
+    url: '/infra/file/getFullUrl',
+    method: 'post',
+    data: url
+  })
+}
+
+
+

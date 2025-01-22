@@ -24,6 +24,13 @@ export function getTeammemberByTeamCode(teamCode) {
   });
 }
 
+export function getByTeamCodeAndShiftInfo(teamCode, shiftInfo) {
+  return request({
+    url: '/cal/team-member/getByTeamCodeAndShiftInfo?teamCode=' + teamCode + '&shiftInfo=' + shiftInfo,
+    method: 'get',
+  });
+}
+
 // 新增班组成员
 export function addTeammember(data) {
   return request({
@@ -38,5 +45,14 @@ export function delTeammember(memberId) {
   return request({
     url: '/cal/team-member//delete?id=' + memberId,
     method: 'delete',
+  });
+}
+
+// 修改班组成员
+export function updateTeammember(data) {
+  return request({
+    url: '/cal/team-member/update',
+    method: 'put',
+    data: data,
   });
 }

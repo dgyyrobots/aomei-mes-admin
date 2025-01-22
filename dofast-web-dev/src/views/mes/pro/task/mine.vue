@@ -758,9 +758,14 @@ export default {
       // 执行查询
       getTaskPage(this.queryParams).then(response => {
         console.log(response.data);
+        if(!response.data){
+          this.loading = false;
+          return;
+        }
         this.list = response.data.list;
         this.total = response.data.total;
         this.loading = false;
+        return;
       });
     },
     /** 取消按钮 */

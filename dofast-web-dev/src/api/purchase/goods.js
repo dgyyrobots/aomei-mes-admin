@@ -99,3 +99,11 @@ export function splitGoods(data) {
     data: data,
   });
 }
+
+// 根据选中行单身Id获取条码渲染内容
+export function getPurchaseBarCode(id) {
+  return request({
+    url: '/purchase/goods/getPurchaseBarCode?id=' + rtId,
+    method: 'get',
+  });
+}

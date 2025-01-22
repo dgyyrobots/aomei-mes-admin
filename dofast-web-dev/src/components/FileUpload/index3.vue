@@ -6,7 +6,7 @@
       <!-- 上传按钮 -->
       <el-button size="mini" type="primary" v-if="isShowTips">选取文件</el-button>
       <!-- 上传提示 -->
-      <div class="el-upload__tip" slot="tip" v-if="showTip">
+      <div class="el-upload__tip" slot="tip" v-if="isShowTips"><!--showTip-->
         请上传
         <template v-if="fileSize">
           大小不超过 <b style="color: #f56c6c">{{ fileSize }}MB</b>
@@ -18,8 +18,8 @@
       </div>
     </el-upload>
 
-    <!-- 文件列表 -->
-    <transition-group class="upload-file-list el-upload-list el-upload-list--text" name="el-fade-in-linear" tag="ul"
+<!--    &lt;!&ndash; 文件列表 &ndash;&gt;
+    <transition-group class="upload-file-list el-upload-list el-upload-list&#45;&#45;text" name="el-fade-in-linear" tag="ul"
       style="display: flex; flex-wrap: wrap;">
       <li :key="file.url" class="el-upload-list__item ele-upload-list__item-content flex"
         v-for="(file, index) in fileList" style="width: 20%;height: 150px;margin: 0 10px 10px  10px !important;">
@@ -28,12 +28,34 @@
           style="height: 100%;"></el-image>
         <el-link v-else :href="`${file.url}`" :underline="false" target="_blank"
           class="flex-1 text-ellipsis text-right overflow-hidden px-2">
-          <span class="el-icon-document" v-if="!isImage(file.url)"> </span>
-          <span v-if="!isImage(file.url)">{{ file.url.split('.').pop().toUpperCase() }}文档</span>
+          <span class="el-icon-document" v-if="!isImage(file.name)"> </span>
+&lt;!&ndash;          <span v-if="!isImage(file.name)">{{ file.name.split('.').pop().toUpperCase() }}</span>&ndash;&gt;
         </el-link>
         <div class="ele-upload-list__item-content-action">
           <el-link :underline="false" @click="handleDelete(index)" v-if="isShowTips" type="danger"
             style="text-align: center;">删除</el-link>
+        </div>
+      </li>
+    </transition-group>-->
+    <!-- 文件列表 -->
+    <transition-group class="upload-file-list el-upload-list el-upload-list--text" name="el-fade-in-linear" tag="ul" style="display: flex; flex-wrap: wrap;">
+      <li :key="file.url" class="el-upload-list__item ele-upload-list__item-content flex"
+          v-for="(file, index) in fileList" style="width: 20%;height: 150px;margin: 0 10px 10px  10px !important;">
+<!--        <el-image v-if="isImage(file.url)" :src="file.name" fit="cover"
+                  :preview-src-list="fileList.filter(({ url }) => isImage(url)).map(({ url }) => url)"
+          style="height: 100%;"></el-image> v-else-->
+
+        <el-link :underline="false" target="_blank"
+          class="flex-1 text-ellipsis text-right overflow-hidden px-2">
+          <!-- :href="file.url"-->
+<!--          <span class="el-icon-document" v-if="!isImage(file.name)"></span>-->
+          <!-- 添加预览按钮 -->
+          <el-button type="text" @click="handlePreview(file.name)">{{ file.name.split('_')[1] }}</el-button>
+        </el-link>
+        <div class="ele-upload-list__item-content-action">
+          <el-link :underline="false" @click="handleDelete(index)" v-if="isShowTips" type="danger" style="text-align: center;" v-hasPermi="['system:file:delete']" >
+            删除
+          </el-link>
         </div>
       </li>
     </transition-group>
@@ -42,6 +64,7 @@
 
 <script>
 import { getAccessToken } from '@/utils/auth';
+import {getFullUrl , deleteFile} from '@/api/infra/file';
 
 export default {
   name: 'FileUpload',
@@ -143,6 +166,17 @@ export default {
           return false;
         }
       }
+      // 校验文件名称不能为中文
+      if (/[\u4e00-\u9fa5]/g.test(file.name)) {
+        this.$modal.msgError('文件名称不能包含中文!');
+        return false;
+      }
+      // 校验文件名称不能包含特殊字符
+      if (/[\\/:*?"<>|]/g.test(file.name)) {
+        this.$modal.msgError('文件名称不能包含特殊字符!');
+        return false;
+      }
+
       this.$modal.loading('正在上传文件，请稍候...');
       this.number++;
       return true;
@@ -157,10 +191,19 @@ export default {
       this.$modal.closeLoading();
     },
     // 上传成功回调
-    handleUploadSuccess(res, file) {
+    async handleUploadSuccess(res, file) {
       if (res.code === 0) {
-        // edit by 惠制造
-        this.uploadList.push({ name: res.data, url: res.data });
+        const fileName = res.data;
+
+        // 根据当前的文件名称获取完整的文件访问路径
+        /*const fullUrl = await getFullUrl(fileName).then(response => {
+          return response.data;
+        });*/
+        //const fullUrl = `http://${window.location.hostname}/minio/${fileName}`;
+        console.log(window.location.hostname);
+        const fullUrl = "http://172.18.12.250:9000/ammes/"+fileName;
+
+        this.uploadList.push({ name: fileName, url: fullUrl });
         this.uploadedSuccessfully();
       } else {
         this.number--;
@@ -172,18 +215,28 @@ export default {
     },
     // 删除文件
     handleDelete(index) {
-      this.fileList.splice(index, 1);
-      this.$emit('input', this.listToString(this.fileList));
+      const fileInfo = this.fileList[index];
+      deleteFile(fileInfo.name).then(response => {
+        if (response.code === 0) {
+          // 开始移除列表信息
+          this.fileList.splice(index, 1);
+          this.$emit('input', this.listToString(this.fileList));
+        } else {
+          this.$modal.msgError("删除文件失败!");
+        }
+      });
     },
     // 上传结束处理
     uploadedSuccessfully() {
       if (this.number > 0 && this.uploadList.length === this.number) {
         this.fileList = this.fileList.concat(this.uploadList);
+        console.log(this.fileList);
         this.uploadList = [];
         this.number = 0;
         this.$emit('input', this.listToString(this.fileList));
         this.$modal.closeLoading();
       }
+      console.log(this.fileList);
     },
     // 获取文件名称
     getFileName(name) {
@@ -202,6 +255,23 @@ export default {
       }
       return strs != '' ? strs.substr(0, strs.length - 1) : '';
     },
+    handlePreview(fileUrl) {
+      console.log(fileUrl);
+      const parts = fileUrl.split('?');
+      console.log(parts[0]);
+      let base64Url = this.base64Encode(parts[0]);
+      const kkFileViewUrl = `http://172.18.12.250:8012/onlinePreview?url=${base64Url}`;
+      console.log(kkFileViewUrl);
+      window.open(kkFileViewUrl, '_blank');
+    },
+    /**
+     * Base64 编码函数
+     * @param {string} str - 需要编码的字符串
+     * @returns {string} Base64 编码后的字符串
+     */
+    base64Encode(str) {
+      return btoa(unescape(encodeURIComponent(str)));
+    }
   },
 };
 </script>

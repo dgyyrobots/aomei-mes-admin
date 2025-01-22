@@ -54,7 +54,7 @@
     </el-row>
 
     <!-- 列表 -->
-    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="采购单号" align="center" prop="poNo"/>
       <el-table-column label="商品编号" align="center" prop="goodsNumber"/>
@@ -241,11 +241,17 @@
         </el-row>
       </el-form>
 
+
       <div style="text-align: right; margin-top: 20px;">
+        <el-button type="primary" @click="conditionSplit">按条件拆分</el-button>
+        <el-button type="primary" @click="addSplitDetailByCount">按数量拆分</el-button>
+
         <el-button type="primary" @click="addSplitDetail">新增</el-button>
       </div>
       <!-- 拆分表格 -->
       <el-table :data="splitDetails" style="width: 100%;" max-height="400">
+
+        <el-table-column prop="index" label="序号" width="60"/>
         <el-table-column prop="poNo" label="采购单号" width="180"/>
         <el-table-column prop="goodsNumber" label="物料料号" width="180"/>
         <el-table-column prop="unitOfMeasure" label="物料单位" width="180"/>
@@ -263,8 +269,26 @@
 
 
       <div slot="footer" class="dialog-footer">
-        <el-button @click="splitDialogVisible = false">取消</el-button>
+        <el-button @click="cancel">取消</el-button>
         <el-button type="primary" @click="submitSplit">确定拆分</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 按条件拆分弹出框 -->
+    <el-dialog :title="'按条件拆分'" :visible.sync="splitConditionDialogVisible" width="30%" v-dialogDrag append-to-body>
+      <el-form ref="splitConditionForm" :model="splitConditionForm" label-width="120px">
+        <el-form-item label="拆分条数">
+          <el-input v-model="splitConditionForm.splitCount" type="number" step="1" placeholder="请输入拆分条数"/>
+        </el-form-item>
+
+        <el-form-item label="拆分数量">
+          <el-input v-model="splitConditionForm.splitQuantity" type="number" step="0.001" placeholder="请输入拆分数量"/>
+        </el-form-item>
+
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancelSplit">取消</el-button>
+        <el-button type="primary" @click="confirmConditionSplit">确定</el-button>
       </div>
     </el-dialog>
 
@@ -272,7 +296,7 @@
 </template>
 
 <script>
-import {createGoods, updateGoods, deleteGoods, getGoods, getGoodsPage, getAllGoods, exportGoodsExcel, updateReceiveStatus, startWareHousing, splitGoods} from '@/api/purchase/goods';
+import {createGoods, updateGoods, deleteGoods, getGoods, getGoodsPage, getAllGoods, exportGoodsExcel, updateReceiveStatus, startWareHousing, splitGoods, getPurchaseBarCode} from '@/api/purchase/goods';
 import {createPrintLog, getPrintLogPage} from "@/api/report/printLog";
 import '@/utils/CLodopfuncs2.js';
 import {getConfigKey} from '@/api/system/config';
@@ -363,8 +387,14 @@ export default {
         receiveNum: '',
         unitOfMeasure: ''
       },
-      splitDetails: []
-
+      splitDetails: [],
+      index: 1, // 序号
+      // 控制按条件拆分弹出框的显示
+      splitConditionDialogVisible: false,
+      splitConditionForm: {
+        splitQuantity: '', // 拆分数量
+        splitCount: '' // 拆分数
+      }
     };
   },
   computed: {
@@ -391,6 +421,25 @@ export default {
       if (!newVal) {
         this.stopScanning();
       }
+    },
+    'wareForm.poNo': function(newVal) {
+      if (newVal.includes('{') && newVal.includes('}')) {
+        console.log('输入内容包含完整的 "{" 和 "}"');
+        // 开始基于当前的内容追加产品入库
+        // 直接解析 JSON 字符串
+        const data = JSON.parse(newVal);
+        // 检查是否包含 po_no 属性
+        if (data && data.po_no) {
+          console.log("data.po_no:", data.po_no);
+          this.wareForm.poNo = data.po_no;
+        } else {
+          console.log("data.po_no is undefined");
+        }
+        console.log(this.wareForm.poNo);
+        this.handleBlur();
+      } else {
+        console.log('输入内容不包含完整的 "{" 和 "}"');
+      }
     }
   },
   methods: {
@@ -410,6 +459,8 @@ export default {
       this.wareOpen = false;
       this.cameraPreviewVisible = false;
       this.wareList = [];
+      this.splitDialogVisible = false;
+      this.index=1;
       this.reset();
     },
     /** 表单重置 */
@@ -564,8 +615,8 @@ export default {
         this.$message.error(datas.msg);
         return
       }
-      // 测试打印功能
-      let res = await getConfigKey('RK2');
+      // 积木报表打印功能
+      /*let res = await getConfigKey('RK2');
       if (!res.data && res.code == 0) {
         this.$message.error('请先配置发货标签id');
         return
@@ -575,7 +626,58 @@ export default {
       if (id) {
         window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/${id}?token=${getAccessToken()}&id=${this.ids[0]}`);
         //this.getDetail()
+      }*/
+      let obj = {};
+      // 根据当前勾选行Id获取条码内容
+      await getGoods(this.ids[0]).then(response => {
+        obj = response.data;
+      });
+
+      LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
+      LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
+      // 添加整体边框
+      LODOP.ADD_PRINT_RECT(8, 5, 150 * 3.71 - 10, 100 * 3.71 - 10, 0, 1); // 整体边框
+
+      // 添加标题及标题边框
+      LODOP.SET_PRINT_STYLE("FontSize", 18);
+      LODOP.SET_PRINT_STYLE("FontName", "Microsoft YaHei");
+      LODOP.SET_PRINT_STYLE("Bold", 1);
+      LODOP.SET_PRINT_STYLE("Horient", 2); // 居中
+      LODOP.ADD_PRINT_TEXT(13, 0, 150, 30, "入库单标签");
+
+      // 内容样式及分块边框
+      LODOP.SET_PRINT_STYLE("FontSize", 16);
+      LODOP.SET_PRINT_STYLE("Bold", 0);
+      LODOP.SET_PRINT_STYLE("Horient", 0); // 取消居中
+      LODOP.ADD_PRINT_TEXT(70, 15, 120, 35, "采购料号:"); // 标签部分，距离左边10px
+      LODOP.ADD_PRINT_TEXT(70, 120, 280, 35, obj.goodsNumber); // 内容部分
+
+      LODOP.ADD_PRINT_TEXT(120, 15, 120, 35, "物料名称:");
+      LODOP.ADD_PRINT_TEXT(120, 120, 280, 35, obj.goodsName);
+
+      LODOP.ADD_PRINT_TEXT(170, 15, 120, 35, "采购单号:");
+      LODOP.ADD_PRINT_TEXT(170, 120, 280, 35, obj.poNo);
+
+      LODOP.ADD_PRINT_TEXT(220, 15, 120, 35, "收货数量:");
+      LODOP.ADD_PRINT_TEXT(220, 120, 280, 35, obj.receiveNum);
+
+      LODOP.ADD_PRINT_TEXT(270, 15, 120, 35, "收货单位:");
+      LODOP.ADD_PRINT_TEXT(270, 120, 280, 35, obj.unitOfMeasure);
+
+      console.log(obj);
+
+      LODOP.ADD_PRINT_TEXT(320, 15, 120, 35, "收货日期:");
+      //LODOP.ADD_PRINT_TEXT(320, 120, 280, 35, new Date(obj.receiveTime).toISOString().slice(0, 19).replace('T', ' '));
+      LODOP.ADD_PRINT_TEXT(320, 120, 280, 35, obj.receiveTime ? new Date(obj.receiveTime).toISOString().slice(0, 19).replace('T', ' ') : '无效日期');
+
+
+      let jsonQc = {
+        "id": obj.id,
+        "type": "purchase",
+        "po_no": obj.poNo,
       }
+      LODOP.ADD_PRINT_BARCODE(220, 390, 170, 170, "QRCode", JSON.stringify(jsonQc));
+      LODOP.PREVIEW();
       this.updateStatus();
     },
     async batchPrint() {
@@ -592,8 +694,10 @@ export default {
       }
 
       await this.$modal.confirm('确认批量打印？');
+      LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
+      LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
       for (const queryId of this.ids) {
-        console.log(id);
+        /*console.log(id);
         let datas = await createPrintLog({
           printName: this.$store.state.user.nickname,
           printType: this.$route.meta.title + '-入库单号',
@@ -603,14 +707,64 @@ export default {
           this.$message.error(datas.msg);
           continue;
         }
-        let res = await getConfigKey('RK1');
+        let res = await getConfigKey('RK2');
         let id = res.data.value;
         if (!res.data && res.code === 0) {
           this.$message.error('请先配置发货标签id');
           return;
         }
-        window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/${id}?token=${getAccessToken()}&id=${queryId}`, '_blank');
+        window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/${id}?token=${getAccessToken()}&id=${queryId}`, '_blank');*/
+
+        let obj = {};
+        // 根据当前勾选行Id获取条码内容
+        await getGoods(queryId).then(response => {
+          obj = response.data;
+        });
+        LODOP.NEWPAGE();
+        //LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
+        //LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
+        // 添加整体边框
+        LODOP.ADD_PRINT_RECT(8, 5, 150 * 3.71 - 10, 100 * 3.71 - 10, 0, 1); // 整体边框
+
+        // 添加标题及标题边框
+        LODOP.SET_PRINT_STYLE("FontSize", 18);
+        LODOP.SET_PRINT_STYLE("FontName", "Microsoft YaHei");
+        LODOP.SET_PRINT_STYLE("Bold", 1);
+        LODOP.SET_PRINT_STYLE("Horient", 2); // 居中
+        LODOP.ADD_PRINT_TEXT(13, 0, 150, 30, "入库单标签");
+
+        // 内容样式及分块边框
+        LODOP.SET_PRINT_STYLE("FontSize", 16);
+        LODOP.SET_PRINT_STYLE("Bold", 0);
+        LODOP.SET_PRINT_STYLE("Horient", 0); // 取消居中
+        LODOP.ADD_PRINT_TEXT(70, 15, 120, 35, "采购料号:"); // 标签部分，距离左边10px
+        LODOP.ADD_PRINT_TEXT(70, 120, 280, 35, obj.goodsNumber); // 内容部分
+
+        LODOP.ADD_PRINT_TEXT(120, 15, 120, 35, "物料名称:");
+        LODOP.ADD_PRINT_TEXT(120, 120, 280, 35, obj.goodsName + obj.goodsSpecs);
+
+        LODOP.ADD_PRINT_TEXT(170, 15, 120, 35, "采购单号:");
+        LODOP.ADD_PRINT_TEXT(170, 120, 280, 35, obj.poNo);
+
+        LODOP.ADD_PRINT_TEXT(220, 15, 120, 35, "收货数量:");
+        LODOP.ADD_PRINT_TEXT(220, 120, 280, 35, obj.receiveNum);
+
+        LODOP.ADD_PRINT_TEXT(270, 15, 120, 35, "收货单位:");
+        LODOP.ADD_PRINT_TEXT(270, 120, 280, 35, obj.unitOfMeasure);
+
+        LODOP.ADD_PRINT_TEXT(320, 15, 120, 35, "收货日期:");
+        let receiveTime = new Date(obj.receiveTime).toISOString().slice(0, 19).replace('T', ' '); // 退料日期
+        LODOP.ADD_PRINT_TEXT(320, 120, 280, 35, receiveTime);
+        let jsonQc = {
+          "id": obj.id,
+          "type": "purchase",
+          "po_no": obj.poNo,
+        }
+        LODOP.ADD_PRINT_BARCODE(220, 390, 170, 170, "QRCode", JSON.stringify(jsonQc));
       }
+      LODOP.SET_PRINT_MODE('AUTO_CLOSE_PREWINDOW', 1); //打印后自动关闭预览窗口
+      LODOP.PREVIEW();
+      //LODOP.PRINT();
       this.updateStatus();
     },
     // 打印完成后， 修改当前行的状态
@@ -625,6 +779,7 @@ export default {
     getWarehouseList() {
       getTreeList().then(response => {
         this.warehouseOptions = response.data;
+        console.log(this.warehouseOptions);
       });
     },
     //选择默认的仓库、库区、库位
@@ -645,10 +800,10 @@ export default {
     // 确定入库
     submitWareForm() {
       // 校验当前的采购单号的内容是否都已打印的条码
-      for (let i = 0; i <this.wareList.length; i++) {
+      for (let i = 0; i < this.wareList.length; i++) {
         // 校验当前是否存在未入库的单据
-        if(this.wareList[i].status===0){
-          this.$message.error('存在未打印的单据, 物料号: '+ this.wareList[i].goodsNumber +'，请先打印条码!');
+        if (this.wareList[i].status === 0) {
+          this.$message.error('存在未打印的单据, 物料号: ' + this.wareList[i].goodsNumber + '，请先打印条码!');
           return;
         }
       }
@@ -658,14 +813,20 @@ export default {
       }
       let obj = {
         'poNo': this.wareForm.poNo,
-        'warehouseId':  this.wareForm.warehouseId,
-        'locationId':  this.wareForm.locationId,
-        'areaId':  this.wareForm.areaId,
+        'warehouseId': this.wareForm.warehouseId,
+        'locationId': this.wareForm.locationId,
+        'areaId': this.wareForm.areaId,
       }
       // TODO 校验表单数据
       startWareHousing(obj).then(response => {
+        if(response!="success"){
+          this.$message.error("入库失败, 请联系系统管理员, 问题如下: " + response);
+          return;
+        }
         this.wareOpen = false;
         this.getList();
+        this.wareForm.poNo = '';
+        this.wareList = [];
         this.$message.success('入库成功');
       })
       // TODO 调用入库接口
@@ -674,10 +835,6 @@ export default {
     },
     handleBlur() {
       // 获取当前的采购单数据
-      console.log(this.wareForm.poNo);
-
-
-
       // 基于当前的采购单获取所有的物料数据
       if (!this.wareForm.poNo) {
         return;
@@ -743,7 +900,7 @@ export default {
       }*/
 
       getAllGoods(this.wareForm).then(response => {
-        this.wareList = response.data.list;
+        this.wareList = response.data;
         this.loading = false;
       });
     },
@@ -903,6 +1060,10 @@ export default {
         this.$message.warning('请选择至少一项进行拆分');
         return;
       }
+      if(!this.selectedRows[0].receiveNum){
+        this.$message.warning('请先填写收货数量');
+        return;
+      }
       this.splitForm = {
         id: this.selectedRows[0].id,
         poNo: this.selectedRows[0].poNo,
@@ -911,6 +1072,7 @@ export default {
         unitOfMeasure: this.selectedRows[0].unitOfMeasure
       };
       this.splitDetails = this.selectedRows.map(row => ({
+        index: this.index,
         poNo: row.poNo,
         goodsNumber: row.goodsNumber,
         unitOfMeasure: row.unitOfMeasure,
@@ -920,7 +1082,21 @@ export default {
     },
     // 新增拆分行
     addSplitDetail() {
+      // 判定当前数量是否允许再次拆分
+      let receiveNum = parseFloat(this.splitForm.receiveNum); // 当前采购数量
+      let totalQuantity = this.splitDetails.reduce((sum, detail) => {
+        return sum + (parseFloat(detail.quantity) || 0);
+      }, 0); // 拆分详情中已填写的数量总和
+      if (totalQuantity >= receiveNum) {
+        this.$message.error('拆分数量总和不能超过采购数量');
+        return;
+      }
+      // 校验当前拆分表单是否为空
+      console.log(this.splitDetails.length);
+
+      this.index+=1;
       const newRow = {
+        index: this.index,
         poNo: this.splitForm.poNo,
         goodsNumber: this.splitForm.goodsNumber,
         unitOfMeasure: this.splitForm.unitOfMeasure,
@@ -928,9 +1104,53 @@ export default {
       };
       this.splitDetails.push(newRow);
     },
+    // 基于当前的采购数量追加拆分行
+    addSplitDetailByCount() {
+      // 追加弹出框等待用户确认, 确认后开始下一步操作
+      this.$confirm('是否基于当前采购数量'+ this.splitForm.receiveNum +'追加拆分行?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        console.log(this.splitForm.receiveNum);
+        let receiveNum = parseFloat(this.splitForm.receiveNum);
+        let finList = [];
+        let maxCount = 0;
+        for (let i = 0; i < receiveNum; i++) {
+          const newRow = {
+            index: i+1,
+            poNo: this.splitForm.poNo,
+            goodsNumber: this.splitForm.goodsNumber,
+            unitOfMeasure: this.splitForm.unitOfMeasure,
+            quantity: 1
+          }
+          finList.push(newRow);
+          maxCount++;
+        }
+        this.index = maxCount+1;
+        this.splitDetails = finList;
+      }).catch(() => {
+        // 用户取消操作
+      });
+    },
+
+
+   /* removeSplitDetail(index) {
+      this.splitDetails.splice(index, 1);
+    },*/
+
     // 删除拆分行
     removeSplitDetail(index) {
       this.splitDetails.splice(index, 1);
+      this.splitDetails.forEach((item, idx) => {
+        item.index = idx + 1;
+      });
+      // 更新index值为当前最大序号
+      if (this.splitDetails.length > 0) {
+        this.index = Math.max(...this.splitDetails.map(item => item.index));
+      } else {
+        this.index = 0; // 如果splitDetails为空，则重置index为0
+      }
     },
     // 提交拆分
     submitSplit() {
@@ -962,11 +1182,65 @@ export default {
       splitGoods(obj).then(response => {
         this.splitDialogVisible = false;
         this.getList();
+        this.index = 1;
         this.$message.success('拆分成功');
       });
     },
-
+   // 显示按条件拆分弹出框
+    conditionSplit() {
+      if (this.selectedRows.length === 0) {
+        this.$message.warning('请选择至少一项进行拆分');
+        return;
+      }
+      if (!this.selectedRows[0].receiveNum) {
+        this.$message.warning('请先填写收货数量');
+        return;
+      }
+      this.splitConditionDialogVisible = true;
+    },
+    // 确认按条件拆分
+    confirmConditionSplit() {
+      // 校验拆分数量和拆分个数
+      if (!this.splitConditionForm.splitQuantity || !this.splitConditionForm.splitCount) {
+        this.$message.error('拆分数量和拆分个数不能为空');
+        return;
+      }
+      const splitQuantity = parseFloat(this.splitConditionForm.splitQuantity);
+      const splitCount = parseInt(this.splitConditionForm.splitCount, 10);
+      if (splitQuantity * splitCount > this.selectedRows[0].receiveNum) {
+        this.$message.error('拆分数量乘以拆分个数不能大于当前的入库数量');
+        return;
+      }
+      // 基于用户输入的拆分数量与拆分个数自动进行拆分
+      this.splitDetails = [];
+      for (let i = 0; i < splitCount; i++) {
+        this.splitDetails.push({
+          index: i + 1, // 同步序号信息,
+          poNo: this.selectedRows[0].poNo,
+          goodsNumber: this.selectedRows[0].goodsNumber,
+          unitOfMeasure: this.selectedRows[0].unitOfMeasure,
+          quantity: splitQuantity // 设置拆分数量
+        });
+      }
+      this.index = this.splitDetails.length + 1; // 更新序号
+      this.splitConditionDialogVisible = false; // 关闭按条件拆分弹出框
+      this.splitDialogVisible = true; // 显示拆分详情弹出框
+      // 清空拆分条数与拆分数量
+      this.splitConditionForm.splitQuantity = '';
+      this.splitConditionForm.splitCount = '';
+    },
+    cancelSplit(){
+      this.splitConditionDialogVisible = false;
+      this.splitConditionForm.splitQuantity = '';
+      this.splitConditionForm.splitCount = '';
+    },
+    handleRowClick(row) {
+      // 切换行的选中状态
+      this.$refs.multipleTable.toggleRowSelection(row);
+    },
   },
+
+
 
 };
 </script>

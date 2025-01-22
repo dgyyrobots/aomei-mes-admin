@@ -22,10 +22,23 @@
 
     <el-table v-loading="loading" :data="issuelineList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
+      <el-table-column type="index" label="序号" width="50" align="center" />
       <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode" />
       <el-table-column label="产品物料名称" width="120px" align="center" prop="itemName" :show-overflow-tooltip="true" />
       <el-table-column label="规格型号" align="center" prop="specification" :show-overflow-tooltip="true" />
-      <el-table-column label="领料状态" align="center" prop="status" />
+      <el-table-column label="领料状态" align="center" prop="status" >
+        <template v-slot="scope">
+          <span v-if="scope.row.status === 'N'">未上料</span>
+          <span v-else>已上料</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="报工状态" align="center" prop="feedbackStatus" >
+        <template v-slot="scope">
+          <span v-if="scope.row.feedbackStatus === 'N'">未报工</span>
+          <span v-else>已报工</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="报工单" align="center" prop="feedbackCode" :show-overflow-tooltip="true" />
       <el-table-column label="单位" align="center" prop="unitOfMeasure" />
       <el-table-column label="领料数量" align="center" prop="quantityIssued" />
       <el-table-column label="批次号" align="center" prop="batchCode" />
@@ -567,6 +580,13 @@ export default {
         let obj = response.data;
         // 追加生产领料表单身信息
         obj.quantityIssued = obj.quantityOnhand;
+        /*obj.issueId = this.issueId;
+        addIssueline(obj).then(response => {
+          this.$modal.msgSuccess('新增成功');
+          //this.open = false;
+          this.getList();
+        });*/
+
         const isItemExists = this.issuelineList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
         // 如果物料Id不存在，则添加到this.allocatedList
         if (!isItemExists) {

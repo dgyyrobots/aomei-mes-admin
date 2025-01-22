@@ -22,6 +22,7 @@
         :unique-opened="true"
         :active-text-color="settings.theme"
         :collapse-transition="false"
+        :style="`font-size: ${variables.menuFontSize};`"
         mode="vertical"
       >
         <!-- 根据 sidebarRouters 路由，生成菜单 -->
@@ -45,6 +46,7 @@
         :unique-opened="true"
         :active-text-color="settings.theme"
         :collapse-transition="false"
+        :style="`font-size: ${variables.menuFontSize};`"
         mode="vertical"
       >
         <!-- 根据 sidebarRouters 路由，生成菜单 -->

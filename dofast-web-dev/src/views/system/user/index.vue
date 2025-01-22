@@ -20,14 +20,17 @@
           <el-form-item label="用户名称" prop="username">
             <el-input v-model="queryParams.username" placeholder="请输入用户名称" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
           </el-form-item>
+          <el-form-item label="用户昵称" prop="username">
+            <el-input v-model="queryParams.nickname" placeholder="请输入用户昵称" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
+          </el-form-item>
           <el-form-item label="手机号码" prop="mobile">
             <el-input v-model="queryParams.mobile" placeholder="请输入手机号码" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
           </el-form-item>
-          <el-form-item label="状态" prop="status">
+<!--          <el-form-item label="状态" prop="status">
             <el-select v-model="queryParams.status" placeholder="用户状态" clearable style="width: 240px">
               <el-option v-for="dict in statusDictDatas" :key="parseInt(dict.value)" :label="dict.label" :value="parseInt(dict.value)" />
             </el-select>
-          </el-form-item>
+          </el-form-item>-->
           <el-form-item label="创建时间" prop="createTime">
             <el-date-picker v-model="queryParams.createTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']" />
           </el-form-item>
@@ -171,7 +174,7 @@
       </div>
     </el-dialog>
 
-    <!-- 分配角色 -->
+    <!-- 分配角色 -->s
     <el-dialog title="分配角色" :visible.sync="openRole" width="500px" append-to-body>
       <el-form :model="form" label-width="80px">
         <el-form-item label="用户名称">

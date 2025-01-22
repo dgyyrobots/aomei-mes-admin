@@ -64,7 +64,7 @@ export default {
 
         // 尝试找到特定的摄像头, 当前需调用前置摄像头
         //const specificCamera = videoDevices.find(device => device.label === 'GC8034' || device.label === 'GC5035');
-        const specificCamera = videoDevices.find(device => device.label === 'GC8034');
+        const specificCamera = videoDevices.find(device => device.label === 'GC5035');
         if (specificCamera) {
           this.targetCameraId = specificCamera.deviceId;
           console.log('找到指定摄像头:', specificCamera);

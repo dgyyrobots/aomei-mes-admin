@@ -62,7 +62,7 @@
     </el-row>
 
     <!-- 列表 -->
-    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column fixed label="任务编号" min-width="150" align="center" prop="taskCode"/>
       <el-table-column label="任务名称" min-width="150" :show-overflow-tooltip="true" align="center" prop="taskName"/>
@@ -74,6 +74,8 @@
       <el-table-column label="产品名称" min-width="150" :show-overflow-tooltip="true" align="center" prop="itemName"/>
       <el-table-column label="排产数量" min-width="100" align="center" prop="quantity"/>
       <el-table-column label="单位" align="center" prop="unitOfMeasure"/>
+      <el-table-column label="设备编号"  min-width="100" align="center" prop="machineryCode"/>
+      <el-table-column label="设备名称"  min-width="120" align="center" prop="machineryName"/>
       <el-table-column label="已生产数量" min-width="100" align="center" prop="quantityProduced"/>
       <el-table-column label="合格品数量" min-width="100" align="center" prop="quantityQuanlify"/>
       <el-table-column label="不良品数量" min-width="100" align="center" prop="quantityUnquanlify"/>
@@ -291,8 +293,8 @@
 
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="班组负责人" prop="principalName">
-              <el-input v-model="sendForm.principalName" disabled placeholder="请输入班组负责人"/>
+            <el-form-item label="机台负责人" prop="principalName">
+              <el-input v-model="sendForm.principalName" disabled placeholder="请输入机台负责人"/>
             </el-form-item>
           </el-col>
 
@@ -548,6 +550,7 @@ export default {
             console.log(teamInfo);
             this.sendForm.teamCode = teamInfo.teamCode;
             this.sendForm.teamName = teamInfo.teamName;
+            this.sendForm.calendarType = teamInfo.calendarType;
             this.sendForm.principalName = teamInfo.principalName;
           }
         }).catch(error => {
@@ -684,8 +687,6 @@ export default {
         this.form.processCode = selectedProcess.processCode;
         this.form.processId = selectedProcess.id;
       }
-
-
     },
     // 弹出物料选择框
     handleSelectProduct() {
@@ -755,6 +756,7 @@ export default {
         this.sendForm.teamCode = team.teamCode;
         this.sendForm.teamName = team.teamName;
         this.sendForm.principalName = team.principalName;
+        this.sendForm.calendarType = team.calendarType;
         // 关闭班组选择对话框
         this.teamOpen = false;
       } else {
@@ -796,7 +798,11 @@ export default {
         principalName: null,
       };
       this.getList();
-    }
+    },
+    handleRowClick(row) {
+      // 切换行的选中状态
+      this.$refs.multipleTable.toggleRowSelection(row);
+    },
 
   },
 };
