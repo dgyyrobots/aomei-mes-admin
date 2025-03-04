@@ -35,6 +35,16 @@ export function updateProroute(data) {
   });
 }
 
+// 修改工单附件信息
+export function updateProrouteFile(data){
+  return request({
+    url: '/mes/pro/route/updateFile',
+    method: 'put',
+    data: data,
+  });
+}
+
+
 // 删除工艺路线
 export function delProroute(routeId) {
   return request({

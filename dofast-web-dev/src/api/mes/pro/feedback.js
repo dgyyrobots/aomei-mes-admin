@@ -92,3 +92,12 @@ export function reFeedback(data) {
     data: data,
   });
 }
+
+// 合并报工单
+export function mergeFeedback(data) {
+  return request({
+    url: '/mes/pro/feedback/mergeFeedback',
+    method: 'post',
+    data: data,
+  });
+}

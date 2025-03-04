@@ -17,6 +17,16 @@ export function getQcindex(indexId) {
   });
 }
 
+// 查询检测项详细
+export function getQcindexByProcessCode(processCode) {
+  return request({
+    url: '/mes/qms/index/getByProcessCode?processCode=' + processCode,
+    method: 'get',
+  });
+}
+
+
+
 // 新增检测项
 export function addQcindex(data) {
   return request({

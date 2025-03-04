@@ -13,6 +13,18 @@ const install = function (Vue) {
   Vue.directive('dialogDrag', dialogDrag);
   Vue.directive('dialogDragWidth', dialogDragWidth);
   Vue.directive('dialogDragHeight', dialogDragHeight);
+  Vue.directive('minio-src', {
+    inserted: async function(el, binding) { //指令名称为：real-img
+      let imgURL = binding.value; //获取图片地址
+      if (imgURL) {
+        const protocol = window.location.protocol;
+        const host = window.location.host;
+        imgURL = imgURL.replaceAll(process.env.VUE_APP_MINIO_HOST,protocol+"//"+host+"/minio");
+        console.log("minio-url",imgURL);
+        el.setAttribute('src', imgURL);
+      }
+    }
+  })
 };
 
 if (window.Vue) {

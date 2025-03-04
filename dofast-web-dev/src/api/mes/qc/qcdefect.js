@@ -17,6 +17,15 @@ export function getQcdefect(defectId) {
   });
 }
 
+// 获得工序异常缺陷名称
+export function getQcdefectByCode(processCode) {
+  return request({
+    url: '/mes/qms/defect/getByCode?processCode=' + processCode,
+    method: 'get',
+  })
+}
+
+
 // 新增常见缺陷
 export function addQcdefect(data) {
   return request({

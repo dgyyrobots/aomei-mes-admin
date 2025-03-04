@@ -54,8 +54,6 @@
       <el-table-column label="调拨单编号" align="center" prop="allocatedCode"/>
       <el-table-column label="调拨单名称" align="center" prop="allocatedName"/>
       <el-table-column label="生产工单" align="center" prop="workorderCode"/>
-      <el-table-column label="客户编码" align="center" prop="clientCode"/>
-      <el-table-column label="客户名称" align="center" prop="clientName"/>
       <el-table-column label="调拨日期" align="center" prop="allocatedDate" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.allocatedDate) }}</span>
@@ -67,7 +65,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" width="150" fixed="right" align="center" class-name="small-padding fixed-width">
         <template v-slot="scope">
           <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status != 'FINISHED'" @click="handleExecute(scope.row)" v-hasPermi="['wms:allocated-header:allocated']">执行领出</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
@@ -99,7 +97,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="调拨单名称" prop="allocatedName">
-              <el-input v-model="form.allocatedName" placeholder="请输入调拨单名称"/>
+              <el-input disabled v-model="form.allocatedName" placeholder="请输入调拨单名称"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -310,7 +308,7 @@
         <el-row :gutter="10" class="mb8">
           <el-col :span="8">
             <el-form-item label="单据信息" prop="purchaseId">
-              <el-input v-model="purchaseId" placeholder="请输入单据信息"/>
+              <el-input v-model="purchaseId" placeholder="请输入"/>
             </el-form-item>
           </el-col>
 
@@ -326,6 +324,11 @@
         </el-row>
         <el-table v-loading="loading" :data="allocatedList" @selection-change="allocatedHandleSelectionChange">
           <el-table-column type="selection" width="55" align="center"/>
+          <el-table-column label="序号" width="50" align="center">
+            <template slot-scope="scope">
+              {{ scope.$index + 1 }}
+            </template>
+          </el-table-column>
           <el-table-column width="150" label="物料编码" align="center" prop="itemCode"/>
           <el-table-column width="150" label="物料名称" :show-overflow-tooltip="true" align="center" prop="itemName"/>
           <el-table-column width="100" label="调拨数量" align="center" prop="quantityAllocated"/>
@@ -452,7 +455,6 @@ export default {
       // 表单校验
       rules: {
         allocatedCode: [{required: true, message: "调拨单编号不能为空", trigger: "blur"}],
-        allocatedName: [{required: true, message: "调拨单名称不能为空", trigger: "blur"}],
         workorderCode: [{required: true, message: '请指定生产工单', trigger: 'blur'}],
         warehouseId: [{required: true, message: '请指定调入仓库', trigger: 'blur'}],
         locationId: [{required: true, message: '请指定调入库区', trigger: 'blur'}],
@@ -613,7 +615,6 @@ export default {
         }));
 
         // 修改的提交
-        //this.form.bomList = this.allocatedList;
         console.log(this.form);
         if (this.form.id != null) {
           console.log("修改参数: "+ this.form);
@@ -715,10 +716,10 @@ export default {
     //自动生成编码
     handleAutoGenChange(autoGenFlag) {
       if (autoGenFlag) {
-        debugger;
-        console.log("AAA");
+        this.loading = true;
         genCode('ALLOCATED_CODE').then(response => {
           this.form.allocatedCode = response;
+          this.loading = false;
         });
       } else {
         this.form.allocatedCode = null;
@@ -730,15 +731,16 @@ export default {
       this.reset();
       const allocatedId = row.id || this.ids;
       console.log(allocatedId);
+      this.loading = true;
       // 完成
       finshAllocatedHeader(allocatedId).then(response => {
         this.$modal.msgSuccess("成功");
         this.open = false;
+        this.loading = false;
         this.getList();
       });
     },
     handleBomSelectionChange(selection) {
-      //this.allocatedList = selection; // 存储选中的bomList项
       this.allocatedList = selection.map(item => ({ ...item }));
     },
     // 执行出库的弹出框方法
@@ -753,8 +755,6 @@ export default {
       });
       getAllocatedHeader(allocatedId).then(response => {
         this.executeForm = response.data;
-        console.log(this.executeForm);
-        console.log(this.warehouseInfo);
         // 设置领料仓库信息
         this.warehouseInfo = [
           response.data.warehouseId,
@@ -798,20 +798,15 @@ export default {
       if(type){
         finType = type;
       }
-      // 获取当前的单据Id
-      console.log(this.purchaseId);
-
       if(this.warehouseInfo[0] === '' || this.warehouseInfo[1] === '' || this.warehouseInfo[2] === '') {
         this.$message.error('请选择调拨仓库、库区、库位信息！');
         return;
       }
-
-      // 基于当前的采购单获取所有的物料数据
       if (!this.purchaseId) {
         return;
       }
       if (isNaN(this.purchaseId)) {
-        if (this.purchaseId && (this.purchaseId.includes('{') || this.purchaseId.includes('[') || this.purchaseId.includes('}') || this.purchaseId.includes(']')) && !this.purchaseId.includes('"')) {
+        if ((this.purchaseId.includes('{') || this.purchaseId.includes('[') || this.purchaseId.includes('}') || this.purchaseId.includes(']'))) {
           this.purchaseId = this.purchaseId.trim();
           // 清理文本框内容的多余空格，并格式化为标准 JSON 格式
           this.purchaseId = this.purchaseId
@@ -836,6 +831,7 @@ export default {
             // Step 4: 使用 JSON.stringify 格式化为标准 JSON 字符串
             const data = JSON.stringify(parsedData, null, 2);
             const transedData = JSON.parse(data);
+            console.log(transedData);
             // 检查是否包含 id 属性
             if (transedData) {
               // 更新 purchaseId
@@ -847,10 +843,6 @@ export default {
           }
         }
       }
-      console.log("开始获取单身信息");
-
-
-
       let obj = {
         'id': parseInt(this.purchaseId), // 转为数字this.purchaseId,
         'type': finType,
@@ -860,13 +852,13 @@ export default {
         'areaId': this.warehouseInfo[2]
       }
       console.log(obj);
+      this.loading = true;
       getStockInfoByPurchaseId(obj).then(response => {
-        console.log(response.data);
+        this.loading = false;
+        this.purchaseId = null;
         let obj = response.data;
         obj.quantityAllocated = obj.quantityOnhand
-
         //this.allocatedList.push(obj);
-
         const isItemCodeExists = this.allocatedList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
         // 如果物料Id不存在，则添加到this.allocatedList
         if (!isItemCodeExists) {
@@ -922,7 +914,6 @@ export default {
           deviceId: {exact: deviceId}
         }
       };
-
       navigator.mediaDevices.getUserMedia(constraints).then(stream => {
         this.$refs.videoCameraPreview.srcObject = stream;
         this.$refs.videoCameraPreview.onloadedmetadata = () => {
@@ -939,8 +930,7 @@ export default {
         });
         this.cameraPreviewVisible = false;
       });
-    }
-    ,
+    },
     scanQRCode() {
       const that = this;
       const video = this.$refs.videoCameraPreview;
@@ -961,9 +951,7 @@ export default {
           });
           if (code) {
             console.log('QR Code scanned:', code.data);
-            //this.stopScanning();
             // 处理扫描到的二维码数据
-            // let fin = null;// 最终扫描的数据
             if (code.data) {
               // 关闭当前的摄像头预览弹出框
               that.cameraPreviewVisible = false;
@@ -994,16 +982,14 @@ export default {
       }
 
       tick();
-    }
-    ,
+    },
     // 停止扫描二维码
     stopScanning() {
       const stream = this.$refs.videoCameraPreview.srcObject;
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
-    }
-    ,
+    },
     // 显示摄像头预览弹出框
     showCameraPreview() {
       this.cameraPreviewVisible = true;
@@ -1035,25 +1021,22 @@ export default {
           "headerId": this.executeForm.id,
           "bomList": this.allocatedList
         }
+        this.loading = true;
         await updateAllocatedLine(obj).then(response => {
           console.log("追加完毕");
         }).catch(error => {
           this.$message.error('追加单身信息失败');
+          this.loading = false;
           return;
         });
-        console.log("执行调拨出库操作");
-        console.log(this.executeForm.id)
         execute(this.executeForm.id).then(() => {
+          this.loading = false;
           this.getList();
           this.$modal.msgSuccess('出库成功');
           this.executeDialogVisible = false;
         });
-      /*} else {
-        this.$message.error('请检查调拨信息，确保所有物料编码和数量正确');
-      }*/
     },
     handleQuantityChange(row) {
-      console.log(row);
       const quantity = parseFloat(row.quantityAllocated);
       if (isNaN(quantity) || quantity <= 0) {
         this.$message.error('调拨数量必须为大于0的正数');

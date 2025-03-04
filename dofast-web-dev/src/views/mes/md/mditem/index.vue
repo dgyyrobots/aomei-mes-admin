@@ -237,12 +237,12 @@
         </el-row>
 
         <el-row>
-          <el-col :span="24">
-            <el-form-item label="附件" prop="adjuncts">
-              <file-upload :isShowTips="isShowDelete" v-model="form.adjuncts" :file-type="adjunctTypes" :limit="20" :file-size="100"></file-upload>
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <el-col :span="24">
+          <el-form-item label="附件" prop="adjuncts">
+            <file-upload :isShowTips="isShowDelete" v-model="form.adjuncts" :file-type="adjunctTypes" :limit="20" :file-size="100"></file-upload>
+          </el-form-item>
+        </el-col>
+      </el-row>
       </el-form>
       <el-tabs type="border-card" v-if="form.id != null">
         <el-tab-pane label="BOM组成">

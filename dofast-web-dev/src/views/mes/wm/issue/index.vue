@@ -65,12 +65,10 @@
           </el-button>
         </template>
       </el-table-column>
-      <el-table-column label="领料单名称" align="center" prop="issueName" :show-overflow-tooltip="true"/>
+      <el-table-column disabled label="领料单名称" align="center" prop="issueName" :show-overflow-tooltip="true"/>
       <el-table-column label="生产工单" align="center" prop="workorderCode"/>
       <el-table-column label="生产工序" align="center" prop="processName"/>
-      <el-table-column label="生产工序" align="center" prop="taskCode"/>
-      <el-table-column label="客户编号" align="center" prop="clientCode"/>
-      <el-table-column label="客户名称" align="center" prop="clientName"/>
+      <el-table-column label="生产任务" align="center" prop="taskCode"/>
       <el-table-column label="领料日期" align="center" prop="issueDate" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.issueDate, '{y}-{m}-{d}') }}</span>
@@ -81,7 +79,7 @@
           <dict-tag :options="dict.type.mes_order_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column width="220" fixed="right"  label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status == 'PREPARE' || scope.row.status == 'CONFIRMED'" @click="handleExecute(scope.row)" v-hasPermi="['wms:issue-header:update']">执行上料</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" v-if="scope.row.status == 'PREPARE' || scope.row.status == 'CONFIRMED' " @click="handleUpdate(scope.row)" v-hasPermi="['wms:issue-header:update']">修改</el-button>
@@ -93,7 +91,7 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList"/>
 
     <!-- 添加或修改生产领料单头对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="960px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="75%" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="8">
@@ -180,8 +178,8 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="设备信息" prop="machineryCode">
-              <el-input v-model="form.machineryCode" placeholder="请选择设备信息" disabled>
+            <el-form-item label="设备信息" prop="machineryName">
+              <el-input v-model="form.machineryName" placeholder="请选择设备信息" disabled>
                 <el-button slot="append" icon="el-icon-search" @click="handleMachineryAdd"></el-button>
               </el-input>
             </el-form-item>
@@ -207,7 +205,8 @@
       </div>
     </el-dialog>
 
-    <!-- 扫码上料对话框-弃用-嫌操作复杂 -->
+<!--
+    &lt;!&ndash; 扫码上料对话框-弃用-嫌操作复杂 &ndash;&gt;
     <el-dialog :title="title" :visible.sync="feedingOpen" width="960px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
@@ -277,7 +276,7 @@
           <el-col :span="12">
             <el-form-item label="工作站" prop="workstationName">
               <el-input v-model="form.workstationName" placeholder="请选择工作站" disabled>
-                <!--                <el-button slot="append" icon="el-icon-search" @click="handleWorkstationSelect"></el-button>-->
+                &lt;!&ndash;                <el-button slot="append" icon="el-icon-search" @click="handleWorkstationSelect"></el-button>&ndash;&gt;
               </el-input>
             </el-form-item>
           </el-col>
@@ -309,9 +308,9 @@
           <el-col :span="1.5">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleBlur()" v-hasPermi="['wms:issue-header:create']">新增</el-button>
           </el-col>
-          <!--      <el-col :span="1.5">
+          &lt;!&ndash;      <el-col :span="1.5">
                   <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
-                </el-col>-->
+                </el-col>&ndash;&gt;
           <el-col :span="1.5">
             <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleFeedDelete" v-hasPermi="['wms:issue-header:delete']">删除</el-button>
           </el-col>
@@ -337,6 +336,7 @@
         <el-button @click="feedCancel">取 消</el-button>
       </div>
     </el-dialog>
+-->
 
     <!-- 摄像头预览弹出框 -->
     <el-dialog title="摄像头预览" :visible.sync="cameraPreviewVisible" width="50%" v-dialogDrag append-to-body>
@@ -352,7 +352,7 @@
 </template>
 
 <script>
-import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, execute} from '@/api/mes/wm/issueheader';
+import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, updateIssueMachinery, execute} from '@/api/mes/wm/issueheader';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import TaskSelectSingle from "@/components/TaskSelect/taskSelectSingle.vue";
@@ -363,13 +363,12 @@ import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
 import {createFeedLine, getByIssueId, createFeedLineList, createFeedLineListByIssueId} from "@/api/wms/feedLine";
 import jsQR from "jsqr";
 import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
-import { listProcess } from '@/api/mes/pro/process';
+import {listProcess} from '@/api/mes/pro/process';
 import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
 
 
-
 export default {
-  name: 'Issueheader',
+  name: 'Issue',
   dicts: ['mes_order_status'],
   components: {ProtaskSelect, MachinerySelectSingle, Issueline, WorkstationSelect, WorkorderSelect, TaskSelectSingle},
   data() {
@@ -435,7 +434,6 @@ export default {
       // 表单校验
       rules: {
         issueCode: [{required: true, message: '领料单编号不能为空', trigger: 'blur'}],
-        issueName: [{required: true, message: '领料单名称不能为空', trigger: 'blur'}],
         issueDate: [{required: true, message: '请指定领出日期', trigger: 'blur'}],
         workorderCode: [{required: true, message: '请指定生产工单', trigger: 'blur'}],
         workorderId: [{required: true, message: '请指定生产工单', trigger: 'blur'}],
@@ -451,6 +449,7 @@ export default {
       purchaseId: '', // 采购单ID
       feedLineList: [], // 上料明细数据
       processOptions: [], // 工序选项
+      preventingWatch: false, // 防止重复监听
     };
   },
   created() {
@@ -459,8 +458,8 @@ export default {
     // 初始化工序选项
     this.processOptions = [];
     listProcess().then(response => {
-       this.processOptions = response.data.list;
-       console.log(this.processOptions)
+      this.processOptions = response.data.list;
+      console.log(this.processOptions)
     });
 
   },
@@ -468,6 +467,26 @@ export default {
     cameraPreviewVisible(newVal) {
       if (!newVal) {
         this.stopScanning();
+      }
+    },
+    // 监听设备变更
+    'form.machineryCode': {
+      handler(newVal) {
+        if(!newVal){
+          return;
+        }
+        if (this.preventingWatch) {
+          return;
+        }
+        if (this.optType === 'edit') {
+          this.form.machineryCode = newVal;
+          updateIssueMachinery(this.form).then(response => {
+            this.$message.success('设备信息修改成功');
+          }).catch(error => {
+            console.error('设备信息修改失败:', error);
+            this.$message.error('设备信息修改失败');
+          });
+        }
       }
     }
   },
@@ -493,8 +512,10 @@ export default {
     },
     // 取消按钮
     cancel() {
+      this.preventingWatch = true; // 禁用watch
       this.open = false;
       this.reset();
+      this.preventingWatch = false; // 启用watch
     },
     feedCancel() {
       this.feedingOpen = false;
@@ -545,6 +566,7 @@ export default {
       this.warehouseInfo = []; // 重置领料仓库信息
       this.autoGenFlag = false;
       this.resetForm('form');
+      this.preventingWatch = false; // 启用watch
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -586,6 +608,7 @@ export default {
         this.open = true;
         this.title = "修改生产领料单";
         this.optType = 'edit';
+        this.preventingWatch = false; // 启用watch
       });
     },
     // 查询明细按钮操作
@@ -712,8 +735,10 @@ export default {
     //自动生成编码
     handleAutoGenChange(autoGenFlag) {
       if (autoGenFlag) {
+        this.loading = true;
         genCode('ISSUE_CODE').then(response => {
           this.form.issueCode = response;
+          this.loading = false;
         });
       } else {
         this.form.issueCode = null;
@@ -745,7 +770,6 @@ export default {
         this.title = '扫码上料';
         this.optType = 'edit';
       });
-
     },
     handleTaskSelect() {
       this.$refs.taskSelect.showFlag = true;
@@ -764,211 +788,6 @@ export default {
         this.form.workstationName = row.workstationName;
         console.log(this.form)
       }
-    },
-    async getCameraInfo() {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
-        const specificCamera = videoDevices.find(device => device.label === 'GC8034');
-        if (specificCamera) {
-          this.targetCameraId = specificCamera.deviceId;
-          console.log('找到指定摄像头:', specificCamera);
-        } else {
-          const defaultCamera = videoDevices[0];
-          if (defaultCamera) {
-            this.targetCameraId = defaultCamera.deviceId;
-            console.log('使用默认摄像头:', defaultCamera);
-          } else {
-            console.log('未找到任何可用的摄像头');
-            this.$notify({
-              title: '错误',
-              message: '未找到任何可用的摄像头',
-              type: 'error'
-            });
-            return;
-          }
-        }
-        this.showCameraPreview();
-      } catch (error) {
-        console.error('获取摄像头信息失败:', error);
-        this.$notify({
-          title: '错误',
-          message: '获取摄像头信息失败',
-          type: 'error'
-        });
-      }
-    }
-    ,
-
-    startScanning() {
-      const deviceId = this.targetCameraId || undefined;
-      const constraints = {
-        audio: false,
-        video: {
-          width: this.videoWidth,
-          height: this.videoHeight,
-          deviceId: {exact: deviceId}
-        }
-      };
-
-      navigator.mediaDevices.getUserMedia(constraints).then(stream => {
-        this.$refs.videoCameraPreview.srcObject = stream;
-        this.$refs.videoCameraPreview.onloadedmetadata = () => {
-          this.$refs.videoCameraPreview.play();
-          this.loading = false;
-          this.scanQRCode();
-        };
-      }).catch(err => {
-        console.error("无法打开摄像头: ", err);
-        this.$notify({
-          title: '警告',
-          message: '没有开启摄像头权限或浏览器版本不兼容.',
-          type: 'warning'
-        });
-        this.cameraPreviewVisible = false;
-      });
-    }
-    ,
-    scanQRCode() {
-      const that = this;
-      const video = this.$refs.videoCameraPreview;
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      let type = null;
-      function tick() {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-          // 将视频流绘制到 canvas 上
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          // 获取 canvas 的图像数据
-          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-          // 使用 jsQR 解码图像数据
-          const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: "dontInvert",
-          });
-          if (code) {
-            console.log('QR Code scanned:', code.data);
-            // 处理扫描到的二维码数据
-            // let fin = null;// 最终扫描的数据
-            if (code.data) {
-              // 关闭当前的摄像头预览弹出框
-              that.cameraPreviewVisible = false;
-              try {
-                // 替换中文引号为英文引号，并解析 JSON
-                code.data = code.data.replace(/“/g, '"').replace(/”/g, '"').replace(/：/g, ':').replace(/，/g, ',');
-                // 移除零宽度非换行空格字符
-                code.data = code.data.replace(/\uFEFF/g, '');
-                // 直接解析 JSON 字符串
-                const data = JSON.parse(code.data);
-                // 检查是否包含 id 属性
-                if (data && data.id) {
-                  console.log("data.id:", data.id);
-                  that.purchaseId = data.id;
-                  type = data.type;
-                } else {
-                  console.log("data.id is undefined");
-                }
-              } catch (error) {
-                that.$message.error('扫描结果不是有效的 JSON 字符串');
-              }
-              that.handleBlur(type); // 基于当前的采购单获取所有的物料数据
-              that.stopScanning();
-            }
-          }
-        }
-        requestAnimationFrame(tick);
-      }
-
-      tick();
-    }
-    ,
-    // 停止扫描二维码
-    stopScanning() {
-      const stream = this.$refs.videoCameraPreview.srcObject;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    }
-    ,
-    // 显示摄像头预览弹出框
-    showCameraPreview() {
-      this.cameraPreviewVisible = true;
-      this.startScanning();
-    },
-    issueLineAdd(){
-      if (!this.purchaseId.includes('{') || !this.purchaseId.includes('}')) {
-        this.$message.error('请扫描正确的单据信息!');
-        return;
-      }
-      this.handleBlur();
-    },
-    handleBlur: function (type) {
-      let finType = '';
-      if(type){
-        finType = type;
-      }
-      // 基于当前的采购单获取所有的物料数据
-      if (!this.purchaseId) {
-        return;
-      }
-      if (this.purchaseId && (this.purchaseId.includes('{') || this.purchaseId.includes('[') || this.purchaseId.includes('}') || this.purchaseId.includes(']')) && !this.purchaseId.includes('"')) {
-        this.purchaseId = this.purchaseId.trim();
-        // 清理文本框内容的多余空格，并格式化为标准 JSON 格式
-        this.purchaseId = this.purchaseId
-          // 去除字段名和字段值之间的多余空格
-          .replace(/\s*[:]\s*/g, ':')
-          .replace(/\s*,\s*/g, ',')
-          .replace(/\s*{\s*/g, '{')
-          .replace(/\s*}\s*/g, '}')
-          .replace(/\s*\[\s*/g, '[')
-          .replace(/\s*\]\s*/g, ']');
-        // 给键和字符串值加上双引号
-        let formattedData = this.purchaseId
-          // 给所有键名加双引号
-          .replace(/([a-zA-Z0-9_]+)(?=\s*[:])/g, '"$1"')
-          // 给字符串值加双引号，排除数字和其他非字符串类型的值
-          .replace(/(:\s*)([a-zA-Z\u4e00-\u9fa5_-]+)(?=\s*,|\s*\})/g, '$1"$2"');
-        // Step 2: 处理数字和标识符类型的字符串，如 AMCG86-241030001 和 20241106805-01，需给它们加上双引号
-        formattedData = formattedData.replace(/(:\s*)([A-Za-z0-9-]+)(?=\s*,|\s*\})/g, '$1"$2"');
-        try {
-          // Step 3: 使用 JSON.parse 转换为对象
-          const parsedData = JSON.parse(formattedData);
-          // Step 4: 使用 JSON.stringify 格式化为标准 JSON 字符串
-          const data = JSON.stringify(parsedData, null, 2);
-          const transedData = JSON.parse(data);
-          // 检查是否包含 id 属性
-          if (transedData) {
-            // 更新 purchaseId
-            this.purchaseId = transedData.id;
-            finType = transedData.type;
-          }
-        } catch (error) {
-          this.$message.error('扫描结果不是有效的 JSON 字符串');
-        }
-      }
-      let obj = {
-        'id': Number.parseInt(this.purchaseId),
-        'type': finType
-      }
-      // 获取当前采购单身信息
-      getStockInfoByPurchaseId(obj).then(response => {
-        console.log(response.data);
-        let obj = response.data;
-        // 追加生产领料表单身信息
-        obj.quantityIssued = obj.quantityOnhand;
-
-        const isItemExists = this.feedLineList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
-        // 如果物料Id不存在，则添加到this.allocatedList
-        if (!isItemExists) {
-          console.log(obj);
-          obj.issueId = this.issueId;
-          this.feedLineList.push(obj);
-        } else {
-          this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
-        }
-      });
     },
     handleFeedDelete() {
       const ids = this.ids;

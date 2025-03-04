@@ -42,3 +42,12 @@ export function delIqc(iqcId) {
     method: 'delete',
   });
 }
+
+// 修改附件
+export function updateIqcAdjuncts(data) {
+  return request({
+    url: '/mes/qms/iqc/updateIqcAdjuncts',
+    method: 'put',
+    data: data,
+  });
+}

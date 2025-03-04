@@ -229,6 +229,15 @@
             </el-form-item>
           </el-col>
         </el-row>
+
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="附件" prop="adjuncts">
+              <file-upload :isShowTips="isShowDelete" v-model="form.adjuncts" :file-type="adjunctTypes" :limit="20" :file-size="100"></file-upload>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
         <el-collapse accordion>
           <el-collapse-item title="结果统计">
             <el-row>
@@ -286,18 +295,20 @@
 </template>
 
 <script>
-import { listIqc, getIqc, delIqc, addIqc, updateIqc } from '@/api/mes/qc/iqc';
+import { listIqc, getIqc, delIqc, addIqc, updateIqc , updateIqcAdjuncts } from '@/api/mes/qc/iqc';
 import ItemSelect from '@/components/itemSelect/single.vue';
 import VendorSelect from '@/components/vendorSelect/single.vue';
 import IqcLine from './iqcline.vue';
 import { genCode } from '@/api/mes/autocode/rule';
 import { getReport2 } from '@/api/mes/report/report';
 import GoodsSelect from '@/components/purchaseGoods/single.vue';
+import FileUpload from "@/components/FileUpload/index3.vue";
+import {updateMdItemAdjuncts} from "@/api/mes/md/mdItem";
 
 export default {
   name: 'Iqc',
   dicts: ['mes_qc_result', 'mes_order_status'],
-  components: { ItemSelect, VendorSelect, IqcLine , GoodsSelect},
+  components: {FileUpload, ItemSelect, VendorSelect, IqcLine , GoodsSelect},
   data() {
     return {
       //自动生成编码
@@ -357,6 +368,7 @@ export default {
         inspectDate: null,
         inspector: null,
         status: null,
+        adjuncts: null,
       },
       // 表单参数
       form: {},
@@ -371,6 +383,9 @@ export default {
         reciveDate: [{ required: true, message: '清选择来料日期', trigger: 'blur' }],
         inspectDate: [{ required: true, message: '清选择检验日期', trigger: 'blur' }],
       },
+      // 用于管控图片删除按钮
+      isShowDelete: true,
+      adjunctTypes: null,
     };
   },
   created() {
@@ -606,7 +621,22 @@ export default {
         this.form.reciveDate = obj.createTime;
       }
     },
-
   },
+  'form.adjuncts': {
+    handler(newVal, oldVal) {
+      /*if(!newVal){
+        return;
+      }*/
+      console.log(newVal, oldVal);
+      //if (this.optType !== 'view') {
+        this.form.adjuncts = newVal;
+        // 开始更新附件
+        updateIqcAdjuncts(this.form).then(response => {
+          this.$modal.msgSuccess('附件修改成功');
+          return;
+        });
+      //}
+    },
+  }
 };
 </script>

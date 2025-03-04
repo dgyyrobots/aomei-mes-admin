@@ -62,12 +62,19 @@ export function exportGoodsExcel(query) {
   });
 }
 
-
-
 // 更新采购商品状态
 export function updateReceiveStatus(data) {
   return request({
     url: '/purchase/goods/updateReceiveStatus',
+    method: 'put',
+    data: data,
+  });
+}
+
+// 更新采购商品状态
+export function batchUpdateReceiveStatus(data) {
+  return request({
+    url: '/purchase/goods/batchUpdateReceiveStatus',
     method: 'put',
     data: data,
   });
@@ -104,6 +111,14 @@ export function splitGoods(data) {
 export function getPurchaseBarCode(id) {
   return request({
     url: '/purchase/goods/getPurchaseBarCode?id=' + rtId,
+    method: 'get',
+  });
+}
+
+// 校验明细是否配置
+export function checkConfig(poNo) {
+  return request({
+    url: '/purchase/goods/checkConfig?poNo=' + poNo,
     method: 'get',
   });
 }

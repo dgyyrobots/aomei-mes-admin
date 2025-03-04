@@ -2,45 +2,10 @@
   <div class="app-container">
     <!-- 搜索工作栏 -->
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="供应商" prop="supplierId">
-        <el-input v-model="queryParams.supplierId" placeholder="请输入供应商" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="供应商联系人" prop="supplierContact" label-width="96">
-        <el-input v-model="queryParams.supplierContact" placeholder="请输入供应商联系人" clearable
-          @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="供应商联系人电话" prop="supplierPhone" label-width="124">
-        <el-input v-model="queryParams.supplierPhone" placeholder="请输入供应商联系人电话" clearable
-          @keyup.enter.native="handleQuery" />
-      </el-form-item>
-      <el-form-item label="采购金额" prop="purchaseAmount">
-        <el-input v-model="queryParams.purchaseAmount" placeholder="请输入采购金额" clearable
-          @keyup.enter.native="handleQuery" />
-      </el-form-item>
       <el-form-item label="采购单号" prop="poNo">
         <el-input v-model="queryParams.poNo" placeholder="请输入采购单号" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="付款类型" prop="paymentType">
-        <el-select v-model="queryParams.paymentType" placeholder="请选择付款类型" clearable size="small">
-          <el-option v-for="dict in this.getDictDatas(DICT_TYPE.PURCHASE_INVOICE_PAY_WAY)" :key="dict.value"
-            :label="dict.label" :value="dict.value" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="退货状态" prop="returnGoods">
-        <el-select v-model="queryParams.returnGoods" placeholder="请选择退货状态" clearable size="small">
-          <el-option v-for="dict in this.getDictDatas(DICT_TYPE.INFRA_BOOLEAN_STRING)" :key="dict.value"
-            :label="dict.label" :value="dict.value" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="审核类型" prop="processType">
-        <el-select v-model="queryParams.processType" placeholder="请选择审核类型" clearable size="small">
-          <el-option v-for="dict in this.getDictDatas(DICT_TYPE.PURCHASE_ORDER_AUDIT_STATUS)" :key="dict.value"
-            :label="dict.label" :value="dict.value" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="备注" prop="remarks">
-        <el-input v-model="queryParams.remarks" placeholder="请输入备注" clearable @keyup.enter.native="handleQuery" />
-      </el-form-item>
+
       <el-form-item label="创建时间" prop="createTime">
         <el-date-picker v-model="queryParams.createTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
           type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
@@ -54,47 +19,33 @@
 
     <!-- 操作工具栏 -->
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+<!--      <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
           v-hasPermi="['purchase:order:create']">新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
+      </el-col>-->
+<!--      <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" :loading="exportLoading"
           v-hasPermi="['purchase:order:export']">导出</el-button>
+      </el-col>-->
+      <el-col :span="1.5">
+        <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="single" @click="printTitle" v-hasPermi="['purchase:goods:print']">单据打印</el-button>
       </el-col>
+
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <!-- 列表 -->
-    <el-table v-loading="loading" :data="list">
-      <el-table-column label="供应商" align="center" prop="supplierId" />
-      <el-table-column label="供应商联系人" align="center" prop="supplierContact" />
-      <el-table-column label="供应商联系人电话" align="center" prop="supplierPhone" />
-      <el-table-column label="采购金额" align="center" prop="purchaseAmount" />
+    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange" >
+      <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="ID" align="center" prop="id" />
       <el-table-column label="采购单号" align="center" prop="poNo" />
-      <el-table-column label="付款类型" align="center" prop="paymentType">
-        <template v-slot="scope">
-          <dict-tag :type="DICT_TYPE.PURCHASE_INVOICE_PAY_WAY" :value="scope.row.paymentType" />
-        </template>
-      </el-table-column>
-      <el-table-column label="退货状态" align="center" prop="returnGoods">
-        <template v-slot="scope">
-          <dict-tag :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="scope.row.returnGoods" />
-        </template>
-      </el-table-column>
-      <el-table-column label="审核类型" align="center" prop="processType">
-        <template v-slot="scope">
-          <dict-tag :type="DICT_TYPE.PURCHASE_ORDER_AUDIT_STATUS" :value="scope.row.processType" />
-        </template>
-      </el-table-column>
       <el-table-column label="备注" align="center" prop="remarks" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column fixed="right" label="操作" align="center" class-name="small-padding fixed-width">
         <template v-slot="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['purchase:order:update']">修改</el-button>
@@ -108,45 +59,31 @@
       @pagination="getList" />
 
     <!-- 对话框(添加 / 修改) -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" v-dialogDrag append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="65%" v-dialogDrag append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="供应商" prop="supplierId">
-          <el-input v-model="form.supplierId" placeholder="请输入供应商" />
-        </el-form-item>
-        <el-form-item label="供应商联系人" prop="supplierContact">
-          <el-input v-model="form.supplierContact" placeholder="请输入供应商联系人" />
-        </el-form-item>
-        <el-form-item label="供应商联系人电话" prop="supplierPhone">
-          <el-input v-model="form.supplierPhone" placeholder="请输入供应商联系人电话" />
-        </el-form-item>
-        <el-form-item label="采购金额" prop="purchaseAmount">
-          <el-input v-model="form.purchaseAmount" placeholder="请输入采购金额" />
-        </el-form-item>
-        <el-form-item label="采购单号" prop="poNo">
-          <el-input v-model="form.poNo" placeholder="请输入采购单号" />
-        </el-form-item>
-        <el-form-item label="付款类型" prop="paymentType">
-          <el-select v-model="form.paymentType" placeholder="请选择付款类型">
-            <el-option v-for="dict in this.getDictDatas(DICT_TYPE.PURCHASE_INVOICE_PAY_WAY)" :key="dict.value"
-              :label="dict.label" :value="parseInt(dict.value)" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="退货状态" prop="returnGoods">
-          <el-select v-model="form.returnGoods" placeholder="请选择退货状态">
-            <el-option v-for="dict in this.getDictDatas(DICT_TYPE.INFRA_BOOLEAN_STRING)" :key="dict.value"
-              :label="dict.label" :value="parseInt(dict.value)" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="审核类型" prop="processType">
-          <el-select v-model="form.processType" placeholder="请选择审核类型">
-            <el-option v-for="dict in this.getDictDatas(DICT_TYPE.PURCHASE_ORDER_AUDIT_STATUS)" :key="dict.value"
-              :label="dict.label" :value="parseInt(dict.value)" />
-          </el-select>
-        </el-form-item>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="采购单号" prop="poNo">
+              <el-input disabled v-model="form.poNo" placeholder="请输入采购单号"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="24">
         <el-form-item label="备注" prop="remarks">
           <el-input v-model="form.remarks" placeholder="请输入备注" />
         </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
+
+      <el-divider v-if="form.id != null" content-position="center">采购明细</el-divider>
+      <el-card shadow="always" v-if="form.id != null" class="box-card">
+        <GoodsLine ref="line" :purchaseId="form.id"  :optType="optType"></GoodsLine>
+      </el-card>
+
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
@@ -157,10 +94,12 @@
 
 <script>
 import { createOrder, updateOrder, deleteOrder, getOrder, getOrderPage, exportOrderExcel } from '@/api/purchase/order';
-
+import GoodsLine from "@/views/purchase/order/line.vue";
+import {checkConfig} from "@/api/purchase/goods";
+import '@/utils/CLodopfuncs2.js';
 export default {
   name: 'Order',
-  components: {},
+  components: {GoodsLine},
   data() {
     return {
       // 遮罩层
@@ -196,6 +135,7 @@ export default {
       form: {},
       // 表单校验
       rules: {},
+      optType: undefined,
     };
   },
   created() {
@@ -248,6 +188,7 @@ export default {
       this.reset();
       this.open = true;
       this.title = '添加采购订单';
+      this.optType = 'add';
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -257,6 +198,7 @@ export default {
         this.form = response.data;
         this.open = true;
         this.title = '修改采购订单';
+        this.optType = 'edit';
       });
     },
     /** 提交按钮 */
@@ -313,6 +255,81 @@ export default {
           this.exportLoading = false;
         })
         .catch(() => { });
+    },
+    // 多选框选中数据
+    handleSelectionChange(selection) {
+      this.selectedRows = selection;
+      this.ids = selection.map(item => item.id);
+      this.single = selection.length !== 1;
+      this.multiple = !selection.length;
+    },
+    async printTitle() {
+      // 校验当前采购单号下所有单身是否配置单位与收货数量
+      let result = await checkConfig(this.selectedRows[0].poNo);
+      if (!result){
+        this.$message.error('采购单: '+ this.selectedRows[0].poNo +'存在未配置单位与收货数量的明细信息，请先配置后打印！');
+        return;
+      }
+      if (!Array.isArray(result.data)) {
+        console.error("结果不是一个数组: ", result);
+        return;
+      }
+
+      await this.$modal.confirm('确认打印？');
+      console.log("开始循环: "+ result);
+
+      LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
+      LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
+
+      for (const obj of result.data) {
+        console.log("数据解析: ", obj);
+        LODOP.NEWPAGE();
+        // 添加整体边框
+        LODOP.ADD_PRINT_RECT(8, 5, 150 * 3.71 - 10, 100 * 3.71 - 10, 0, 1); // 整体边框
+
+        // 添加标题及标题边框
+        LODOP.SET_PRINT_STYLE("FontSize", 18);
+        LODOP.SET_PRINT_STYLE("FontName", "Microsoft YaHei");
+        LODOP.SET_PRINT_STYLE("Bold", 1);
+        LODOP.SET_PRINT_STYLE("Horient", 2); // 居中
+        LODOP.ADD_PRINT_TEXT(13, 0, 150, 30, "入库单标签");
+
+        // 内容样式及分块边框
+        LODOP.SET_PRINT_STYLE("FontSize", 14);
+        LODOP.SET_PRINT_STYLE("Bold", 0);
+        LODOP.SET_PRINT_STYLE("Horient", 0); // 取消居中
+
+        LODOP.ADD_PRINT_TEXT(65, 15, 120, 35, "条码编号:"); // 标签部分，距离左边10px
+        LODOP.ADD_PRINT_TEXT(65, 120, 280, 35, obj.id); // 内容部分
+
+        LODOP.ADD_PRINT_TEXT(110, 15, 120, 35, "采购料号:"); // 标签部分，距离左边10px
+        LODOP.ADD_PRINT_TEXT(110, 120, 280, 35, obj.goodsNumber); // 内容部分
+
+        LODOP.ADD_PRINT_TEXT(155, 15, 120, 35, "物料名称:");
+        LODOP.ADD_PRINT_TEXT(155, 120, 280, 35, obj.goodsName + obj.goodsSpecs);
+
+        LODOP.ADD_PRINT_TEXT(200, 15, 120, 35, "采购单号:");
+        LODOP.ADD_PRINT_TEXT(200, 120, 280, 35, obj.poNo);
+
+        LODOP.ADD_PRINT_TEXT(245, 15, 120, 35, "收货数量:");
+        LODOP.ADD_PRINT_TEXT(245, 120, 280, 35, obj.receiveNum);
+
+        LODOP.ADD_PRINT_TEXT(290, 15, 120, 35, "收货单位:");
+        LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.unitOfMeasure);
+
+        LODOP.ADD_PRINT_TEXT(335, 15, 120, 35, "收货日期:");
+        let receiveTime = new Date(obj.receiveTime).toISOString().slice(0, 19).replace('T', ' '); // 退料日期
+        LODOP.ADD_PRINT_TEXT(335, 120, 280, 35, receiveTime);
+        let jsonQc = {
+          "id": obj.id,
+          "type": "purchase",
+          "po_no": obj.poNo,
+        }
+        LODOP.ADD_PRINT_BARCODE(220, 390, 170, 170, "QRCode", JSON.stringify(jsonQc));
+      }
+      LODOP.SET_PRINT_MODE('AUTO_CLOSE_PREWINDOW', 1); //打印后自动关闭预览窗口
+      LODOP.PREVIEW();
+      this.batchUpdateStatus(this.selectedRows[0].poNo);
     },
   },
 };

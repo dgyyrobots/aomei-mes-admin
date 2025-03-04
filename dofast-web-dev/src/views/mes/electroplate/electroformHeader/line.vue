@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-row v-if="optType != 'view'" :gutter="10" class="mb8">
       <el-col :span="8">
-          <el-input v-model="purchaseId" placeholder="请输入"/>
+        <el-input v-model="purchaseId" placeholder="请输入"/>
       </el-col>
       <el-col :span="4">
         <el-button type="primary" round @click="getCameraInfo()">摄像头</el-button>
@@ -11,53 +11,30 @@
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleBlur" v-hasPermi="['wms:issue-header:create']">新增 </el-button>
       </el-col>
-<!--      <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
-      </el-col>-->
+
       <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="issuelineList" @selection-change="handleSelectionChange" @row-click="handleRowClick">
+    <el-table v-loading="loading" :data="issuelineList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column type="index" label="序号" width="50" align="center" />
-      <el-table-column label="条码编号" align="center" prop="barcodeNumber" />
       <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode" />
       <el-table-column label="产品物料名称" width="120px" align="center" prop="itemName" :show-overflow-tooltip="true" />
-      <el-table-column label="设备名称" align="center" prop="machineryName" />
-      <el-table-column label="领料数量" align="center" prop="quantityIssued" />
-      <el-table-column label="领料状态" align="center" prop="status" >
-        <template v-slot="scope">
-          <span v-if="scope.row.status === 'N'">未上料</span>
-          <span v-else>已上料</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="报工状态" align="center" prop="feedbackStatus" >
-        <template v-slot="scope">
-          <span v-if="scope.row.feedbackStatus === 'N'">未报工</span>
-          <span v-else>已报工</span>
-        </template>
-      </el-table-column>
-      <el-table-column  width="180"  label="报工单" align="center" prop="feedbackCode" :show-overflow-tooltip="true" />
-      <el-table-column label="单位" align="center" prop="unitOfMeasure" />
-      <el-table-column width="180" label="批次号" align="center" prop="batchCode" />
-      <el-table-column width="180" label="仓库名称" align="center" prop="warehouseName" />
-      <el-table-column width="180" label="库区名称" align="center" prop="locationName" />
-      <el-table-column width="180" label="库位名称" align="center" prop="areaName" />
+      <el-table-column label="规格型号" align="center" prop="specification" :show-overflow-tooltip="true" />
 
-      <el-table-column fixed="right"  label="领料人" align="center" prop="creator" />
-      <el-table-column fixed="right"  label="领料时间" align="center" prop="createTime" width="180">
-        <template v-slot="scope">
-          <span>{{ parseTime(scope.row.createTime) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column fixed="right" label="操作" align="center"  v-if="optType != 'view'" width="100px" class-name="small-padding fixed-width">
+      <el-table-column label="单位" align="center" prop="unitOfMeasure" />
+      <el-table-column label="领料数量" align="center" prop="quantityIssued" />
+      <el-table-column label="批次号" align="center" prop="batchCode" />
+      <el-table-column label="仓库名称" align="center" prop="warehouseName" />
+      <el-table-column label="库区名称" align="center" prop="locationName" />
+      <el-table-column label="库位名称" align="center" prop="areaName" />
+      <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" />
+      <el-table-column label="操作" align="center"  v-if="optType != 'view'" width="100px" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-<!--
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-if="optType != 'view'" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
--->
+
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-if="optType != 'view'" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
         </template>
       </el-table-column>
@@ -154,12 +131,15 @@
 
 <script>
 import { listIssueline, getIssueline, delIssueline, addIssueline, updateIssueline } from '@/api/mes/wm/issueline';
+import { createElectroformLine, updateElectroformLine, deleteElectroformLine, getElectroformLine, getElectroformLinePage, exportElectroformLineExcel } from "@/api/wms/electroformLine";
+
+
 import StockSelect from '@/components/stockSelect/single.vue';
 import jsQR from "jsqr";
 import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
 
 export default {
-  name: 'Issueline',
+  name: 'electroline',
   components: { StockSelect },
   props: {
     optType: null,
@@ -235,7 +215,7 @@ export default {
     /** 查询生产领料单行列表 */
     getList() {
       this.loading = true;
-      listIssueline(this.queryParams).then(response => {
+      getElectroformLinePage(this.queryParams).then(response => {
         console.log(response.data);
         this.issuelineList = response.data.list;
         this.total = response.data.total;
@@ -306,7 +286,7 @@ export default {
     handleUpdate(row) {
       this.reset();
       const lineId = row.id || this.ids;
-      getIssueline(lineId).then(response => {
+      getElectroformLine(lineId).then(response => {
         this.form = response.data;
         // this.warehouseInfo[0] = response.data.warehouseId;
         // this.warehouseInfo[1] = response.data.locationId;
@@ -351,7 +331,7 @@ export default {
       this.$modal
         .confirm('是否确认删除生产领料单行编号为"' + lineIds + '"的数据项？')
         .then(function () {
-          return delIssueline(lineIds);
+          return deleteElectroformLine(lineIds);
         })
         .then(() => {
           this.getList();
@@ -581,7 +561,6 @@ export default {
       // 获取当前采购单身信息
       getStockInfoByPurchaseId(obj).then(response => {
         console.log(response.data);
-        const barcodeNumber = this.purchaseId;
         this.purchaseId = null;
         let obj = response.data;
         // 追加生产领料表单身信息
@@ -591,8 +570,7 @@ export default {
         if (!isItemExists) {
           // 将当前数据传入领料单单身表
           obj.issueId = this.issueId;
-          obj.barcodeNumber = barcodeNumber;
-          addIssueline(obj).then(response => {
+          createElectroformLine(obj).then(response => {
             this.$modal.msgSuccess('新增成功');
             this.getList();
           });
@@ -600,11 +578,8 @@ export default {
           this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
         }
       });
-    },
-    handleRowClick(row) {
-      // 切换行的选中状态
-      this.$refs.multipleTable.toggleRowSelection(row);
-    },
+
+    }
 
 
   },

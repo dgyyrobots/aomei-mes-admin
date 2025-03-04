@@ -47,7 +47,7 @@
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作"  width="150" fixed="right"  align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pro:route:update']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pro:route:delete']">删除</el-button>
@@ -63,17 +63,17 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="编号" prop="routeCode">
-              <el-input v-model="form.routeCode" placeholder="请输入工艺路线编号" />
+              <el-input :disabled="optType === 'edit'" v-model="form.routeCode" placeholder="请输入工艺路线编号" />
             </el-form-item>
           </el-col>
           <el-col :span="3">
             <el-form-item label-width="80">
-              <el-switch v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成" @change="handleAutoGenChange(autoGenFlag)" v-if="optType != 'view'"> </el-switch>
+              <el-switch :disabled="optType === 'edit'" v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成" @change="handleAutoGenChange(autoGenFlag)" v-if="optType != 'view'"> </el-switch>
             </el-form-item>
           </el-col>
           <el-col :span="7">
             <el-form-item label="名称" prop="routeName">
-              <el-input v-model="form.routeName" placeholder="请输入工艺路线名称" />
+              <el-input :disabled="optType === 'edit'" v-model="form.routeName" placeholder="请输入工艺路线名称" />
             </el-form-item>
           </el-col>
           <el-col :span="6">
@@ -101,6 +101,15 @@
             </el-form-item>
           </el-col>
         </el-row>
+
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="附件" prop="file">
+              <file-upload :isShowTips="isShowDelete" v-model="form.file" :file-type="fileType" :limit="20" :file-size="100"></file-upload>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
       </el-form>
       <el-tabs type="border-card" v-if="form.id != null">
         <el-tab-pane label="组成工序">
@@ -120,14 +129,16 @@
 </template>
 
 <script>
-import { listProroute, getProroute, delProroute, addProroute, updateProroute } from '@/api/mes/pro/proroute';
+import { listProroute, getProroute, delProroute, addProroute, updateProroute, updateProrouteFile } from '@/api/mes/pro/proroute';
 import Routeprocess from './routeprocess';
 import Routeproduct from './product';
 import { genCode } from '@/api/mes/autocode/rule';
+import FileUpload from "@/components/FileUpload/index3.vue";
+import {updateWorkorderAdjuncts} from "@/api/mes/pro/workorder";
 export default {
   name: 'Proroute',
   dicts: ['sys_yes_no'],
-  components: { Routeprocess, Routeproduct },
+  components: {FileUpload, Routeprocess, Routeproduct },
   data() {
     return {
       //自动生成编码
@@ -159,19 +170,36 @@ export default {
         routeName: null,
         routeDesc: null,
         enableFlag: null,
+        file: null,
       },
       // 表单参数
       form: {},
       // 表单校验
       rules: {
-        routeCode: [{ required: true, message: '工艺路线编号不能为空', trigger: 'blur' }],
-        routeName: [{ required: true, message: '工艺路线名称不能为空', trigger: 'blur' }],
-        enableFlag: [{ required: true, message: '是否启用不能为空', trigger: 'blur' }],
+
       },
+      isShowDelete: true,
+      fileType: null,
     };
   },
   created() {
     this.getList();
+  },
+  watch: {
+    'form.file': {
+      handler(newVal, oldVal) {
+        //若当前为修改页面， 则图片更改就进行数据的更新
+        if (this.optType == 'edit' || this.optType == 'view') {
+          this.form.file = newVal;
+          // 开始更新附件
+          updateProrouteFile(this.form).then(response => {
+            //this.$modal.msgSuccess('附件修改成功');
+            return;
+          });
+        }
+
+      }
+    }
   },
   methods: {
     /** 查询工艺路线列表 */

@@ -2,16 +2,16 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="100px">
       <el-form-item label="缺陷描述" prop="defectName">
-        <el-input v-model="queryParams.defectName" placeholder="请输入缺陷描述" clearable @keyup.enter.native="handleQuery" />
+        <el-input v-model="queryParams.defectName" placeholder="请输入缺陷描述" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="检测项类型" prop="indexType">
         <el-select v-model="queryParams.indexType" placeholder="请选择检测项类型" clearable>
-          <el-option v-for="dict in dict.type.mes_index_type" :key="dict.value" :label="dict.label" :value="dict.value" />
+          <el-option v-for="dict in dict.type.mes_index_type" :key="dict.value" :label="dict.label" :value="dict.value"/>
         </el-select>
       </el-form-item>
       <el-form-item label="缺陷等级" prop="defectLevel">
         <el-select v-model="queryParams.defectLevel" placeholder="请选择缺陷等级" clearable>
-          <el-option v-for="dict in dict.type.mes_defect_level" :key="dict.value" :label="dict.label" :value="dict.value" />
+          <el-option v-for="dict in dict.type.mes_defect_level" :key="dict.value" :label="dict.label" :value="dict.value"/>
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -37,16 +37,16 @@
     </el-row>
 
     <el-table v-loading="loading" :data="qcdefectList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="缺陷描述" align="center" prop="defectName" :show-overflow-tooltip="true" />
+      <el-table-column type="selection" width="55" align="center"/>
+      <el-table-column label="缺陷描述" align="center" prop="defectName" :show-overflow-tooltip="true"/>
       <el-table-column label="检测项类型" align="center" prop="indexType">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.mes_index_type" :value="scope.row.indexType" />
+          <dict-tag :options="dict.type.mes_index_type" :value="scope.row.indexType"/>
         </template>
       </el-table-column>
       <el-table-column label="缺陷等级" align="center" prop="defectLevel">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.mes_defect_level" :value="scope.row.defectLevel" />
+          <dict-tag :options="dict.type.mes_defect_level" :value="scope.row.defectLevel"/>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -57,34 +57,43 @@
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList" />
+    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList"/>
 
     <!-- 添加或修改常见缺陷对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="960px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+
         <el-row>
-          <el-col :span="24">
-            <el-form-item label="缺陷描述" prop="defectName">
-              <el-input v-model="form.defectName" type="textarea" placeholder="请输入缺陷描述" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
+          <el-col :span=8>
             <el-form-item label="检测项类型" prop="indexType">
               <el-select v-model="form.indexType" placeholder="请选择检测项类型">
                 <el-option v-for="dict in dict.type.mes_index_type" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="8">
             <el-form-item label="缺陷等级" prop="defectLevel">
               <el-select v-model="form.defectLevel" placeholder="请选择缺陷等级" clearable>
-                <el-option v-for="dict in dict.type.mes_defect_level" :key="dict.value" :label="dict.label" :value="dict.value" />
+                <el-option v-for="dict in dict.type.mes_defect_level" :key="dict.value" :label="dict.label" :value="dict.value"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="所属工序" prop="processId">
+              <el-select v-model="form.processCode" placeholder="请选择工序">
+                <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="缺陷描述" prop="defectName">
+              <el-input v-model="form.defectName" type="textarea" placeholder="请输入缺陷描述"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="cancel" v-if="optType == 'view'">返回</el-button>
@@ -96,8 +105,8 @@
 </template>
 
 <script>
-import { listQcdefect, getQcdefect, delQcdefect, addQcdefect, updateQcdefect } from '@/api/mes/qc/qcdefect';
-
+import {listQcdefect, getQcdefect, delQcdefect, addQcdefect, updateQcdefect} from '@/api/mes/qc/qcdefect';
+import {listProcess} from "@/api/mes/pro/process";
 export default {
   name: 'Qcdefect',
   dicts: ['mes_index_type', 'mes_defect_level'],
@@ -135,14 +144,17 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        defectName: [{ required: true, message: '缺陷描述不能为空', trigger: 'blur' }],
-        indexType: [{ required: true, message: '检测项类型不能为空', trigger: 'change' }],
-        defectLevel: [{ required: true, message: '缺陷等级不能为空', trigger: 'blur' }],
+        defectName: [{required: true, message: '缺陷描述不能为空', trigger: 'blur'}],
+        indexType: [{required: true, message: '检测项类型不能为空', trigger: 'change'}],
+        defectLevel: [{required: true, message: '缺陷等级不能为空', trigger: 'blur'}],
       },
+      //工序选项
+      processOptions: [],
     };
   },
   created() {
     this.getList();
+    this.getProcess();
   },
   methods: {
     /** 查询常见缺陷列表 */
@@ -238,7 +250,8 @@ export default {
           this.getList();
           this.$modal.msgSuccess('删除成功');
         })
-        .catch(() => {});
+        .catch(() => {
+        });
     },
     /** 导出按钮操作 */
     handleExport() {
@@ -250,6 +263,16 @@ export default {
         `qcdefect_${new Date().getTime()}.xlsx`,
       );
     },
+    //查询工序信息
+    getProcess() {
+      // 初始化工序选项
+      this.processOptions = [];
+      listProcess().then(response => {
+        this.processOptions = response.data.list;
+        console.log(this.processOptions)
+      });
+    },
+
   },
 };
 </script>

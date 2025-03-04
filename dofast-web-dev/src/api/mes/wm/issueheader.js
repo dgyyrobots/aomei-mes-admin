@@ -35,6 +35,16 @@ export function updateIssueheader(data) {
   });
 }
 
+
+// 修改生产领料单头
+export function updateIssueMachinery(data) {
+  return request({
+    url: '/wms/issue-header/updateMachinery',
+    method: 'put',
+    data: data,
+  });
+}
+
 // 删除生产领料单头
 export function delIssueheader(issueId) {
   return request({

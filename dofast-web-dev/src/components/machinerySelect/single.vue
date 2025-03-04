@@ -105,6 +105,12 @@ export default {
         children: 'children',
         label: 'machineryTypeName',
       },
+      props: {
+        machineryTypeId: {
+          type: Number,
+          default: null,
+        },
+      },
       // 查询参数
       queryParams: {
         pageNo: 1,
@@ -113,7 +119,7 @@ export default {
         machineryName: null,
         machineryBrand: null,
         machinerySpec: null,
-        machineryTypeId: null,
+        machineryTypeId: this.machineryTypeId,
         machineryTypeCode: null,
         machineryTypeName: null,
         workshopId: null,
@@ -128,6 +134,10 @@ export default {
     machineryTypeName(val) {
       this.$refs.tree.filter(val);
     },
+    machineryTypeId(newVal) {
+      this.queryParams.machineryTypeId = newVal;
+      this.getList();
+    },
   },
   created() {
     this.getList();
@@ -137,6 +147,7 @@ export default {
     /** 查询物料编码列表 */
     getList() {
       this.loading = true;
+      console.log(this.queryParams);
       listMachinery(this.queryParams).then(response => {
         this.machineryList = response.data.list;
         this.total = response.data.total;

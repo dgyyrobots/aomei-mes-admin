@@ -147,7 +147,7 @@ module.exports = {
       })
       .end();
 
-    config.when(process.env.NODE_ENV !== 'development', config => {
+    /*config.when(process.env.NODE_ENV !== 'development', config => {
       config
         .plugin('ScriptExtHtmlWebpackPlugin')
         .after('html')
@@ -207,7 +207,7 @@ module.exports = {
         from: path.resolve(__dirname, './public/robots.txt'), //防爬虫文件
         to: './', //到根目录下
       });
-    });
+    });*/
     config.merge({
       cache: false,
     });

@@ -106,7 +106,7 @@
 </template>
 
 <script>
-import { listQcindex, getQcindex, delQcindex, addQcindex, updateQcindex } from '@/api/mes/qc/qcindex';
+import {listQcindex, getQcindex, delQcindex, addQcindex, updateQcindex, getQcindexByProcessCode} from '@/api/mes/qc/qcindex';
 import { genCode } from '@/api/mes/autocode/rule';
 export default {
   name: 'Qcindex',
