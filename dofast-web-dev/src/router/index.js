@@ -363,7 +363,24 @@ export const constantRoutes = [
         meta: { title: '编辑设备', activeMenu: '/iot/device', noCache: true}
       },
     ]
-  }
+  },
+  /*{
+    path: '/mes/wm/issue',
+    component: Layout,
+    meta: {
+      title: '领料管理',
+      keepAlive: true,
+      icon: 'example'
+    },
+    children: [
+      {
+        path: 'line',
+        component: () => import('@/views/mes/wm/issue/line'),
+        name: 'IssueLine',
+        meta: { title: '领料单行管理' }
+      },
+    ]
+  },*/
 ];
 
 // 防止连续点击多次路由报错

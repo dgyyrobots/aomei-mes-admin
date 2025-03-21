@@ -34,6 +34,7 @@
                    v-hasPermi="['wms:allocated-header:create']">新增
         </el-button>
       </el-col>
+
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" :loading="exportLoading"
                    v-hasPermi="['wms:allocated-header:export']">导出
@@ -45,6 +46,13 @@
                    v-hasPermi="['wms:allocated-header:finsh']">完成
         </el-button>
       </el-col>
+
+      <el-col :span="1.5">
+        <el-button plain icon="el-icon-edit" size="mini" @click="handleIssue" :disabled="single"
+                   v-hasPermi="['wms:allocated-header:createIssue']">生成领料单
+        </el-button>
+      </el-col>
+
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -65,7 +73,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="150" fixed="right" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" width="210" fixed="right" align="center" class-name="small-padding fixed-width">
         <template v-slot="scope">
           <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status != 'FINISHED'" @click="handleExecute(scope.row)" v-hasPermi="['wms:allocated-header:allocated']">执行领出</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
@@ -130,7 +138,15 @@
 
         <el-row>
 
-          <el-col :span="8">
+          <el-col :span="2"></el-col>
+
+          <el-col :span="6">
+            <el-form-item label-width="80">
+              <el-switch style="margin-left: 10%;" v-model="form.bindWorkorder" active-color="#13ce66" inactive-text="绑定工单" @change="handleBindWorkorderChange" v-if="optType != 'view' && form.status == 'PREPARE'"></el-switch>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8" v-if="form.bindWorkorder">
             <el-form-item label="生产工单" prop="workorderCode">
               <el-input v-model="form.workorderCode" placeholder="请选择生产工单">
                 <el-button slot="append" icon="el-icon-search" @click="handleWorkorderSelect"></el-button>
@@ -139,7 +155,7 @@
             <WorkorderSelect ref="woSelect" @onSelected="onWorkorderSelected"></WorkorderSelect>
           </el-col>
 
-          <el-col :span="8">
+          <el-col :span="8" v-if="form.bindWorkorder">
             <el-form-item label="生产任务" prop="taskCode">
               <el-input v-model="form.taskCode" placeholder="请选择生产任务">
                 <el-button slot="append" icon="el-icon-search" @click="handleTaskSelect"></el-button>
@@ -148,13 +164,11 @@
             <ProtaskSelect ref="taskSelect" :workorderId="form.workorderId" @onSelected="onTaskSelected"></ProtaskSelect>
           </el-col>
 
-          <el-col :span="8">
-            <el-form-item label="客户编号">
-              <el-input v-model="form.clientCode" placeholder="请选择生产工单"></el-input>
-            </el-form-item>
-          </el-col>
 
         </el-row>
+
+
+
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
@@ -163,6 +177,7 @@
           </el-col>
         </el-row>
       </el-form>
+      <div v-if="form.bindWorkorder">
       <el-divider content-position="center">物料信息</el-divider>
       <el-card shadow="always" class="box-card">
         <!--追加工单BOM信息-->
@@ -211,6 +226,8 @@
 
       </el-card>
 
+      </div>
+
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
@@ -255,7 +272,7 @@
 
         </el-row>
 
-        <el-row>
+        <el-row v-if="executeForm.bindWorkorder">
 
           <el-col :span="8">
             <el-form-item label="生产工单" prop="workorderCode">
@@ -288,9 +305,9 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-divider content-position="center">BOM信息</el-divider>
+        <el-divider v-if="executeForm.bindWorkorder" content-position="center">BOM信息</el-divider>
         <!-- 物料信息列表，隐藏单选框 -->
-        <el-table v-loading="bomLoadding" max-height="200" :data="bomList" style="width: 100%">
+        <el-table v-if="executeForm.bindWorkorder" v-loading="bomLoadding" max-height="200" :data="bomList" style="width: 100%">
           <el-table-column width="220" label="物料编码" align="center" prop="itemCode"/>
           <el-table-column width="220" label="物料名称" :show-overflow-tooltip="true" align="center" prop="itemName"/>
           <el-table-column width="220" label="需求数量" align="center" prop="quantityAllocated"/>
@@ -318,6 +335,12 @@
           <el-col :span="1.5">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="allocatedHandleAdd">新增</el-button>
           </el-col>
+
+          <el-col :span="1.5">
+            <el-button type="primary" plain icon="el-icon-plus" size="mini" v-hasPermi="['wms:allocated-header:batchAdd']" @click="allocatedHandleBatchAdd">批量新增</el-button>
+          </el-col>
+          <StockSelect ref="stockSelect"  @onSelected="onStockSelected"></StockSelect>
+
           <el-col :span="1.5">
             <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="allocatedSingle" @click="allocatedHandleDelete">删除</el-button>
           </el-col>
@@ -363,7 +386,7 @@
 </template>
 
 <script>
-import {createAllocatedHeader, updateAllocatedHeader, deleteAllocatedHeader, getAllocatedHeader, getAllocatedHeaderPage, exportAllocatedHeaderExcel, initBomInfo, execute, finshAllocatedHeader , updateAllocatedLine} from "@/api/wms/allocatedHeader";
+import {createAllocatedHeader, updateAllocatedHeader, deleteAllocatedHeader, getAllocatedHeader, getAllocatedHeaderPage, exportAllocatedHeaderExcel, initBomInfo, execute, finshAllocatedHeader , updateAllocatedLine, createIssue} from "@/api/wms/allocatedHeader";
 import {genCode} from '@/api/mes/autocode/rule';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
@@ -373,6 +396,8 @@ import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
 import jsQR from "jsqr";
 import ProtaskSelect from '@/components/TaskSelect/taskSelectSingle.vue';
 import {getAllocatedRecordByHeaderId} from  "@/api/wms/allocatedRecord";
+import StockSelect from '@/components/stockSelect/multi.vue';
+
 
 
 export default {
@@ -380,7 +405,8 @@ export default {
   dicts: ['wms_allocated_status'],
   components: {
     ProtaskSelect,
-    WorkorderSelect
+    WorkorderSelect,
+    StockSelect
   },
   data() {
     return {
@@ -447,6 +473,7 @@ export default {
         status: null,
         remark: null,
         createTime: [],
+        bindWorkorder: null, // 默认不绑定工单
       },
       // 表单参数
       form: {},
@@ -455,11 +482,11 @@ export default {
       // 表单校验
       rules: {
         allocatedCode: [{required: true, message: "调拨单编号不能为空", trigger: "blur"}],
-        workorderCode: [{required: true, message: '请指定生产工单', trigger: 'blur'}],
         warehouseId: [{required: true, message: '请指定调入仓库', trigger: 'blur'}],
         locationId: [{required: true, message: '请指定调入库区', trigger: 'blur'}],
         areaId: [{required: true, message: '请指定调入库位', trigger: 'blur'}],
-        taskCode: [{required: true, message: '请指定生产任务', trigger: 'blur'}],
+        workorderCode: [], // 改为动态规格
+        taskCode: [],
       },
       executeDialogVisible: false,
       executeForm: {},
@@ -470,12 +497,27 @@ export default {
       videoHeight: 480,
       cameraPreviewVisible: false, // 控制摄像头弹出框
       scanResult: '', // 存储扫描结果
+
     };
   },
   computed: {
     isEdit() {
       return this.optType === 'edit';
-    }
+    },
+    dynamicRules() {
+      // 如果绑定了工单，则设置工单和任务单为必填
+      if (this.form.bindWorkorder) {
+        return {
+          workorderCode: [{ required: true, message: '请指定生产工单', trigger: 'blur' }],
+          taskCode: [{ required: true, message: '请指定生产任务', trigger: 'blur' }],
+        };
+      }
+      // 如果未绑定工单，则清空相关规则
+      return {
+        workorderCode: [],
+        taskCode: [],
+      };
+    },
   },
   created() {
     this.getList();
@@ -486,6 +528,28 @@ export default {
     cameraPreviewVisible(newVal) {
       if (!newVal) {
         this.stopScanning();
+      }
+    },
+    'purchaseId': function(newVal) {
+      if (typeof newVal === 'string' && newVal.includes('{') && newVal.includes('}')) {
+        console.log('输入内容包含完整的 "{" 和 "}"');
+        let type = '';
+        // 开始基于当前的内容追加产品入库
+
+        // 替换中文引号为英文引号，并解析 JSON
+        newVal = newVal.replace(/“/g, '"').replace(/”/g, '"').replace(/：/g, ':').replace(/，/g, ',');
+        // 移除零宽度非换行空格字符
+        newVal = newVal.replace(/\uFEFF/g, '');
+        // 直接解析 JSON 字符串
+        const data = JSON.parse(newVal);
+        // 检查是否包含 id 属性
+        if (data) {
+          this.purchaseId = data.id;
+          type = data.type;
+        }
+        this.handleBlur(type);
+      } else {
+        console.log('输入内容不包含完整的 "{" 和 "}"');
       }
     }
   },
@@ -584,6 +648,9 @@ export default {
       const id = row.id;
       getAllocatedHeader(id).then(response => {
         this.form = response.data;
+        this.form.bindWorkorder = this.form.bindWorkorder === "true";
+
+
         // 设置领料仓库信息
         this.warehouseInfo = [
           response.data.warehouseId,
@@ -591,6 +658,7 @@ export default {
           response.data.areaId
         ];
         this.bomList = response.data.bomList; // 获取BOM信息
+        this.allocatedList = []; // 清空调拨信息
         this.open = true;
         this.title = "修改调拨单";
         this.optType = 'edit';
@@ -602,11 +670,15 @@ export default {
         if (!valid) {
           return;
         }
+        console.log("this.form: ", this.form);
+        if(!this.form.bindWorkorder){
+          this.form.bindWorkorder = false;
+        }
         if(this.form.warehouseId == null || this.form.locationId == null || this.form.areaId == null){
           this.$modal.msgError("请选择调拨仓库、库区、库位信息！");
           return;
         }
-        if (this.allocatedList.length === 0) {
+        if (this.allocatedList.length === 0 && this.form.bindWorkorder === true) {
           this.$modal.msgError("请选择需要调拨的BOM信息");
           return;
         }
@@ -755,6 +827,8 @@ export default {
       });
       getAllocatedHeader(allocatedId).then(response => {
         this.executeForm = response.data;
+        this.executeForm.bindWorkorder = this.executeForm.bindWorkorder === "true";
+
         // 设置领料仓库信息
         this.warehouseInfo = [
           response.data.warehouseId,
@@ -781,6 +855,10 @@ export default {
         return;
       }
         this.handleBlur();
+    },
+    allocatedHandleBatchAdd(){
+      this.$refs.stockSelect.showFlag = true;
+      this.$refs.stockSelect.getList();
     },
     // 删除调拨数据
     allocatedHandleDelete() {
@@ -858,6 +936,7 @@ export default {
         this.purchaseId = null;
         let obj = response.data;
         obj.quantityAllocated = obj.quantityOnhand
+        console.log("获取的库存信息： ", obj)
         //this.allocatedList.push(obj);
         const isItemCodeExists = this.allocatedList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
         // 如果物料Id不存在，则添加到this.allocatedList
@@ -901,8 +980,7 @@ export default {
           type: 'error'
         });
       }
-    }
-    ,
+    },
 
     startScanning() {
       const deviceId = this.targetCameraId || undefined;
@@ -1034,6 +1112,10 @@ export default {
           this.getList();
           this.$modal.msgSuccess('出库成功');
           this.executeDialogVisible = false;
+        }).catch(error => {
+          this.$message.error('出库失败');
+          this.loading = false;
+          return;
         });
     },
     handleQuantityChange(row) {
@@ -1079,7 +1161,49 @@ export default {
         this.executeForm.processCode = row.processCode;
         this.executeForm.processName = row.processName;
       }
-    }
+    },
+    //物料选择弹出框
+    onStockSelected(row) {
+      if (row != undefined && row != null) {
+        for (let i = 0; i < row.length; i++) {
+          let obj = row[i];
+          obj.quantityAllocated = obj.quantityOnhand
+          //this.allocatedList.push(obj);
+          const isItemCodeExists = this.allocatedList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
+          // 如果物料Id不存在，则添加到this.allocatedList
+          if (!isItemCodeExists) {
+            this.allocatedList.push(obj);
+          } else {
+            this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
+          }
+        }
+      }
+    },
+    handleBindWorkorderChange(value) {
+      this.bindWorkorder = value;
+      // 触发重新校验
+      this.$refs.form.validate();
+    },
+    handleIssue(row){
+      // 确认执行吗?
+      this.$confirm('确认生成领料单吗?').then(() => {
+        this.loading = true;
+        const allocatedId = row.id || this.ids;
+        createIssue(allocatedId).then(() => {
+          this.loading = false;
+          this.getList();
+          this.$modal.msgSuccess('领料单创建成功');
+          this.dialogVisible = false;
+        }).catch(error => {
+          this.$message.error('领料单创建失败');
+          this.loading = false;
+          return;
+        });
+      }).catch(() => {
+        this.$message.info('已取消');
+      });
+    },
+
 
   }
 };

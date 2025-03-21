@@ -424,7 +424,7 @@ export default {
       }
     },
     'wareForm.poNo': function(newVal) {
-      if (newVal.includes('{') && newVal.includes('}')) {
+      if (typeof newVal === 'string' && newVal.includes('{') && newVal.includes('}')) {
         console.log('输入内容包含完整的 "{" 和 "}"');
         // 开始基于当前的内容追加产品入库
         // 直接解析 JSON 字符串
@@ -650,10 +650,11 @@ export default {
         LODOP.ADD_PRINT_TEXT(200, 120, 280, 35, obj.poNo);
 
         LODOP.ADD_PRINT_TEXT(245, 15, 120, 35, "收货数量:");
-        LODOP.ADD_PRINT_TEXT(245, 120, 280, 35, obj.receiveNum);
+        LODOP.ADD_PRINT_TEXT(245, 120, 280, 35, obj.receiveNum + obj.unitOfMeasure);
 
-        LODOP.ADD_PRINT_TEXT(290, 15, 120, 35, "收货单位:");
-        LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.unitOfMeasure);
+        LODOP.ADD_PRINT_TEXT(290, 15, 120, 35, "批次号:");
+        LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.batchCode);
+
 
         LODOP.ADD_PRINT_TEXT(335, 15, 120, 35, "收货日期:");
         let receiveTime = new Date(obj.receiveTime).toISOString().slice(0, 19).replace('T', ' '); // 退料日期
@@ -722,10 +723,10 @@ export default {
         LODOP.ADD_PRINT_TEXT(200, 120, 280, 35, obj.poNo);
 
         LODOP.ADD_PRINT_TEXT(245, 15, 120, 35, "收货数量:");
-        LODOP.ADD_PRINT_TEXT(245, 120, 280, 35, obj.receiveNum);
+        LODOP.ADD_PRINT_TEXT(245, 120, 280, 35, obj.receiveNum + obj.unitOfMeasure);
 
-        LODOP.ADD_PRINT_TEXT(290, 15, 120, 35, "收货单位:");
-        LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.unitOfMeasure);
+        LODOP.ADD_PRINT_TEXT(290, 15, 120, 35, "批次号:");
+        LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.batchCode);
 
         LODOP.ADD_PRINT_TEXT(335, 15, 120, 35, "收货日期:");
         let receiveTime = new Date(obj.receiveTime).toISOString().slice(0, 19).replace('T', ' '); // 退料日期

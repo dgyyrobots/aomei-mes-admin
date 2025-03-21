@@ -60,3 +60,11 @@ export function execute(issueId) {
     method: 'put',
   });
 }
+
+// 更新调拨单头
+export function finshIssueHeader(id) {
+  return request({
+    url: '/wms/issue-header/finsh?id=' + id,
+    method: 'get',
+  })
+}

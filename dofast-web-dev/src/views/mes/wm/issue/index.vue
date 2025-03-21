@@ -18,7 +18,7 @@
       </el-form-item>
 
       <el-form-item label="生产工序" prop="processCode">
-        <el-select v-model="queryParams.processCode" placeholder="请选择生产工序" clearable>
+        <el-select @change="val => { handleProcessChange(val) }" v-model="queryParams.processCode" placeholder="请选择生产工序" clearable>
           <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"/>
         </el-select>
       </el-form-item>
@@ -47,6 +47,10 @@
       </el-col>
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['mes:wm:issueheader:export']">导出</el-button>
+      </el-col>
+
+      <el-col :span="1.5">
+        <el-button type="success" plain icon="el-icon-download" size="mini" :disabled="single" @click="handleFinsh" v-hasPermi="['wms:issue-header:update']">完成</el-button>
       </el-col>
 
       <!--      <el-col :span="1.5">
@@ -123,7 +127,7 @@
                 v-model="warehouseInfo"
                 :options="warehouseOptions"
                 :props="warehouseProps"
-                placeholder="请选择"
+                placeholder="请选择"s
                 @change="handleWarehouseChanged"
               ></el-cascader>
             </el-form-item>
@@ -176,7 +180,7 @@
           </el-col>
         </el-row>
 
-        <el-row>
+<!--        <el-row>
           <el-col :span="12">
             <el-form-item label="设备信息" prop="machineryName">
               <el-input v-model="form.machineryName" placeholder="请选择设备信息" disabled>
@@ -185,7 +189,7 @@
             </el-form-item>
             <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
           </el-col>
-        </el-row>
+        </el-row>-->
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
@@ -352,19 +356,20 @@
 </template>
 
 <script>
-import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, updateIssueMachinery, execute} from '@/api/mes/wm/issueheader';
+import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, updateIssueMachinery, execute, finshIssueHeader} from '@/api/mes/wm/issueheader';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import TaskSelectSingle from "@/components/TaskSelect/taskSelectSingle.vue";
 import {getTreeList} from '@/api/mes/wm/warehouse';
 import {genCode} from '@/api/mes/autocode/rule';
 import Issueline from './line.vue';
-import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
+import {deleteGoods, getStockInfoByPurchaseId} from "@/api/purchase/goods";
 import {createFeedLine, getByIssueId, createFeedLineList, createFeedLineListByIssueId} from "@/api/wms/feedLine";
 import jsQR from "jsqr";
 import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
 import {listProcess} from '@/api/mes/pro/process';
 import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
+import {finshAllocatedHeader} from "@/api/wms/allocatedHeader";
 
 
 export default {
@@ -453,6 +458,8 @@ export default {
     };
   },
   created() {
+    // 从 localStorage 恢复
+    this.queryParams.processCode = localStorage.getItem('cachedProcessCode') || null;
     this.getList();
     this.getWarehouseList();
     // 初始化工序选项
@@ -470,7 +477,7 @@ export default {
       }
     },
     // 监听设备变更
-    'form.machineryCode': {
+    /*'form.machineryCode': {
       handler(newVal) {
         if(!newVal){
           return;
@@ -488,7 +495,7 @@ export default {
           });
         }
       }
-    }
+    }*/
   },
   methods: {
     /** 查询生产领料单头列表 */
@@ -641,10 +648,10 @@ export default {
               this.$modal.msgError('请选择生产任务');
               return;
             }
-            if (this.form.machineryName == null || this.form.machineryName == undefined || this.form.machineryName == '') {
+            /*if (this.form.machineryName == null || this.form.machineryName == undefined || this.form.machineryName == '') {
               this.$modal.msgError('请选择生产设备');
               return;
-            }
+            }*/
             updateIssueheader(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
               this.open = false;
@@ -681,7 +688,18 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-
+      const id = row.id || this.ids;
+      this.$modal
+        .confirm('是否确认删除编号为"' + id + '"的数据项?')
+        .then(function () {
+          return delIssueheader(id);
+        })
+        .then(() => {
+          this.getList();
+          this.$modal.msgSuccess('删除成功');
+        })
+        .catch(() => {
+        });
     },
     /** 导出按钮操作 */
     handleExport() {
@@ -832,17 +850,20 @@ export default {
         obj.areaId = this.feedLineList[i].areaId;
         obj.areaCode = this.feedLineList[i].areaCode;
         obj.areaName = this.feedLineList[i].areaName;
+        obj.machineryName = this.feedLineList[i].machineryName;
+        obj.machineryCode = this.feedLineList[i].machineryCode;
+        obj.machineryId = this.feedLineList[i].machineryId;
+        obj.barcodeNumber = this.feedLineList[i].barcodeNumber;
         finList.push(obj);
       }
-      console.log(finList);
+      console.log("上料详情数据: " , finList);
       createFeedLineList(finList).then(response => {
         this.$modal.msgSuccess("上料成功");
         this.feedingOpen = false;
         this.getList();
       });
     },
-
-    handleMachineryAdd() {
+    /*handleMachineryAdd() {
       this.$refs.machinerySelect.showFlag = true;
     },
     //设备资源选择回调
@@ -854,11 +875,34 @@ export default {
         console.log(this.form.machineryName);
         console.log(this.form.machineryCode);
       }
-    },
+    },*/
     handleRowClick(row) {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
     },
+    handleFinsh(row){
+      this.reset();
+      const ids = row.id || this.ids;
+      this.loading = true;
+      // 完成
+      finshIssueHeader(ids).then(response => {
+        this.$modal.msgSuccess("成功");
+        this.open = false;
+        this.loading = false;
+        this.getList();
+      });
+    },
+    handleProcessChange(val) {
+      if (val) {
+        localStorage.setItem('cachedProcessCode', val);
+      } else {
+        localStorage.removeItem('cachedProcessCode');
+      }
+    }
   },
+  activated() {
+    // 当从缓存中重新激活组件时，可以在此更新数据
+    this.getList();
+  }
 };
 </script>

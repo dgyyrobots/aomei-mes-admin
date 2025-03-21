@@ -201,9 +201,9 @@ export default {
         });*/
         //const fullUrl = `http://${window.location.hostname}/minio/${fileName}`;
         console.log(window.location.hostname);
-        const fullUrl = "http://172.18.12.250:9000/ammes/"+fileName;
+        //const fullUrl = "http://172.18.12.250:9000/ammes/"+fileName;
 
-        this.uploadList.push({ name: fileName, url: fullUrl });
+        this.uploadList.push({ name: fileName, url: fileName });
         this.uploadedSuccessfully();
       } else {
         this.number--;

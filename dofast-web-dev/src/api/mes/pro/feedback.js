@@ -52,8 +52,15 @@ export function execute(recordId) {
 //增加-审核是否通过
 export function executes(data) {
   return request({
-    url: `/mes/pro/feedback/update-feedback-status?id=${data.id}&status=${data.status}`,
+    url: `/mes/pro/feedback/update-feedback-status`,
     method: 'put',
+    params: {
+      id: data.id,
+      status: data.status,
+      warehouseId: data.warehouseId,
+      locationId: data.locationId,
+      areaId: data.areaId
+    }
     // data: data
   });
 }
@@ -99,5 +106,14 @@ export function mergeFeedback(data) {
     url: '/mes/pro/feedback/mergeFeedback',
     method: 'post',
     data: data,
+  });
+}
+
+// 查询报工后的存储仓库
+export function initWarehouse(query) {
+  return request({
+    url: '/mes/pro/feedback/initWarehouse',
+    method: 'get',
+    params: query,
   });
 }

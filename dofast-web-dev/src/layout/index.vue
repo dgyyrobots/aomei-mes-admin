@@ -13,7 +13,14 @@
         <settings />
       </right-panel>
     </div>
+
+    <!-- 动态缓存路由组件 -->
+    <keep-alive>
+      <router-view v-if="$route.meta.keepAlive"></router-view>
+    </keep-alive>
+
   </div>
+
 </template>
 
 <script>

@@ -20,9 +20,14 @@
           <el-form-item label="入库批次号" prop="batchCode">
             <el-input v-model="queryParams.batchCode" placeholder="请输入入库批次号" clearable @keyup.enter.native="handleQuery" />
           </el-form-item>
-          <el-form-item label="仓库名称" prop="warehouseName">
+<!--          <el-form-item label="仓库名称" prop="warehouseName">
             <el-input v-model="queryParams.warehouseName" placeholder="请输入仓库名称" clearable @keyup.enter.native="handleQuery" />
+          </el-form-item>-->
+
+          <el-form-item label="仓库信息" prop="warehouse">
+            <el-cascader v-model="queryParams.warehouse" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
           </el-form-item>
+
           <el-form-item label="供应商编号" prop="vendorCode">
             <el-input v-model="queryParams.vendorCode" placeholder="请输入供应商编号" clearable @keyup.enter.native="handleQuery" />
           </el-form-item>
@@ -82,6 +87,8 @@
 import { listWmstock, getWmstock, delWmstock, addWmstock, updateWmstock } from '@/api/mes/wm/wmstock';
 import { treeselect } from '@/api/mes/md/itemtype';
 import Treeselect from '@riophae/vue-treeselect';
+import {getTreeList} from '@/api/mes/wm/warehouse';
+
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
 export default {
   name: 'Wmstock',
@@ -137,9 +144,17 @@ export default {
         quantityOnhand: null,
         workorderCode: null,
         expireDate: null,
+        warehouse: null,
       },
       // 表单参数
       form: {},
+      // 仓库数据
+      warehouseOptions: [],
+      warehouseProps: {
+        multiple: false,
+        value: 'pId',
+        label: 'pName',
+      },
     };
   },
   watch: {
@@ -151,11 +166,13 @@ export default {
   created() {
     this.getList();
     this.getTreeselect();
+    this.getWarehouseList();
   },
   methods: {
     /** 查询库存记录列表 */
     getList() {
       this.loading = true;
+      console.log(this.queryParams);
       listWmstock(this.queryParams).then(response => {
         this.wmstockList = response.data.list;
         this.total = response.data.total;
@@ -203,6 +220,21 @@ export default {
         },
         `wmstock_${new Date().getTime()}.xlsx`,
       );
+    },
+    // 初始化仓库数据
+    getWarehouseList() {
+      getTreeList().then(response => {
+        this.warehouseOptions = response.data;
+        console.log(this.warehouseOptions);
+      });
+    },
+    //选择默认的仓库、库区、库位
+    handleWarehouseChanged(obj) {
+      if (obj != null) {
+        this.queryParams.warehouseId = obj[0]; // 仓库
+        this.queryParams.locationId = obj[1];// 库区
+        this.queryParams.areaId = obj[2]; // 库位
+      }
     },
   },
 };

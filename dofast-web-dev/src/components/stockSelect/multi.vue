@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="人员选择" v-if="showFlag" :visible.sync="showFlag" :modal="false" width="80%" center>
+  <el-dialog title="物料选择" v-if="showFlag" :visible.sync="showFlag" :modal="false" width="80%" center>
     <el-row :gutter="20">
       <el-col :span="4" :xs="24">
         <div class="head-container">
@@ -20,9 +20,14 @@
           <el-form-item label="入库批次号" prop="batchCode">
             <el-input v-model="queryParams.batchCode" placeholder="请输入入库批次号" clearable @keyup.enter.native="handleQuery" />
           </el-form-item>
-          <el-form-item label="仓库名称" prop="warehouseName">
+<!--          <el-form-item label="仓库名称" prop="warehouseName">
             <el-input v-model="queryParams.warehouseName" placeholder="请输入仓库名称" clearable @keyup.enter.native="handleQuery" />
+          </el-form-item>-->
+
+          <el-form-item label="仓库信息" prop="warehouse">
+            <el-cascader v-model="queryParams.warehouse" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
           </el-form-item>
+
           <el-form-item label="供应商编号" prop="vendorCode">
             <el-input v-model="queryParams.vendorCode" placeholder="请输入供应商编号" clearable @keyup.enter.native="handleQuery" />
           </el-form-item>
@@ -39,9 +44,9 @@
         </el-form>
 
         <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
+<!--          <el-col :span="1.5">
             <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['wm:wmstock:export']">导出</el-button>
-          </el-col>
+          </el-col>-->
           <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
@@ -81,6 +86,7 @@ import { listWmstock } from '@/api/mes/wm/wmstock';
 import { treeselect } from '@/api/mes/md/itemtype';
 import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
+import {getTreeList} from "@/api/mes/wm/warehouse";
 export default {
   name: 'WmstockMultiSelect',
   components: { Treeselect },
@@ -134,14 +140,28 @@ export default {
         vendorNick: null,
         quantityOnhand: null,
         expireDate: null,
+        warehouse: null,
       },
       // 表单参数
       form: {},
+      itemTypeName: undefined,
+      defaultProps: {
+        children: 'children',
+        label: 'label',
+      },
+      // 仓库数据
+      warehouseOptions: [],
+      warehouseProps: {
+        multiple: false,
+        value: 'pId',
+        label: 'pName',
+      },
     };
   },
   created() {
     this.getList();
     this.getTreeselect();
+    this.getWarehouseList();
   },
   methods: {
     /** 查询库存记录列表 */
@@ -184,7 +204,38 @@ export default {
       this.ids = selection.map(item => item.materialStockId);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
+      this.selectedRows = selection;
     },
+    //确定选中
+    confirmSelect() {
+      if (!this.selectedRows) {
+        this.$notify({
+          title: '提示',
+          type: 'warning',
+          message: '请至少选择一条数据!',
+        });
+        return;
+      }
+      console.log(this.selectedRows);
+      this.$emit('onSelected', this.selectedRows);
+      this.showFlag = false;
+    },
+    // 初始化仓库数据
+    getWarehouseList() {
+      getTreeList().then(response => {
+        this.warehouseOptions = response.data;
+        console.log(this.warehouseOptions);
+      });
+    },
+    //选择默认的仓库、库区、库位
+    handleWarehouseChanged(obj) {
+      if (obj != null) {
+        this.queryParams.warehouseId = obj[0]; // 仓库
+        this.queryParams.locationId = obj[1];// 库区
+        this.queryParams.areaId = obj[2]; // 库位
+      }
+    },
+
   },
 };
 </script>

@@ -42,3 +42,13 @@ export function delIssueline(lineId) {
     method: 'delete',
   });
 }
+
+
+// 修改生产领料单行
+export function updateEnable(data) {
+  return request({
+    url: '/mes/wms/issue-line/updateEnable',
+    method: 'put',
+    data: data,
+  });
+}

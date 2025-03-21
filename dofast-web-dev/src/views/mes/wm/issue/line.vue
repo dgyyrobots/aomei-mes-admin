@@ -1,12 +1,20 @@
 <template>
   <div class="app-container">
     <el-row v-if="optType != 'view'" :gutter="10" class="mb8">
-      <el-col :span="8">
+      <el-col :span="4">
           <el-input v-model="purchaseId" placeholder="请输入"/>
       </el-col>
-      <el-col :span="4">
+      <el-col :span="3">
         <el-button type="primary" round @click="getCameraInfo()">摄像头</el-button>
       </el-col>
+
+      <el-col :span="4">
+          <el-input v-model="form.machineryName" placeholder="请选择设备信息" disabled>
+            <el-button slot="append" icon="el-icon-search" @click="handleMachineryAdd"></el-button>
+          </el-input>
+        <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
+      </el-col>
+
 
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleBlur" v-hasPermi="['wms:issue-header:create']">新增 </el-button>
@@ -17,10 +25,15 @@
       <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
       </el-col>
+
+      <el-col :span="1.5">
+        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleSwitchChange" v-hasPermi="['wms:issue-header:update']">启用 </el-button>
+      </el-col>
+
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="issuelineList" @selection-change="handleSelectionChange" @row-click="handleRowClick">
+    <el-table v-loading="loading" :data="issuelineList" @selection-change="handleSelectionChange" ><!--@row-click="handleRowClick"-->
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column type="index" label="序号" width="50" align="center" />
       <el-table-column label="条码编号" align="center" prop="barcodeNumber" />
@@ -34,6 +47,18 @@
           <span v-else>已上料</span>
         </template>
       </el-table-column>
+
+      <el-table-column label="启用状态" align="center" prop="enableFlag" >
+        <template v-slot="scope">
+          <el-switch
+            disabled
+            v-model="scope.row.enableFlag"
+            active-value="true"
+            active-color="#13ce66">
+          </el-switch>
+        </template>
+      </el-table-column>
+
       <el-table-column label="报工状态" align="center" prop="feedbackStatus" >
         <template v-slot="scope">
           <span v-if="scope.row.feedbackStatus === 'N'">未报工</span>
@@ -153,14 +178,15 @@
 </template>
 
 <script>
-import { listIssueline, getIssueline, delIssueline, addIssueline, updateIssueline } from '@/api/mes/wm/issueline';
+import { listIssueline, getIssueline, delIssueline, addIssueline, updateIssueline , updateEnable} from '@/api/mes/wm/issueline';
 import StockSelect from '@/components/stockSelect/single.vue';
 import jsQR from "jsqr";
 import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
+import MachinerySelectSingle from "@/components/machinerySelect/single.vue";
 
 export default {
   name: 'Issueline',
-  components: { StockSelect },
+  components: {MachinerySelectSingle, StockSelect },
   props: {
     optType: null,
     issueId: null,
@@ -213,7 +239,12 @@ export default {
         areaName: null,
       },
       // 表单参数
-      form: {},
+      form: {
+        // 设备信息
+        machineryName: '',
+        machineryId: '',
+        machineryCode: ''
+      },
       // 表单校验
       rules: {
         itemId: [{ required: true, message: '产品物料不能为空', trigger: 'blur' }],
@@ -226,17 +257,44 @@ export default {
       cameraPreviewVisible: false, // 控制摄像头弹出框
       scanResult: '', // 存储扫描结果
       purchaseId: '', // 采购单ID
+
     };
   },
   created() {
+    // 初始化时读取设备缓存
+    this.loadMachineryCache()
     this.getList();
+  },
+  watch: {
+    'purchaseId': function(newVal) {
+      if(!newVal){
+        return;
+      }
+      if (typeof newVal === 'string' && newVal.includes('{') && newVal.includes('}')) {
+        console.log('输入内容包含完整的 "{" 和 "}"');
+        let type = '';
+        // 替换中文引号为英文引号，并解析 JSON
+        newVal = newVal.replace(/“/g, '"').replace(/”/g, '"').replace(/：/g, ':').replace(/，/g, ',');
+        // 移除零宽度非换行空格字符
+        newVal = newVal.replace(/\uFEFF/g, '');
+        // 直接解析 JSON 字符串
+        const data = JSON.parse(newVal);
+        // 检查是否包含 id 属性
+        if (data) {
+          this.purchaseId = data.id;
+          type = data.type;
+        }
+        this.handleBlur(type);
+      } else {
+        console.log('输入内容不包含完整的 "{" 和 "}"');
+      }
+    }
   },
   methods: {
     /** 查询生产领料单行列表 */
     getList() {
       this.loading = true;
       listIssueline(this.queryParams).then(response => {
-        console.log(response.data);
         this.issuelineList = response.data.list;
         this.total = response.data.total;
         this.loading = false;
@@ -519,8 +577,7 @@ export default {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
-    }
-    ,
+    },
     // 显示摄像头预览弹出框
     showCameraPreview() {
       this.cameraPreviewVisible = true;
@@ -528,6 +585,8 @@ export default {
     },
 
     handleBlur: function(type) {
+      console.log("当前选中的设备信息: ",  this.form.machineryId, this.form.machineryCode, this.form.machineryName);
+
       let finType = '';
       if(type){
         finType = type;
@@ -536,7 +595,6 @@ export default {
       if (!this.purchaseId) {
         return;
       }
-
       if (isNaN(this.purchaseId)) {
         if ((this.purchaseId.includes('{') || this.purchaseId.includes('[') || this.purchaseId.includes('}') || this.purchaseId.includes(']'))) {
           this.purchaseId = this.purchaseId.trim();
@@ -592,6 +650,10 @@ export default {
           // 将当前数据传入领料单单身表
           obj.issueId = this.issueId;
           obj.barcodeNumber = barcodeNumber;
+          obj.machineryId = this.form.machineryId;
+          obj.machineryCode = this.form.machineryCode;
+          obj.machineryName = this.form.machineryName;
+          console.log("obj信息 :", obj);
           addIssueline(obj).then(response => {
             this.$modal.msgSuccess('新增成功');
             this.getList();
@@ -599,13 +661,72 @@ export default {
         } else {
           this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
         }
-      });
+      }).catch(error => {
+        console.log(error);
+        this.$message.error(`获取物料信息失败!`);
+        this.purchaseId = null;
+        });
     },
     handleRowClick(row) {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
     },
+    handleSwitchChange(row){
+      const ids = row.id || this.ids;
+      if(!ids || ids.length === 0){
+        this.$message.error(`请至少选中一行数据!`);
+        return;
+      }
+      updateEnable(ids).then(response => {
+        this.$message.success(`物料状态变更成功!`);
+        this.getList();
+      });
+    },
+    handleMachineryAdd() {
+      this.$refs.machinerySelect.showFlag = true;
+    },
 
+    // 加载设备缓存
+    loadMachineryCache() {
+      try {
+        const cached = localStorage.getItem('cachedMachinery')
+        if (cached) {
+          const { id, code, name } = JSON.parse(cached)
+          this.form.machineryId = id
+          this.form.machineryCode = code
+          this.form.machineryName = name
+        }
+      } catch (e) {
+        console.error('设备缓存读取失败', e)
+        localStorage.removeItem('cachedMachinery')
+      }
+    },
+
+    // 设备选择回调
+    onMachineryAdd(rows) {
+      if (rows) {
+        this.form.machineryId = rows.id
+        this.form.machineryCode = rows.machineryCode
+        this.form.machineryName = rows.machineryName
+
+        // 保存到缓存
+        localStorage.setItem('cachedMachinery', JSON.stringify({
+          id: rows.id,
+          code: rows.machineryCode,
+          name: rows.machineryName
+        }))
+      } else {
+        this.clearMachineryCache()
+      }
+    },
+
+    // 清理设备缓存
+    clearMachineryCache() {
+      localStorage.removeItem('cachedMachinery')
+      this.form.machineryId = ''
+      this.form.machineryCode = ''
+      this.form.machineryName = ''
+    },
 
   },
 };

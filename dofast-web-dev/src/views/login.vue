@@ -194,6 +194,14 @@ export default {
           this.tenantEnable = true;
         }
       });
+    const searchParams = new URLSearchParams(window.location.search);
+    const params = Object.fromEntries(searchParams.entries());
+    if (params != null) {
+      if (params.token != null) {
+        localStorage.setItem('ACCESS_TOKEN', params.token);
+        location.reload();
+      }
+    }
     // 租户开关
     // this.tenantEnable = getTenantEnable();
     // if (this.tenantEnable) {

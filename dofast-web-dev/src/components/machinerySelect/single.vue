@@ -228,6 +228,9 @@ export default {
         this.selectedRows = row;
         this.$emit('onSelected', this.selectedRows);
         this.showFlag = false;
+
+        // 主动触发父级缓存更新
+        this.$parent.loadMachineryCache && this.$parent.loadMachineryCache()
       }
     },
     // 单选选中数据
@@ -248,6 +251,9 @@ export default {
       }
       this.$emit('onSelected', this.selectedRows);
       this.showFlag = false;
+
+      // 主动触发父级缓存更新
+      this.$parent.loadMachineryCache && this.$parent.loadMachineryCache()
     },
   },
 };

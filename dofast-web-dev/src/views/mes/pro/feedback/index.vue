@@ -28,7 +28,7 @@
         <el-input v-model="queryParams.itemName" placeholder="请输入产品物料名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="生产工序" prop="processCode">
-        <el-select v-model="queryParams.processCode" placeholder="请选择生产工序" clearable>
+        <el-select @change="val => { handleProcessChange(val) }" v-model="queryParams.processCode" placeholder="请选择生产工序" clearable>
           <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"/>
         </el-select>
       </el-form-item>
@@ -263,40 +263,22 @@
             </el-form-item>
           </el-col>
 
-          <!--          <el-col :span="8">
-                      <el-form-item label="异常缺陷" prop="defectId">
-                        <el-select v-model="form.defectId" placeholder="请选择" multiple @change="defectChange">
-                          <el-option v-for="item in processDefectList" :key="item.id" :label="item.defectName" :value="item.id"></el-option>
-                        </el-select>
-                      </el-form-item>
-                    </el-col>-->
-          <!--          <el-col :span="8">
-                      <el-form-item label="异常缺陷" prop="defectId">
-                        &lt;!&ndash;              <el-cascader
-                                        ref="cascader"
-                                        v-model="form.cascaderValues"
-                                        :options="cascaderOptions"
-                                        :props="cascaderProps"
-                                        placeholder="请选择缺陷问题及区间"
-                                        @change="handleChange"
-                                        filterable
-                                        multiple
-                                        :loading="loadingMore">
-                                      </el-cascader>&ndash;&gt;
-                        <el-cascader
-                          ref="cascader"
-                          v-model="form.cascaderValues"
-                          :options="cascaderOptions"
-                          :props="cascaderProps"
-                          placeholder="请选择缺陷问题及区间"
-                          filterable
-                          multiple
-                          :lazy="true"
-                          @lazy-load="lazyLoad"
-                          style="width: 100%"
-                        ></el-cascader>
-                      </el-form-item>
-                    </el-col>-->
+          <el-col :span="8">
+            <el-form-item label="设备信息" prop="machineryName">
+              <el-input v-model="form.machineryName" placeholder="请选择设备信息" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleMachineryAdd"></el-button>
+              </el-input>
+            </el-form-item>
+            <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item v-if=" form.status == 'APPROVING' " label="仓库信息">
+              <el-cascader v-model="wareHouse" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
+            </el-form-item>
+          </el-col>
+
+
         </el-row>
 
         <el-collapse v-model="activeName" accordion>
@@ -387,8 +369,8 @@
     </el-dialog>
 
 
-    <!--  入库  -->
-    <el-dialog :title="title" :visible.sync="wareOpen" width="75%" v-dialogDrag append-to-body>
+    <!--  入库--报废  -->
+<!--    <el-dialog :title="title" :visible.sync="wareOpen" width="75%" v-dialogDrag append-to-body>
       <el-form ref="form" :model="wareForm" :rules="rules" label-width="80px">
         <el-row :gutter="20">
           <el-col :span="8">
@@ -399,14 +381,10 @@
           <el-col :span="4">
             <el-button type="primary" round @click="getCameraInfo()">摄像头</el-button>
           </el-col>
-          <!--          <el-col :span="12">
-                      <el-form-item label="仓库信息" prop="goodsNumber">
-                        <el-cascader v-model="wareForm.wareHouse" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
-                      </el-form-item>
-                    </el-col>-->
+
         </el-row>
 
-        <!-- 设置el-table的高度 -->
+        &lt;!&ndash; 设置el-table的高度 &ndash;&gt;
         <el-table v-loading="loading" :data="wareList" height="500">
           <el-table-column label="产品编号" align="center" prop="itemCode"/>
           <el-table-column label="产品名称" align="center" prop="itemName"/>
@@ -429,7 +407,7 @@
         <el-button type="primary" @click="submitWareForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
-    </el-dialog>
+    </el-dialog>-->
 
     <!-- 摄像头预览弹出框 -->
     <el-dialog title="摄像头预览" :visible.sync="cameraPreviewVisible" width="50%" v-dialogDrag append-to-body>
@@ -502,7 +480,7 @@
 </template>
 
 <script>
-import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback, mergeFeedback} from '@/api/mes/pro/feedback';
+import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback, mergeFeedback, initWarehouse} from '@/api/mes/pro/feedback';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import UserSingleSelect from '@/components/userSelect/single.vue';
@@ -513,16 +491,18 @@ import {getTreeList} from '@/api/mes/wm/warehouse';
 import {createPrintLog, getPrintLogPage} from "@/api/report/printLog";
 import jsQR from "jsqr";
 import {getByTeamCodeAndShiftInfo, getTeammemberByTeamCode} from '@/api/mes/cal/teammember';
+import {listTeam} from "@/api/mes/cal/team";
 import '@/utils/CLodopfuncs2.js';
 import {getByCode} from '@/api/mes/pro/processDefect';
 import {getQcdefectByCode} from '@/api/mes/qc/qcdefect';
 import {listProcess} from "@/api/mes/pro/process";
 import {getQcindexByProcessCode} from '@/api/mes/qc/qcindex';
+import MachinerySelectSingle from "@/components/machinerySelect/single.vue";
 
 
 export default {
   name: 'Feedback',
-  components: {WorkorderSelect, WorkstationSelect, UserSingleSelect, ProtaskSelect},
+  components: {MachinerySelectSingle, WorkorderSelect, WorkstationSelect, UserSingleSelect, ProtaskSelect},
   dicts: ['mes_order_status', 'mes_feedback_type', 'mes_shift_info'],
   data() {
     return {
@@ -640,11 +620,16 @@ export default {
       processOptions: [], // 工序选项
       activeName: '1',
       qcIndexList: [], // 机长自检列表
+      wareHouse: [], // 仓库信息
     };
   },
   created() {
+    // 从 localStorage 恢复
+    this.queryParams.processCode = localStorage.getItem('cachedProcessCode') || null;
     this.getList();
     this.getProcess();
+    this.getWarehouseList();
+
   },
   methods: {
     /** 查询生产报工记录列表 */
@@ -665,6 +650,7 @@ export default {
       this.cascaderOptions = []; // 清空缺陷级联选择器
       //this.removeScrollListener();
       this.wareList = []; // 清空入库列表
+      this.wareHouse = [];
       this.reset();
     },
     // 表单重置
@@ -710,7 +696,10 @@ export default {
         defectId: null,
         principalName: null,
         principalId: null,
-        cascaderValues: []  // 存储级联选择的值
+        cascaderValues: [],  // 存储级联选择的值
+        machineryCode: null,
+        machineryName: null,
+        machineryId: null,
       };
       this.resetForm('form');
       this.teamMembers = []; // 清空班组成员
@@ -743,16 +732,19 @@ export default {
       this.reset();
       this.open = true;
       this.form.feedbackTime = new Date(); // 追加当前时间展示
+      this.form.feedbackType ="UNI"; // 默认选中
       this.title = '添加生产报工记录';
       this.optType = 'add';
+      // 初始化时读取设备缓存
+      this.loadMachineryCache();
     },
     /** 修改按钮操作 */
-    handleUpdate(row) {
+    async handleUpdate(row) {
       this.reset();
       const recordId = row.id || this.ids;
-      getFeedback(recordId).then(response => {
+      await getFeedback(recordId).then(response => {
         this.form = response.data;
-        console.log(this.form);
+        console.log("获取的表单信息: " , this.form);
         for (let i = 0; i < this.form.memberList.length; i++) {
           this.form.memberList[i].nickname = this.form.memberList[i].nickName;
           this.form.memberList[i].username = this.form.memberList[i].userName;
@@ -762,7 +754,6 @@ export default {
           ...item,
           index: index + 1  // 从1开始编号
         }));
-        console.log(this.processDefectList);
         /* if (this.form.processCode) {
           // 追加缺陷下拉框
           getByCode(this.form.processCode).then(response => {
@@ -770,17 +761,34 @@ export default {
             this.changeDefectList();
           });
         }*/
-
-        this.open = true;
-        this.title = '修改生产报工记录';
-        this.optType = 'edit';
       });
+
+      await initWarehouse({
+        workorderId: this.form.workorderId,
+        taskId: this.form.taskId
+      }).then(response => {
+        this.wareHouse = [
+          response.warehouse.id,
+          response.location.id,
+          response.area.id
+        ];
+        this.form.warehouseId = response.warehouse.id;
+        this.form.locationId = response.location.id;
+        this.form.areaId = response.area.id;
+        console.log("this.wareHouse" , this.wareHouse);
+        this.$nextTick(() => {
+          this.open = true;
+          this.title = '修改生产报工记录';
+          this.optType = 'edit';
+        });
+      });
+
     },
     // 查询明细按钮操作
-    handleView(row) {
+    async handleView(row) {
       this.reset();
       const recordId = row.id || this.ids;
-      getFeedback(recordId).then(response => {
+      await getFeedback(recordId).then(response => {
         // 在此处更改 审核人
         // response.data.recordNick = response.data.recordNick ? response.data.recordNick : this.$store.state.user.nickname;
         console.log(response.data);
@@ -802,10 +810,28 @@ export default {
             this.changeDefectList();
           });
         }*/
-        this.open = true;
-        this.title = '查看生产报工单信息';
-        this.optType = 'view';
       });
+
+      await initWarehouse({
+        workorderId: this.form.workorderId,
+        taskId: this.form.taskId
+      }).then(response => {
+        this.wareHouse = [
+          response.warehouse.id,
+          response.location.id,
+          response.area.id
+        ];
+        this.form.warehouseId = response.warehouse.id;
+        this.form.locationId = response.location.id;
+        this.form.areaId = response.area.id;
+        console.log("this.wareHouse" , this.wareHouse);
+        this.$nextTick(() => {
+          this.open = true;
+          this.title = '查看生产报工记录';
+          this.optType = 'view';
+        });
+      });
+
     },
     /** 提交按钮 */
     submitForm() {
@@ -844,9 +870,9 @@ export default {
           return;
         }
 
+
         if (valid) {
           this.form.feedbackMemberList = this.teamMembers;
-          console.log(this.form.processDefectList);
           if (this.form.id != null) {
             updateFeedback(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
@@ -888,10 +914,16 @@ export default {
     //执行
     handleExecute() {
       const recordIds = this.form.id;
+
+      if (!this.form.warehouseId && !this.form.locationId && !this.form.areaId) {
+        this.$message.error(`请选择仓库信息！`);
+        return;
+      }
+
       this.$modal
         .confirm('确认执行报工？')
-        .then(function () {
-          return executes({id: recordIds, status: 'APPROVED'}); //审核通过APPROVED 不通过UNAPPROVED
+        .then(() => {
+          return executes({id: recordIds, status: 'APPROVED', warehouseId: this.form.warehouseId, locationId: this.form.locationId, areaId: this.form.areaId}); //审核通过APPROVED 不通过UNAPPROVED
         })
         .then(() => {
           this.getList();
@@ -906,10 +938,15 @@ export default {
     // 审核不通过
     handleReject() {
       const recordIds = this.form.id;
+      if (!this.form.warehouseId && !this.form.locationId && !this.form.areaId) {
+        this.$message.error(`请选择仓库信息！`);
+        return;
+      }
+
       this.$modal
         .confirm('确认拒审报工？')
         .then(function () {
-          return executes({id: recordIds, status: 'UNAPPROVED'}); //审核通过APPROVED 不通过UNAPPROVED
+          return executes({id: recordIds, status: 'UNAPPROVED', warehouseId: this.form.warehouseId, locationId: this.form.locationId, areaId: this.form.areaId}); //审核通过APPROVED 不通过UNAPPROVED
         })
         .then(() => {
           this.getList();
@@ -980,12 +1017,22 @@ export default {
         this.form.processName = row.processName;
         this.form.teamCode = row.attr1;
       }
+      if(this.form.processCode === 'AM005'){
+        this.form.unitOfMeasure = '米';
+      }
       if (this.form.teamCode) {
         // 基于当前班组编码获取班组人员
+        /*listTeam({teamCode: this.form.teamCode}).then(response => {
+          const result = response.data.list[0];
+          console.log("result: ", result);
+          this.form.machineryCode = result.machineryCode;
+          this.form.machineryName = result.machineryName;
+          this.form.machineryId = result.machineryId;
+        });*/
         const shiftInfo = this.form.shiftInfo || 'default'; // 使用默认班次或当前选择的班次
         getByTeamCodeAndShiftInfo(this.form.teamCode, shiftInfo).then(response => {
           let teamInfo = response.data;
-          console.log("teamInfo: " + teamInfo);
+          console.log("teamInfo: ", teamInfo);
           this.form.principalName = teamInfo[0].principalName;
           this.form.principalId = teamInfo[0].principalId;
           this.teamMembers = []; // 清空当前班组成员列表
@@ -1105,10 +1152,10 @@ export default {
         LODOP.ADD_PRINT_TEXT(200, 120, 280, 35, obj.workorderCode);
 
         LODOP.ADD_PRINT_TEXT(245, 15, 120, 35, "合格数量:");
-        LODOP.ADD_PRINT_TEXT(245, 120, 280, 35, obj.quantityQualified);
+        LODOP.ADD_PRINT_TEXT(245, 120, 280, 35, obj.quantityQualified + obj.unitOfMeasure);
 
-        LODOP.ADD_PRINT_TEXT(290, 15, 120, 35, "单位:");
-        LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.unitOfMeasure);
+        LODOP.ADD_PRINT_TEXT(290, 15, 120, 35, "批次号:");
+        LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.batchCode);
 
         LODOP.ADD_PRINT_TEXT(335, 15, 120, 35, "日期:");
         LODOP.ADD_PRINT_TEXT(335, 120, 280, 35, new Date(obj.createTime).toISOString().slice(0, 19).replace('T', ' '));
@@ -1131,7 +1178,7 @@ export default {
         });
 
         // 校验当前单据是否已入库, 未入库则改变状态
-        if(obj.status === 'WAREHOUSED'){
+        if (obj.status === 'WAREHOUSED') {
           return;
         }
 
@@ -1154,9 +1201,38 @@ export default {
     warehousing() {
       // 初始化仓库信息
       // 弹出框
-      this.wareOpen = true;
-      this.title = '产成品入库';
-      this.getWarehouseList();
+     /* this.wareOpen = true;
+      this.title = '产成品入库';*/
+
+      if(this.selectedRows.length <1){
+        this.$message.error('请勾选要入库的产成品');
+        return;
+      }
+
+      console.log(this.selectedRows);
+
+      // 只允许勾选已完成单据进行入库
+      for (const row of this.selectedRows) {
+        if (row.status !== 'FINISHED' && row.status !== 'PRINTED') {
+          this.$message.error('请勾选已完成的单据进行入库');
+          return;
+        }
+      }
+
+      this.$modal.confirm('确认入库选中的 ' + this.selectedRows.length + ' 条报工单？').then(() => {
+        this.loading = true;
+        startWareHousing({"wareList": this.selectedRows}).then(response => {
+          this.$modal.msgSuccess("入库成功");
+          this.getList();
+        }).catch(error => {
+          console.error('入库失败:', error);
+          this.$message.error(`入库失败`);
+        }).finally(() => {
+          this.loading = false;
+          this.getList(); // 刷新列表
+        });
+      });
+
     },
     async getCameraInfo() {
       try {
@@ -1351,9 +1427,9 @@ export default {
     //选择默认的仓库、库区、库位
     handleWarehouseChanged(obj) {
       if (obj != null) {
-        this.wareForm.warehouseId = obj[0]; // 仓库
-        this.wareForm.locationId = obj[1];// 库区
-        this.wareForm.areaId = obj[2]; // 库位
+        this.form.warehouseId = obj[0]; // 仓库
+        this.form.locationId = obj[1];// 库区
+        this.form.areaId = obj[2]; // 库位
       }
     },
 
@@ -1772,12 +1848,14 @@ export default {
       const first = this.selectedRows[0];
       const canMerge = this.selectedRows.every(row =>
         row.itemCode === first.itemCode &&
+        row.workorderCode === first.workorderCode &&
+        row.taskCode === first.taskCode &&
         row.processCode === first.processCode &&
-        row.status === 'FINISHED'
+        row.status === 'WAREHOUSED'
       );
 
       if (!canMerge) {
-        this.$message.error('只能合并相同产品、相同工序且状态为完成的报工单');
+        this.$message.error('只能合并相同任务单、相同物料且状态为完成的报工单');
         return;
       }
 
@@ -1791,7 +1869,69 @@ export default {
           this.loading = false;
         });
       });
-    }
+    },
+    // 工序缓存
+    handleProcessChange(val) {
+      if (val) {
+        localStorage.setItem('cachedProcessCode', val);
+      } else {
+        localStorage.removeItem('cachedProcessCode');
+      }
+    },
+    handleMachineryAdd() {
+      this.$refs.machinerySelect.showFlag = true;
+    },
+
+    loadMachineryCache() {
+      console.log("加载缓存!", localStorage.getItem('cachedMachinery'));
+      try {
+        const cachedMachinery = localStorage.getItem('cachedMachinery')
+        if (cachedMachinery) {
+          const { id, code, name } = JSON.parse(cachedMachinery)
+          // 验证缓存数据完整性
+          if (id && code && name) {
+            this.form.machineryId = id
+            this.form.machineryCode = code
+            this.form.machineryName = name
+          }
+        }
+      } catch (e) {
+        console.error('设备信息缓存读取失败:', e)
+        localStorage.removeItem('cachedMachinery')
+      }
+    },
+
+    saveMachineryCache(data) {
+      console.log("保存缓存!", data);
+      localStorage.setItem('cachedMachinery', JSON.stringify({
+        id: data.id,
+        code: data.machineryCode,
+        name: data.machineryName
+      }))
+    },
+
+    onMachineryAdd(rows) {
+      if (rows) {
+        // 更新表单数据
+        this.form.machineryId = rows.id
+        this.form.machineryCode = rows.machineryCode
+        this.form.machineryName = rows.machineryName
+
+        // 保存到缓存
+        this.saveMachineryCache(rows)
+      } else {
+        // 清空选择时移除缓存
+        localStorage.removeItem('cachedMachinery')
+        this.form.machineryId = ''
+        this.form.machineryCode = ''
+        this.form.machineryName = ''
+      }
+    },
+
   },
+  activated() {
+    // 当从缓存中重新激活组件时，可以在此更新数据
+    this.getList();
+  }
 };
 </script>

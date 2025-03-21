@@ -87,3 +87,12 @@ export function updateAllocatedLine(data) {
     data: data
   })
 }
+
+
+// 根据调拨单自动创建领料单
+export function createIssue(id) {
+  return request({
+    url: '/wms/allocated-header/createIssue?id=' + id,
+    method: 'get',
+  })
+}
