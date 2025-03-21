@@ -14,7 +14,7 @@ export default {
   components: { iFrame },
   data() {
     return {
-      url: '',
+      url: '/goview/',
     };
   },
   async created() {
@@ -31,7 +31,7 @@ export default {
         tenantId: getTenantId(),
       },
     );
-    this.url = process.env.VUE_APP_BASE_API.replace(/(.*)(\/prod-api)/i, '$1') + '/goview/';
+    //this.url = process.env.VUE_APP_BASE_API.replace(/(.*)(\/prod-api)/i, '$1') + '/goview/'
   },
   methods: {
     async init() {
