@@ -52,3 +52,21 @@ export function updateEnable(data) {
     data: data,
   });
 }
+
+// 撤销上料
+export function cancleIssue(data) {
+  return request({
+    url: '/mes/wms/issue-line/cancleIssue',
+    method: 'put',
+    data: data,
+  });
+}
+
+// 卡控物料信息
+export function checkMaxIssue(data) {
+  return request({
+    url: '/mes/wms/issue-line/checkMaxIssue',
+    method: 'post',
+    data: data,
+  });
+}

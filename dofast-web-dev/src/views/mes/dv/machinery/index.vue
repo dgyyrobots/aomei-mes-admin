@@ -260,7 +260,7 @@ export default {
         ],
         machineryName: [{required: true, message: '设备名称不能为空', trigger: 'blur'}],
         workshopId: [{required: true, message: '车间不能为空', trigger: 'blur'}],
-        machineryTypeId: [{required: true, message: '设备分类不能为空', trigger: 'blur'}],
+        //machineryTypeId: [{required: true, message: '设备分类不能为空', trigger: 'blur'}],
       },
     };
   },

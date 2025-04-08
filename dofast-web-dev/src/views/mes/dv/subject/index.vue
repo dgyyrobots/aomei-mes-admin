@@ -213,7 +213,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.subjectId);
+      this.ids = selection.map(item => item.id);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
     },
@@ -255,7 +255,7 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const subjectIds = row.subjectId || this.ids;
+      const subjectIds = row.id || this.ids;
       this.$modal
         .confirm('是否确认删除设备点检保养项目编号为"' + subjectIds + '"的数据项？')
         .then(function () {

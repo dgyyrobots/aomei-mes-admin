@@ -13,6 +13,9 @@
       <el-form-item label="商品名称" prop="goodsName">
         <el-input v-model="queryParams.goodsName" placeholder="请输入商品名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
+      <el-form-item label="供应商名称" prop="goodsName">
+        <el-input v-model="queryParams.vendorName" placeholder="请输入" clearable @keyup.enter.native="handleQuery"/>
+      </el-form-item>
 
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜索</el-button>
@@ -38,16 +41,21 @@
         <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="single" @click="printTitle" v-hasPermi="['purchase:goods:print']">单据打印</el-button>
       </el-col>
 
-      <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-success" size="mini" @click="warehousing" v-hasPermi="['purchase:goods:warehousing']">一键入库</el-button>
-      </el-col>
+
+      <!--      <el-col :span="1.5">
+              <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" :loading="exportLoading" v-hasPermi="['purchase:goods:export']">导出</el-button>
+            </el-col>-->
 
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" :loading="exportLoading" v-hasPermi="['purchase:goods:export']">导出</el-button>
+        <el-button type="primary" plain icon="el-icon-edit" size="mini" @click="receive" v-hasPermi="['purchase:goods:split']">收货</el-button>
       </el-col>
 
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="single" @click="split" v-hasPermi="['purchase:goods:split']">拆分</el-button>
+      </el-col>
+
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-success" size="mini" @click="warehousing" v-hasPermi="['purchase:goods:warehousing']">一键入库</el-button>
       </el-col>
 
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
@@ -61,9 +69,11 @@
       <el-table-column label="商品编号" align="center" prop="goodsNumber"/>
       <el-table-column :show-overflow-tooltip="true" label="商品名称" align="center" prop="goodsName"/>
       <el-table-column :show-overflow-tooltip="true" label="商品规格" align="center" prop="goodsSpecs"/>
-      <el-table-column label="商品单位" align="center" prop="company"/>
-      <el-table-column label="采购数量" align="center" prop="quantity"/>
+      <el-table-column label="供应商编号" align="center" prop="vendorCode"/>
+      <el-table-column label="供应商名称" align="center" prop="vendorName"/>
+      <!--      <el-table-column label="采购数量" align="center" prop="quantity"/>-->
       <el-table-column label="收货数量" align="center" prop="receiveNum"/>
+      <el-table-column label="单位" align="center" prop="company"/>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -74,7 +84,7 @@
           <dict-tag :options="dict.type.purchase_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
-      <el-table-column  width="150" fixed="right"  label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column width="150" fixed="right" label="操作" align="center" class-name="small-padding fixed-width">
         <template v-slot="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['purchase:goods:update']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['purchase:goods:delete']">删除</el-button>
@@ -173,6 +183,7 @@
           <el-table-column label="商品编号" align="center" prop="goodsNumber"/>
           <el-table-column label="商品名称" align="center" prop="goodsName"/>
           <el-table-column label="商品规格" align="center" prop="goodsSpecs"/>
+          <el-table-column label="供应商编号" align="center" prop="vendorCode"/>
           <el-table-column label="商品单位" align="center" prop="company"/>
           <el-table-column label="采购数量" align="center" prop="quantity"/>
           <el-table-column label="收货数量" align="center" prop="receiveNum"/>
@@ -297,7 +308,7 @@
 </template>
 
 <script>
-import {createGoods, updateGoods, deleteGoods, getGoods, getGoodsPage, getAllGoods, exportGoodsExcel, updateReceiveStatus, startWareHousing, splitGoods, getPurchaseBarCode , checkConfig , batchUpdateReceiveStatus} from '@/api/purchase/goods';
+import {createGoods, updateGoods, deleteGoods, getGoods, getGoodsPage, getAllGoods, exportGoodsExcel, updateReceiveStatus, startWareHousing, splitGoods, getPurchaseBarCode, checkConfig, batchUpdateReceiveStatus, receiving} from '@/api/purchase/goods';
 import {createPrintLog, getPrintLogPage} from "@/api/report/printLog";
 import '@/utils/CLodopfuncs2.js';
 import {getConfigKey} from '@/api/system/config';
@@ -423,7 +434,7 @@ export default {
         this.stopScanning();
       }
     },
-    'wareForm.poNo': function(newVal) {
+    'wareForm.poNo': function (newVal) {
       if (typeof newVal === 'string' && newVal.includes('{') && newVal.includes('}')) {
         console.log('输入内容包含完整的 "{" 和 "}"');
         // 开始基于当前的内容追加产品入库
@@ -461,7 +472,7 @@ export default {
       this.cameraPreviewVisible = false;
       this.wareList = [];
       this.splitDialogVisible = false;
-      this.index=1;
+      this.index = 1;
       this.reset();
     },
     /** 表单重置 */
@@ -520,8 +531,8 @@ export default {
       const id = row.id || this.ids;
 
       // 追加校验, 禁止修改已入库的单据
-      if (this.selectedRows[0].status === 2) {
-        this.$modal.msgError('该单据已入库，禁止修改！');
+      if (this.selectedRows[0].status != 0) {
+        this.$modal.msgError('该单据已收货/入库，禁止修改！');
         return;
       }
 
@@ -531,6 +542,11 @@ export default {
 
       getGoods(id).then(response => {
         this.form = response.data;
+        // 新增：自动填充收货数量和单位
+        if (!this.form.receiveNum) {
+          this.form.receiveNum = this.form.quantity; // 采购数量 -> 收货数量
+          this.form.unitOfMeasure = this.form.company; // 商品单位 -> 收货单位
+        }
         this.open = true;
         this.title = '修改采购商品明细';
       });
@@ -538,25 +554,29 @@ export default {
     /** 提交按钮 */
     submitForm() {
       this.$refs['form'].validate(valid => {
-        if (!valid) {
-          return;
-        }
-        // 修改的提交
-        if (this.form.id != null) {
-          updateGoods(this.form).then(response => {
-            this.$modal.msgSuccess('修改成功');
+          if (!valid) {
+            return;
+          }
+
+          // 修改的提交
+          if (this.form.id != null) {
+            updateGoods(this.form).then(response => {
+              this.$modal.msgSuccess('收货成功');
+              this.open = false;
+              this.getList();
+            });
+            return;
+          }
+
+          // 添加的提交
+          createGoods(this.form).then(response => {
+            this.$modal.msgSuccess('新增成功');
             this.open = false;
             this.getList();
           });
-          return;
         }
-        // 添加的提交
-        createGoods(this.form).then(response => {
-          this.$modal.msgSuccess('新增成功');
-          this.open = false;
-          this.getList();
-        });
-      });
+      )
+      ;
     },
     /** 删除按钮操作 */
     handleDelete(row) {
@@ -572,7 +592,8 @@ export default {
         })
         .catch(() => {
         });
-    },
+    }
+    ,
     /** 导出按钮操作 */
     handleExport() {
       // 处理查询参数
@@ -591,21 +612,23 @@ export default {
         })
         .catch(() => {
         });
-    },
-    // 多选框选中数据
+    }
+    ,
+// 多选框选中数据
     handleSelectionChange(selection) {
       this.selectedRows = selection;
       this.ids = selection.map(item => item.id);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
-    },
-    // 单据打印
+    }
+    ,
+// 单据打印
     async printTitle() {
 
       // 校验当前采购单号下所有单身是否配置单位与收货数量
       let result = await checkConfig(this.selectedRows[0].poNo);
-      if (!result){
-        this.$message.error('采购单: '+ this.selectedRows[0].poNo +'存在未配置单位与收货数量的明细信息，请先配置后打印！');
+      if (!result) {
+        this.$message.error('采购单: ' + this.selectedRows[0].poNo + '存在未配置单位与收货数量的明细信息，请先配置后打印！');
         return;
       }
       if (!Array.isArray(result.data)) {
@@ -614,7 +637,7 @@ export default {
       }
 
       await this.$modal.confirm('确认打印？');
-      console.log("开始循环: "+ result);
+      console.log("开始循环: " + result);
 
       LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
       LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
@@ -671,7 +694,8 @@ export default {
 
 
       this.batchUpdateStatus(this.selectedRows[0].poNo);
-    },
+    }
+    ,
     async batchPrint() {
       //校验当前所选项的收货数量与收货单位是否填写
       for (let i = 0; i < this.selectedRows.length; i++) {
@@ -683,6 +707,12 @@ export default {
           this.$message.error('请先确认第' + (i + 1) + '行的收货单位');
           return;
         }
+
+        if (this.selectedRows[i].status === 0) {
+          this.$message.error('请先对第' + (i + 1) + '行的物料进行收货');
+          return;
+        }
+
       }
 
       await this.$modal.confirm('确认批量打印？');
@@ -742,43 +772,49 @@ export default {
       LODOP.PREVIEW();
 
       this.updateStatus();
-    },
-    // 打印完成后， 修改当前行的状态
+    }
+    ,
+// 打印完成后， 修改当前行的状态
     updateStatus() {
       updateReceiveStatus(this.selectedRows).then(response => {
         this.$message.success('打印成功');
         this.getList();
       });
-    },
+    }
+    ,
     batchUpdateStatus(poNo) {
       batchUpdateReceiveStatus(poNo).then(response => {
         this.$message.success('打印成功');
         this.getList();
       });
-    },
-    // 初始化仓库数据
+    }
+    ,
+// 初始化仓库数据
     getWarehouseList() {
       getTreeList().then(response => {
         this.warehouseOptions = response.data;
         console.log(this.warehouseOptions);
       });
-    },
-    //选择默认的仓库、库区、库位
+    }
+    ,
+//选择默认的仓库、库区、库位
     handleWarehouseChanged(obj) {
       if (obj != null) {
         this.wareForm.warehouseId = obj[0]; // 仓库
         this.wareForm.locationId = obj[1];// 库区
         this.wareForm.areaId = obj[2]; // 库位
       }
-    },
-    // 开始入库
+    }
+    ,
+// 开始入库
     warehousing() {
       // 初始化仓库信息
       // 弹出框
       this.wareOpen = true;
       this.title = '一键入库';
-    },
-    // 确定入库
+    }
+    ,
+// 确定入库
     submitWareForm() {
       // 校验当前的采购单号的内容是否都已打印的条码
       for (let i = 0; i < this.wareList.length; i++) {
@@ -801,7 +837,7 @@ export default {
       this.loading = true;
       // TODO 校验表单数据
       startWareHousing(obj).then(response => {
-        if(response!="success"){
+        if (response != "success") {
           this.$message.error("入库失败, 请联系系统管理员, 问题如下: " + response);
           return;
         }
@@ -815,7 +851,8 @@ export default {
       // TODO 调用入库接口
       // TODO 关闭弹出框
       // TODO 刷新列表
-    },
+    }
+    ,
     handleBlur() {
       // 获取当前的采购单数据
       // 基于当前的采购单获取所有的物料数据
@@ -863,7 +900,8 @@ export default {
         this.wareList = response.data;
         this.loading = false;
       });
-    },
+    }
+    ,
     async getCameraInfo() {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -897,7 +935,8 @@ export default {
           type: 'error'
         });
       }
-    },
+    }
+    ,
 
     startScanning() {
       const deviceId = this.targetCameraId || undefined;
@@ -926,7 +965,8 @@ export default {
         });
         this.cameraPreviewVisible = false;
       });
-    },
+    }
+    ,
     handleScanResult(scanResult) {
       /*try {
         // 尝试解析 JSON 字符串
@@ -941,9 +981,10 @@ export default {
         this.$message.error('扫描结果不是有效的 JSON 字符串');
       }
       that.handleBlur(); // 基于当前的采购单获取所有的物料数据
-*/
-    },
-    // 扫描二维码
+    */
+    }
+    ,
+// 扫描二维码
     scanQRCode() {
       const that = this;
       const video = this.$refs.videoCameraPreview;
@@ -997,30 +1038,33 @@ export default {
       }
 
       tick();
-    },
-    // 停止扫描二维码
+    }
+    ,
+// 停止扫描二维码
     stopScanning() {
       const stream = this.$refs.videoCameraPreview.srcObject;
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
-    },
-    // 显示摄像头预览弹出框
+    }
+    ,
+// 显示摄像头预览弹出框
     showCameraPreview() {
       this.cameraPreviewVisible = true;
       this.startScanning();
-    },
+    }
+    ,
     handleInput(inputValue) {
       // 更新 scanResult
       this.scanResult = inputValue;
     },
-    // 显示拆分弹出框
+// 显示拆分弹出框
     split() {
       if (this.selectedRows.length === 0) {
         this.$message.warning('请选择至少一项进行拆分');
         return;
       }
-      if(!this.selectedRows[0].receiveNum){
+      if (!this.selectedRows[0].receiveNum) {
         this.$message.warning('请先填写收货数量');
         return;
       }
@@ -1040,7 +1084,7 @@ export default {
       }));
       this.splitDialogVisible = true;
     },
-    // 新增拆分行
+// 新增拆分行
     addSplitDetail() {
       // 判定当前数量是否允许再次拆分
       let receiveNum = parseFloat(this.splitForm.receiveNum); // 当前采购数量
@@ -1054,7 +1098,7 @@ export default {
       // 校验当前拆分表单是否为空
       console.log(this.splitDetails.length);
 
-      this.index+=1;
+      this.index += 1;
       const newRow = {
         index: this.index,
         poNo: this.splitForm.poNo,
@@ -1063,11 +1107,12 @@ export default {
         quantity: ''
       };
       this.splitDetails.push(newRow);
-    },
-    // 基于当前的采购数量追加拆分行
+    }
+    ,
+// 基于当前的采购数量追加拆分行
     addSplitDetailByCount() {
       // 追加弹出框等待用户确认, 确认后开始下一步操作
-      this.$confirm('是否基于当前采购数量'+ this.splitForm.receiveNum +'追加拆分行?', '提示', {
+      this.$confirm('是否基于当前采购数量' + this.splitForm.receiveNum + '追加拆分行?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -1078,7 +1123,7 @@ export default {
         let maxCount = 0;
         for (let i = 0; i < receiveNum; i++) {
           const newRow = {
-            index: i+1,
+            index: i + 1,
             poNo: this.splitForm.poNo,
             goodsNumber: this.splitForm.goodsNumber,
             unitOfMeasure: this.splitForm.unitOfMeasure,
@@ -1087,14 +1132,14 @@ export default {
           finList.push(newRow);
           maxCount++;
         }
-        this.index = maxCount+1;
+        this.index = maxCount + 1;
         this.splitDetails = finList;
       }).catch(() => {
         // 用户取消操作
       });
     },
 
-    // 删除拆分行
+// 删除拆分行
     removeSplitDetail(index) {
       this.splitDetails.splice(index, 1);
       this.splitDetails.forEach((item, idx) => {
@@ -1107,7 +1152,7 @@ export default {
         this.index = 0; // 如果splitDetails为空，则重置index为0
       }
     },
-    // 提交拆分
+// 提交拆分
     submitSplit() {
       // 校验拆分详情中的数量总和是否小于等于采购数量
       let totalQuantity = this.splitDetails.reduce((sum, detail) => {
@@ -1142,7 +1187,7 @@ export default {
         this.loading = false;
       });
     },
-   // 显示按条件拆分弹出框
+// 显示按条件拆分弹出框
     conditionSplit() {
       if (this.selectedRows.length === 0) {
         this.$message.warning('请选择至少一项进行拆分');
@@ -1185,7 +1230,7 @@ export default {
       this.splitConditionForm.splitQuantity = '';
       this.splitConditionForm.splitCount = '';
     },
-    cancelSplit(){
+    cancelSplit() {
       this.splitConditionDialogVisible = false;
       this.splitConditionForm.splitQuantity = '';
       this.splitConditionForm.splitCount = '';
@@ -1194,9 +1239,58 @@ export default {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
     },
+    // 收货
+    receive() {
+      if (this.selectedRows.length === 0) {
+        this.$message.warning('请选择至少一项进行拆分');
+        return;
+      }
+      for (let i = 0; i < this.selectedRows.length; i++) {
+        if (!this.selectedRows[i].receiveNum) {
+          this.$message.warning('请先填写第' + (i + 1) + '行收货数量!');
+          return;
+        }
+      }
+
+      // 先收货再拆分
+      // 允许用户跨采购单进行收货, 卡控仅允许选中相同的供应商信息
+      // 循环当前选中行, 若当前行所有的供应商都一直, 则调用收货接口
+      /* let poNo = this.selectedRows[0].poNo;
+       for (let i = 0; i < this.selectedRows.length; i++) {
+         if (this.selectedRows[i].poNo !== poNo) {
+           this.$message.error('请选择相同的采购单进行收货');
+           return;
+         }
+       }*/
+
+      // 调用后台收货接口
+      let obj = {
+        'list': this.selectedRows,
+      }
+
+      this.$confirm('确定收货吗?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.loading = true;
+        receiving(obj).then(response => {
+          if (response != "success") {
+            this.$message.error("收货失败, 请联系系统管理员, 问题如下: " + response);
+            return;
+          }
+          this.loading = false;
+          this.getList();
+          this.index = 1;
+          this.$message.success('收货成功');
+        });
+      });
+
+
+    }
   },
 
 
-
-};
+}
+;
 </script>

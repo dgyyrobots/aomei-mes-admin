@@ -122,3 +122,13 @@ export function checkConfig(poNo) {
     method: 'get',
   });
 }
+
+
+// 开始收货
+export function receiving(data) {
+  return request({
+    url: '/purchase/goods/receiving',
+    method: 'post',
+    data: data,
+  });
+}

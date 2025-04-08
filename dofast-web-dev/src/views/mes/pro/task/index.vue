@@ -313,7 +313,7 @@
 
     <el-dialog :title="teamTitle" :visible.sync="teamOpen" width="800" v-dialogDrag append-to-body custom-class="my-dialog-class">
       <el-table :data="teamList">
-        <el-table-column label="班组ID" width="55" align="center">
+        <el-table-column label="班组ID" width="80" align="center">
           <template slot-scope="scope">
             <el-radio
               v-model="selectedTeamId"

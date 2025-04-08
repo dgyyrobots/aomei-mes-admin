@@ -26,14 +26,19 @@
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
       </el-col>
 
-      <el-col :span="1.5">
+<!--      <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleSwitchChange" v-hasPermi="['wms:issue-header:update']">启用 </el-button>
+      </el-col>-->
+
+      <el-col :span="1.5">
+        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleCancleIssue" >撤销领料 </el-button>
       </el-col>
+
 
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="issuelineList" @selection-change="handleSelectionChange" ><!--@row-click="handleRowClick"-->
+    <el-table  ref="multipleTable"  v-loading="loading" :data="issuelineList" @selection-change="handleSelectionChange" @row-click="handleRowClick"><!--@row-click="handleRowClick"-->
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column type="index" label="序号" width="50" align="center" />
       <el-table-column label="条码编号" align="center" prop="barcodeNumber" />
@@ -178,7 +183,7 @@
 </template>
 
 <script>
-import { listIssueline, getIssueline, delIssueline, addIssueline, updateIssueline , updateEnable} from '@/api/mes/wm/issueline';
+import { listIssueline, getIssueline, delIssueline, addIssueline, updateIssueline , updateEnable, cancleIssue , checkMaxIssue} from '@/api/mes/wm/issueline';
 import StockSelect from '@/components/stockSelect/single.vue';
 import jsQR from "jsqr";
 import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
@@ -206,6 +211,8 @@ export default {
       single: true,
       // 非多个禁用
       multiple: true,
+      // 选中行
+      selectedRows: [],
       // 显示搜索条件
       showSearch: true,
       // 总条数
@@ -353,6 +360,7 @@ export default {
       this.ids = selection.map(item => item.id);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
+      this.selectedRows = selection;
     },
     /** 新增按钮操作 */
     handleAdd() {
@@ -584,7 +592,7 @@ export default {
       this.startScanning();
     },
 
-    handleBlur: function(type) {
+    /*handleBlur: function(type) {
       console.log("当前选中的设备信息: ",  this.form.machineryId, this.form.machineryCode, this.form.machineryName);
 
       let finType = '';
@@ -601,12 +609,12 @@ export default {
           // 清理文本框内容的多余空格，并格式化为标准 JSON 格式
           this.purchaseId = this.purchaseId
             // 去除字段名和字段值之间的多余空格
-            .replace(/\s*[:]\s*/g, ':')
-            .replace(/\s*,\s*/g, ',')
-            .replace(/\s*{\s*/g, '{')
-            .replace(/\s*}\s*/g, '}')
-            .replace(/\s*\[\s*/g, '[')
-            .replace(/\s*\]\s*/g, ']');
+            .replace(/\s*[:]\s*!/g, ':')
+            .replace(/\s*,\s*!/g, ',')
+            .replace(/\s*{\s*!/g, '{')
+            .replace(/\s*}\s*!/g, '}')
+            .replace(/\s*\[\s*!/g, '[')
+            .replace(/\s*\]\s*!/g, ']');
           // 给键和字符串值加上双引号
           let formattedData = this.purchaseId
             // 给所有键名加双引号
@@ -654,10 +662,43 @@ export default {
           obj.machineryCode = this.form.machineryCode;
           obj.machineryName = this.form.machineryName;
           console.log("obj信息 :", obj);
-          addIssueline(obj).then(response => {
-            this.$modal.msgSuccess('新增成功');
-            this.getList();
-          });
+          let count = -1;
+          // 校验当前物料是否以61开头
+          let shouldAddIssue = true;
+          if (obj.itemCode.startsWith('61')) {
+            // 开始获取单身绑定报工单个数
+            checkMaxIssue(obj).then(response => {
+              console.log("获取的膜类物料对应报工单个数: ", response);
+              if(response.code !== 0){
+                shouldAddIssue = false;
+              }
+              count = response.data;
+            }).catch(error => {
+              console.log("error: ", error);
+              shouldAddIssue = false;
+            });
+          }
+          if(count > 0){
+            this.$confirm('当前已存在膜类物料, 绑定报工单个数为:  ' + count + ' 个, 是否继续上料?', '警告', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(async () => {
+              addIssueline(obj).then(response => {
+                this.$modal.msgSuccess('新增成功');
+                this.getList();
+              });
+            });
+          }else{
+            console.log("当前是否允许追加领料单行: " , shouldAddIssue);
+            if(shouldAddIssue){
+              addIssueline(obj).then(response => {
+                this.$modal.msgSuccess('新增成功');
+                this.getList();
+              });
+            }
+          }
+
         } else {
           this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
         }
@@ -666,21 +707,151 @@ export default {
         this.$message.error(`获取物料信息失败!`);
         this.purchaseId = null;
         });
+    },*/
+
+    handleBlur: function(type) {
+      console.log("当前选中的设备信息: ",  this.form.machineryId, this.form.machineryCode, this.form.machineryName);
+
+      let finType = '';
+      if(type){
+        finType = type;
+      }
+      // 基于当前的采购单获取所有的物料数据
+      if (!this.purchaseId) {
+        return;
+      }
+      if (isNaN(this.purchaseId)) {
+        if ((this.purchaseId.includes('{') || this.purchaseId.includes('[') || this.purchaseId.includes('}') || this.purchaseId.includes(']'))) {
+          this.purchaseId = this.purchaseId.trim();
+          // 清理文本框内容的多余空格，并格式化为标准 JSON 格式
+          this.purchaseId = this.purchaseId
+            // 去除字段名和字段值之间的多余空格
+            .replace(/\s*[:]\s*/g, ':')
+            .replace(/\s*,\s*/g, ',')
+            .replace(/\s*{\s*/g, '{')
+            .replace(/\s*}\s*/g, '}')
+            .replace(/\s*\[\s*/g, '[')
+            .replace(/\s*\]\s*/g, ']');
+          // 给键和字符串值加上双引号
+          let formattedData = this.purchaseId
+            // 给所有键名加双引号
+            .replace(/([a-zA-Z0-9_]+)(?=\s*[:])/g, '"$1"')
+            // 给字符串值加双引号，排除数字和其他非字符串类型的值
+            .replace(/(:\s*)([a-zA-Z\u4e00-\u9fa5_-]+)(?=\s*,|\s*\})/g, '$1"$2"');
+          // Step 2: 处理数字和标识符类型的字符串，如 AMCG86-241030001 和 20241106805-01，需给它们加上双引号
+          formattedData = formattedData.replace(/(:\s*)([A-Za-z0-9-]+)(?=\s*,|\s*\})/g, '$1"$2"');
+          try {
+            // Step 3: 使用 JSON.parse 转换为对象
+            const parsedData = JSON.parse(formattedData);
+            // Step 4: 使用 JSON.stringify 格式化为标准 JSON 字符串
+            const data = JSON.stringify(parsedData, null, 2);
+            const transedData = JSON.parse(data);
+            // 检查是否包含 id 属性
+            if (transedData) {
+              // 更新 purchaseId
+              this.purchaseId = transedData.id;
+              finType = transedData.type;
+            }
+          } catch (error) {
+            this.$message.error('扫描结果不是有效的 JSON 字符串');
+            return; // 如果 JSON 解析失败，直接返回
+          }
+        }
+      }
+      let obj = {
+        'id': Number.parseInt(this.purchaseId),
+        'type': finType
+      }
+      // 获取当前采购单身信息
+      getStockInfoByPurchaseId(obj).then(response => {
+        console.log(response.data);
+        const barcodeNumber = this.purchaseId;
+        this.purchaseId = null;
+        let obj = response.data;
+        // 追加生产领料表单身信息
+        obj.quantityIssued = obj.quantityOnhand;
+        const isItemExists = this.issuelineList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
+        // 如果物料Id不存在，则添加到this.allocatedList
+        if (!isItemExists) {
+          // 将当前数据传入领料单单身表
+          obj.issueId = this.issueId;
+          obj.barcodeNumber = barcodeNumber;
+          obj.machineryId = this.form.machineryId;
+          obj.machineryCode = this.form.machineryCode;
+          obj.machineryName = this.form.machineryName;
+          console.log("obj信息 :", obj);
+          let count = -1;
+          // 校验当前物料是否以61开头
+          if (obj.itemCode.startsWith('61')) {
+            // 开始获取单身绑定报工单个数
+            checkMaxIssue(obj).then(response => {
+              console.log("获取的膜类物料对应报工单个数: ", response);
+              count = response.data;
+              if(count > 0){
+                this.$confirm('当前已存在膜类物料, 绑定报工单个数为:  ' + count + ' 个, 是否继续上料?', '警告', {
+                  confirmButtonText: '确定',
+                  cancelButtonText: '取消',
+                  type: 'warning'
+                }).then(async () => {
+                  addIssueline(obj).then(response => {
+                    this.$modal.msgSuccess('新增成功');
+                    this.getList();
+                  });
+                });
+              }else{
+                addIssueline(obj).then(response => {
+                  this.$modal.msgSuccess('新增成功');
+                  this.getList();
+                });
+              }
+            }).catch(error => {
+              console.log("error: ", error);
+              this.$message.error(`获取报工单个数失败!`);
+              return; // 如果 checkMaxIssue 报错，直接返回
+            });
+          } else {
+            // 如果物料不以61开头，直接添加
+            addIssueline(obj).then(response => {
+              this.$modal.msgSuccess('新增成功');
+              this.getList();
+            });
+          }
+        } else {
+          this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
+        }
+      }).catch(error => {
+        console.log(error);
+        this.$message.error(`获取物料信息失败!`);
+        this.purchaseId = null;
+      });
     },
     handleRowClick(row) {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
     },
-    handleSwitchChange(row){
+    handleSwitchChange(row) {
       const ids = row.id || this.ids;
-      if(!ids || ids.length === 0){
+      if (!ids || ids.length === 0) {
         this.$message.error(`请至少选中一行数据!`);
         return;
       }
-      updateEnable(ids).then(response => {
-        this.$message.success(`物料状态变更成功!`);
-        this.getList();
+
+
+      this.$confirm('是否确认变更物料状态?', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        updateEnable(ids).then(response => {
+          this.$message.success(`物料状态变更成功!`);
+          this.getList();
+        }).catch(error => {
+          console.log(error);
+          this.$message.error(`启用失败!`);
+          this.getList();
+        });
       });
+
     },
     handleMachineryAdd() {
       this.$refs.machinerySelect.showFlag = true;
@@ -727,6 +898,41 @@ export default {
       this.form.machineryCode = ''
       this.form.machineryName = ''
     },
+    handleCancleIssue(){
+      const ids = this.ids;
+      if(!ids || ids.length === 0){
+        this.$message.error(`请至少选中一行数据!`);
+        return;
+      }
+
+      // 获取当前选中行信息
+      const selectedRows = this.selectedRows;
+      console.log("selectedRows:", selectedRows);
+      // 仅允许选取已上料未报工的单据行信息
+      for (const row of selectedRows) {
+        console.log("row:", row);
+        if (row.status != 'Y' || row.feedbackStatus != 'N') {
+          this.$message.error('请勾选已上料未报工的单据进行撤销!');
+          return;
+        }
+      }
+
+      this.$confirm('是否确认撤销?', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        cancleIssue(ids).then(response => {
+          this.$message.success(`撤销成功!`);
+          this.getList();
+        }).catch(error => {
+          console.log(error);
+          this.$message.error(`撤销失败!`);
+          this.getList();
+        });
+      });
+
+    }
 
   },
 };
