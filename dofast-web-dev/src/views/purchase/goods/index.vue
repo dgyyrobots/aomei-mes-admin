@@ -1187,7 +1187,7 @@ export default {
         this.loading = false;
       });
     },
-// 显示按条件拆分弹出框
+    // 显示按条件拆分弹出框
     conditionSplit() {
       if (this.selectedRows.length === 0) {
         this.$message.warning('请选择至少一项进行拆分');
@@ -1206,9 +1206,11 @@ export default {
         this.$message.error('拆分数量和拆分个数不能为空');
         return;
       }
-      const splitQuantity = parseFloat(this.splitConditionForm.splitQuantity);
+      const splitQuantity = parseFloat(this.splitConditionForm.splitQuantity); // 避免splitQuantity精度缺失， 取小数点后四位
       const splitCount = parseInt(this.splitConditionForm.splitCount, 10);
-      if (splitQuantity * splitCount > this.selectedRows[0].receiveNum) {
+      let sum = splitQuantity * splitCount;
+
+      if (sum.toFixed(4) > this.selectedRows[0].receiveNum) {
         this.$message.error('拆分数量乘以拆分个数不能大于当前的入库数量');
         return;
       }
