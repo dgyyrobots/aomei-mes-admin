@@ -1,6 +1,6 @@
 <template>
   <div>
-    <doc-alert title="报表" url="" />
+<!--    <doc-alert title="报表" url="" />-->
     <i-frame :src="url" v-if="url" />
   </div>
 </template>
