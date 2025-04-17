@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <!-- 搜索工作栏 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="90px">
 
       <el-form-item label="采购单号" prop="goodsNumber">
         <el-input v-model="queryParams.poNo" placeholder="请输入采购单号" clearable @keyup.enter.native="handleQuery"/>
@@ -10,11 +10,24 @@
       <el-form-item label="商品编号" prop="goodsNumber">
         <el-input v-model="queryParams.goodsNumber" placeholder="请输入商品编号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
+
       <el-form-item label="商品名称" prop="goodsName">
         <el-input v-model="queryParams.goodsName" placeholder="请输入商品名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
+
       <el-form-item label="供应商名称" prop="goodsName">
         <el-input v-model="queryParams.vendorName" placeholder="请输入" clearable @keyup.enter.native="handleQuery"/>
+      </el-form-item>
+
+      <el-form-item label="入库状态" prop="status">
+        <el-select v-model="queryParams.status" placeholder="入库状态" clearable>
+          <el-option
+            v-for="dict in dict.type.purchase_status"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
       </el-form-item>
 
       <el-form-item>
@@ -62,17 +75,18 @@
     </el-row>
 
     <!-- 列表 -->
-    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
+    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick" >
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="单据编码" align="center" prop="id"/>
       <el-table-column label="采购单号" align="center" prop="poNo"/>
       <el-table-column label="商品编号" align="center" prop="goodsNumber"/>
       <el-table-column :show-overflow-tooltip="true" label="商品名称" align="center" prop="goodsName"/>
       <el-table-column :show-overflow-tooltip="true" label="商品规格" align="center" prop="goodsSpecs"/>
-      <el-table-column label="供应商编号" align="center" prop="vendorCode"/>
-      <el-table-column label="供应商名称" align="center" prop="vendorName"/>
-      <!--      <el-table-column label="采购数量" align="center" prop="quantity"/>-->
+      <el-table-column label="供应商编号" width=120 align="center" prop="vendorCode"/>
+      <el-table-column label="供应商名称" width=120 align="center" prop="vendorName"/>
+      <el-table-column label="采购数量" align="center" prop="quantity"/>
       <el-table-column label="收货数量" align="center" prop="receiveNum"/>
+      <el-table-column label="已拆数量" align="center" prop="receivedNum"/>
       <el-table-column label="单位" align="center" prop="company"/>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template v-slot="scope">
@@ -139,8 +153,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="收货单位" prop="receiveNum">
-              <el-select filterable clearable v-model="form.unitOfMeasure" width="100%" placeholder="请选择">
+            <el-form-item label="收货单位" prop="unitOfMeasure">
+              <el-select filterable clearable v-model="form.unitOfMeasure" style="width: 100%" placeholder="请选择">
                 <el-option
                   v-for="unit in unitOptions"
                   :key="unit.measureCode"
@@ -413,7 +427,7 @@ export default {
     // 计算拆分按钮是否可用
     canSplit() {
       return this.selectedRows.length > 0;
-    }
+    },
   },
   created() {
     this.getList();
@@ -543,7 +557,7 @@ export default {
       getGoods(id).then(response => {
         this.form = response.data;
         // 新增：自动填充收货数量和单位
-        if (!this.form.receiveNum) {
+        if (this.form.receiveNum === null) {
           this.form.receiveNum = this.form.quantity; // 采购数量 -> 收货数量
           this.form.unitOfMeasure = this.form.company; // 商品单位 -> 收货单位
         }
@@ -1058,7 +1072,7 @@ export default {
       // 更新 scanResult
       this.scanResult = inputValue;
     },
-// 显示拆分弹出框
+    // 显示拆分弹出框
     split() {
       if (this.selectedRows.length === 0) {
         this.$message.warning('请选择至少一项进行拆分');
@@ -1068,6 +1082,14 @@ export default {
         this.$message.warning('请先填写收货数量');
         return;
       }
+
+      /*
+      允许收获前拆分
+      if (!this.selectedRows[0].status === 0) {
+        this.$message.warning('请先收货！');
+        return;
+      }*/
+
       this.splitForm = {
         id: this.selectedRows[0].id,
         poNo: this.selectedRows[0].poNo,
@@ -1289,6 +1311,13 @@ export default {
       });
 
 
+    },
+    // 省略其他计算属性
+    tableRowClassName({row, rowIndex}) {
+      if (row.quantity && row.receiveNum && row.receivedNum && row.receiveNum > 0) {
+        return 'highlight-row';
+      }
+      return '';
     }
   },
 
@@ -1296,3 +1325,9 @@ export default {
 }
 ;
 </script>
+
+<style scoped>
+.highlight-row {
+  background-color: #bae5ec;
+}
+</style>

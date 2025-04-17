@@ -168,7 +168,7 @@
                 <el-button slot="append" icon="el-icon-search" @click="handleTaskSelect"></el-button>
               </el-input>
             </el-form-item>
-            <TaskSelectSingle :workorderId="form.workorderId" ref="taskSelect" @onSelected="onTaskSelected"></TaskSelectSingle>
+            <TaskSelectSingle  :processCode="cachedProcessCode" :workorderId="form.workorderId" ref="taskSelect" @onSelected="onTaskSelected"></TaskSelectSingle>
           </el-col>
 
           <el-col :span="12">
@@ -455,11 +455,13 @@ export default {
       feedLineList: [], // 上料明细数据
       processOptions: [], // 工序选项
       preventingWatch: false, // 防止重复监听
+      cachedProcessCode: null // 缓存工序编码
     };
   },
   created() {
     // 从 localStorage 恢复
-    this.queryParams.processCode = localStorage.getItem('cachedProcessCode') || null;
+    this.queryParams.processCode = this.cachedProcessCode = localStorage.getItem('cachedProcessCode');
+    console.log("读取缓存: ", this.queryParams.processCode  , this.cachedProcessCode);
     this.getList();
     this.getWarehouseList();
     // 初始化工序选项
@@ -893,10 +895,13 @@ export default {
       });
     },
     handleProcessChange(val) {
+      console.log("触发缓存: ", val);
       if (val) {
         localStorage.setItem('cachedProcessCode', val);
+        this.cachedProcessCode = val;
       } else {
         localStorage.removeItem('cachedProcessCode');
+        this.cachedProcessCode = null;
       }
     }
   },

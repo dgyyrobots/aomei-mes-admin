@@ -76,3 +76,11 @@ export function updateWorkorderAdjuncts(data){
     data: data,
   });
 }
+
+export function finshWorkorder(data){
+  return request({
+    url: '/mes/pro/workorder/finshWorkorder',
+    method: 'post',
+    data: data,
+  });
+}
