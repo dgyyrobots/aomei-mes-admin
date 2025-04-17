@@ -26,9 +26,9 @@
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
       </el-col>
 
-<!--      <el-col :span="1.5">
+      <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleSwitchChange" v-hasPermi="['wms:issue-header:update']">启用 </el-button>
-      </el-col>-->
+      </el-col>
 
       <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleCancleIssue" >撤销领料 </el-button>
@@ -711,6 +711,12 @@ export default {
 
     handleBlur: function(type) {
       console.log("当前选中的设备信息: ",  this.form.machineryId, this.form.machineryCode, this.form.machineryName);
+
+      if(!this.form.machineryId){
+        this.$message.error(`请选择领料机台`);
+        this.purchaseId = null;
+        return;
+      }
 
       let finType = '';
       if(type){

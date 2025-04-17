@@ -56,8 +56,6 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
       @pagination="getList" />
 
-
-
     <!-- 添加或修改生产任务对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="1080px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
@@ -119,6 +117,7 @@
 <script>
 import { listProtask, getProtask, delProtask, addProtask, updateProtask } from '@/api/mes/pro/protask';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
+import {listWorkstation} from "@/api/mes/md/workstation";
 
 export default {
   name: 'Protask',
@@ -163,7 +162,7 @@ export default {
         itemName: null,
         specification: null,
         unitOfMeasure: null,
-        quantity: null,
+        quantity: this.initQuantity,
         quantityProduced: null,
         quantityChanged: null,
         clientId: null,
@@ -194,14 +193,29 @@ export default {
     colorCode: null,
     processId: null,
     optType: null,
+    initQuantity: {
+      type: Number,
+      default: 0
+    }
   },
   created() {
     this.getList();
+  },
+  watch: {
+    initQuantity: {
+      immediate: true,
+      handler(newVal) {
+        if (this.form) {
+          this.form.quantity = newVal;
+        }
+      }
+    }
   },
   methods: {
     /** 查询生产任务列表 */
     getList() {
       this.loading = true;
+      this.queryParams.quantity = null;
       listProtask(this.queryParams).then(response => {
         this.protaskList = response.data.list;
         this.total = response.data.total;
@@ -252,7 +266,7 @@ export default {
         itemName: null,
         specification: null,
         unitOfMeasure: null,
-        quantity: null,
+        quantity: this.initQuantity,
         quantityProduced: null,
         quantityChanged: null,
         clientId: null,
@@ -296,7 +310,13 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
+      if (!this.form.workstationId) {
+        this.$nextTick(() => {
+          this.fetchFirstWorkstation();
+        });
+      }
       this.title = '添加生产任务';
+
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -367,6 +387,24 @@ export default {
         this.$refs.form.validateField('workstationName')
       }
     },
+    fetchFirstWorkstation() {
+      this.loading = true;
+      listWorkstation({ processId: this.processId }).then(response => {
+        if (response.data.list && response.data.list.length > 0) {
+          const firstWorkstation = response.data.list[0];
+          console.log("firstWorkstation" , firstWorkstation);
+          this.form.workstationId = firstWorkstation.workstationId;
+          this.form.workstationCode = firstWorkstation.workstationCode;
+          this.form.workstationName = firstWorkstation.workstationName;
+          this.$refs.form.validateField('workstationName');
+        } else {
+          this.$message.warning('没有可用的工作站');
+        }
+      }).finally(() => {
+        this.loading = false;
+      });
+
+    }
   },
 };
 </script>

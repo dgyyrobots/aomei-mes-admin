@@ -374,9 +374,12 @@ export default {
             areaCode: item.areaCode,
             areaName: item.areaName,
             vendorCode: item.vendorCode,
+            sequence: item.sequence,
+            sequenceOrder: item.sequenceOrder
           });
         }
       });
+      console.log("当前选中项信息: ",this.form.rtissuelineList);
     },
     /** 新增按钮操作 */
     handleAdd() {

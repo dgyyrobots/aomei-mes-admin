@@ -1074,6 +1074,7 @@ export default {
       this.startScanning();
     },
     async executeAllocated() {
+      this.loading = true;
       // 检查allocatedList和bomList是否有匹配的物料编码
       this.allocatedList.forEach(allocatedItem => {
         // 查找bomList中是否存在相同的物料编码
@@ -1099,7 +1100,7 @@ export default {
           "headerId": this.executeForm.id,
           "bomList": this.allocatedList
         }
-        this.loading = true;
+
         await updateAllocatedLine(obj).then(response => {
           console.log("追加完毕");
         }).catch(error => {
@@ -1107,8 +1108,8 @@ export default {
           this.loading = false;
           return;
         });
+
         execute(this.executeForm.id).then(() => {
-          this.loading = false;
           this.getList();
           this.$modal.msgSuccess('出库成功');
           this.executeDialogVisible = false;
@@ -1116,7 +1117,10 @@ export default {
           this.$message.error('出库失败');
           this.loading = false;
           return;
+        }).finally(()=>{
+          this.loading = false;
         });
+
     },
     handleQuantityChange(row) {
       const quantity = parseFloat(row.quantityAllocated);

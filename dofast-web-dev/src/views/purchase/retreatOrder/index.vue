@@ -29,7 +29,7 @@
       </el-col>
 
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleRetreat"
                    v-hasPermi="['purchase:order:create']">退货</el-button>
       </el-col>
 
@@ -42,6 +42,7 @@
 
     <!-- 列表 -->
     <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="仓退单编号" align="center" prop="retreatCode" />
       <el-table-column label="仓退单名称" align="center" prop="retreatName" />
       <el-table-column label="供应商编号" align="center" prop="vendorName" />
@@ -256,6 +257,7 @@ export default {
         return;
       }
 
+      let obj = this.selectedRows[0];
       this.$confirm('确定仓退吗?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',

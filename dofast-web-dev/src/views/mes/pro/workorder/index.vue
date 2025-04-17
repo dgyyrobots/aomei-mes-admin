@@ -62,6 +62,11 @@
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['pro:feedback:export']">导出 </el-button>
       </el-col>
+
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleFinsh">完成 </el-button>
+      </el-col>
+
 <!--      <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-edit" size="mini" @click="handleCirculation"
                    v-hasPermi="['pro:feedback:update']">流转卡 </el-button>
@@ -304,7 +309,7 @@
           </el-steps>
           <template v-for="(item, index) in processOptions">
             <el-card :key="index" v-if="activeProcess == index">
-              <ProTask :workorderId="form.id" :workorderName = "form.workorderName" :workorderCode="form.workorderCode" :processId="item.processId" :colorCode="item.colorCode" :optType="optType">
+              <ProTask :workorderId="form.id" :workorderName = "form.workorderName" :workorderCode="form.workorderCode" :processId="item.processId" :colorCode="item.colorCode" :optType="optType" :initQuantity="form.quantity" >
               </ProTask>
             </el-card>
           </template>
@@ -327,7 +332,7 @@ import { createPrintLog } from "@/api/report/printLog";
 import { listProductprocess } from '@/api/mes/pro/routeprocess';
 import { getRouteCodeByItemCode } from '@/api/mes/pro/proroute';
 import ProTask from '../schedule/proTask.vue';
-import { listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder , updateWorkorderAdjuncts } from '@/api/mes/pro/workorder';
+import { listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder , updateWorkorderAdjuncts , finshWorkorder } from '@/api/mes/pro/workorder';
 import Workorderbom from './bom/bom.vue';
 import WorkorderItemList from './items/item.vue';
 import ItemSelect from '@/components/itemSelect/single.vue';
@@ -807,6 +812,28 @@ export default {
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
     },
+    // 工单完结
+    handleFinsh(){
+      // 澳美的工单跨度可达个月，无法通过数量来进行卡控是否完结
+      // 当前通过人为控制单据状态
+      let obj = this.selectionObj;
+
+      if(obj.length >1 ){
+        this.$modal.msgError('请选择一条数据!');
+        return;
+      }
+
+      // 追加提示
+      this.$modal.confirm('是否确认完成选中的工单？').then(function () {
+         finshWorkorder(obj[0]).then(response => {
+           //this.$modal.msgSuccess('附件修改成功');
+           return;
+         });
+
+
+      });
+
+    }
   },
   watch: {
     'form.adjuncts': {

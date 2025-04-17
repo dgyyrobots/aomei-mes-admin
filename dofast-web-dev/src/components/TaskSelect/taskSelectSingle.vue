@@ -129,7 +129,7 @@ export default {
         workstationCode: null,
         workstationName: null,
         processId: this.processId,
-        processCode: null,
+        processCode: this.processCode,
         processName: null,
         itemId: null,
         itemCode: null,

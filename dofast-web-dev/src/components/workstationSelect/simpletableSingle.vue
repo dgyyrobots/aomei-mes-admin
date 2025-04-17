@@ -209,6 +209,8 @@ export default {
       this.$emit('onSelected', this.selectedRows);
       this.showFlag = false;
     },
+
+
   },
 };
 </script>

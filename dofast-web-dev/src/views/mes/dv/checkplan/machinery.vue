@@ -102,6 +102,8 @@ export default {
       if (rows != null && rows.length > 0) {
         rows.forEach(row => {
           row.planId = this.planId;
+          console.log("row", row);
+          row.machineryId = row.id;
           addCheckmachinery(row).then(response => {
             this.getList();
           });
