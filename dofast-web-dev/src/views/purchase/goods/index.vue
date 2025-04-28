@@ -545,8 +545,8 @@ export default {
       const id = row.id || this.ids;
 
       // 追加校验, 禁止修改已入库的单据
-      if (this.selectedRows[0].status != 0) {
-        this.$modal.msgError('该单据已收货/入库，禁止修改！');
+      if (this.selectedRows[0].status === 3) {
+        this.$modal.msgError('该单据已入库，禁止修改！');
         return;
       }
 

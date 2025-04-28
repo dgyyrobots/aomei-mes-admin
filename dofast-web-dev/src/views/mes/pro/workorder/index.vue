@@ -64,7 +64,7 @@
       </el-col>
 
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleFinsh">完成 </el-button>
+        <el-button type="warning" plain icon="el-icon-download" size="mini" :disabled="single" @click="handleFinsh">完成 </el-button>
       </el-col>
 
 <!--      <el-col :span="1.5">
@@ -818,7 +818,7 @@ export default {
       // 当前通过人为控制单据状态
       let obj = this.selectionObj;
 
-      if(obj.length >1 ){
+      if(!obj){
         this.$modal.msgError('请选择一条数据!');
         return;
       }

@@ -69,7 +69,7 @@
       </el-col>
 
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-success" size="mini" @click="warehousing" v-hasPermi="['pro:feedback:warehousing']">入库</el-button>
+        <el-button type="warning" plain icon="el-icon-success" size="mini" :disabled="single" @click="warehousing" v-hasPermi="['pro:feedback:warehousing']">入库</el-button>
       </el-col>
 
       <el-col :span="1.5">
@@ -277,8 +277,6 @@
               <el-cascader v-model="wareHouse" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
             </el-form-item>
           </el-col>
-
-
         </el-row>
 
         <el-collapse v-model="activeName" accordion>
@@ -296,6 +294,24 @@
                 <el-table-column prop="nickname" label="成员昵称" width="180"/>
                 <el-table-column prop="username" label="成员名称" width="180"/>
                 <!--            <el-table-column prop="position" label="职位"/>-->
+                <el-table-column label="岗位">
+                  <template slot-scope="scope">
+                    <el-select
+                      v-model="scope.row.postIds"
+                      multiple
+                      placeholder="请选择岗位"
+                      @change="handlePostChange(scope.row)"
+                    >
+                      <el-option
+                        v-for="item in postOptions"
+                        :key="item.id"
+                        :label="item.name"
+                        :value="item.id"
+                      ></el-option>
+                    </el-select>
+                  </template>
+                </el-table-column>
+
                 <el-table-column label="操作">
                   <template slot-scope="scope">
                     <el-button size="mini" type="text" icon="el-icon-delete" @click="deleteTeamMember(scope.row.id)">删除</el-button>
@@ -498,7 +514,7 @@ import {getQcdefectByCode} from '@/api/mes/qc/qcdefect';
 import {listProcess} from "@/api/mes/pro/process";
 import {getQcindexByProcessCode} from '@/api/mes/qc/qcindex';
 import MachinerySelectSingle from "@/components/machinerySelect/single.vue";
-
+import {listSimplePosts} from "@/api/system/post";
 
 export default {
   name: 'Feedback',
@@ -621,6 +637,8 @@ export default {
       activeName: '1',
       qcIndexList: [], // 机长自检列表
       wareHouse: [], // 仓库信息
+      // 岗位选项
+      postOptions: [],
     };
   },
   created() {
@@ -629,7 +647,7 @@ export default {
     this.getList();
     this.getProcess();
     this.getWarehouseList();
-
+    this.getTreeselect();
   },
   methods: {
     /** 查询生产报工记录列表 */
@@ -744,12 +762,20 @@ export default {
       const recordId = row.id || this.ids;
       await getFeedback(recordId).then(response => {
         this.form = response.data;
-        console.log("获取的表单信息: " , this.form);
+        console.log("获取的表单信息: " , this.form.memberList);
         for (let i = 0; i < this.form.memberList.length; i++) {
           this.form.memberList[i].nickname = this.form.memberList[i].nickName;
           this.form.memberList[i].username = this.form.memberList[i].userName;
+
+          if (this.form.memberList[i].postIds) {
+            const idsString = this.form.memberList[i].postIds.replace(/[^0-9,]/g, ''); // 清理字符串
+            if (idsString) {
+              this.form.memberList[i].postIds = idsString.split(',').map(Number); // 转换为数字数组
+            }
+          }
         }
-        this.teamMembers = this.form.memberList;
+
+        this.teamMembers =  this.form.memberList;
         this.processDefectList = response.data.processDefectList.map((item, index) => ({
           ...item,
           index: index + 1  // 从1开始编号
@@ -796,7 +822,15 @@ export default {
         for (let i = 0; i < this.form.memberList.length; i++) {
           this.form.memberList[i].nickname = this.form.memberList[i].nickName;
           this.form.memberList[i].username = this.form.memberList[i].userName;
+
+          if (this.form.memberList[i].postIds) {
+            const idsString = this.form.memberList[i].postIds.replace(/[^0-9,]/g, ''); // 清理字符串
+            if (idsString) {
+              this.form.memberList[i].postIds = idsString.split(',').map(Number); // 转换为数字数组
+            }
+          }
         }
+
         this.teamMembers = this.form.memberList;
         this.processDefectList = response.data.processDefectList.map((item, index) => ({
           ...item,
@@ -1115,6 +1149,7 @@ export default {
           return;
         }
       }
+      console.log("当前行信息: ", this.selectedRows);
       await this.$modal.confirm('确认批量打印？');
       LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
       LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
@@ -1152,7 +1187,12 @@ export default {
         LODOP.ADD_PRINT_TEXT(200, 120, 280, 35, obj.workorderCode);
 
         LODOP.ADD_PRINT_TEXT(245, 15, 120, 35, "合格数量:");
-        LODOP.ADD_PRINT_TEXT(245, 120, 280, 35, obj.quantityQualified + obj.unitOfMeasure);
+        if(obj.machineryCode === 'AMSB-BF202401'){
+          // 分切工序中, 剥离复卷机产成品单位为"米"
+          LODOP.ADD_PRINT_TEXT(245, 120, 280, 35, obj.quantityQualified + '米');
+        }else{
+          LODOP.ADD_PRINT_TEXT(245, 120, 280, 35, obj.quantityQualified + obj.unitOfMeasure);
+        }
 
         LODOP.ADD_PRINT_TEXT(290, 15, 120, 35, "批次号:");
         LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.batchCode);
@@ -1910,6 +1950,13 @@ export default {
       }))
     },
 
+    getTreeselect() {
+      listSimplePosts().then(response => {
+        // 处理 postOptions 参数
+        this.postOptions = [];
+        this.postOptions.push(...response.data);
+      });
+    },
     onMachineryAdd(rows) {
       if (rows) {
         // 更新表单数据
@@ -1927,7 +1974,9 @@ export default {
         this.form.machineryName = ''
       }
     },
-
+    handlePostChange(row) {
+      console.log('修改后的岗位:', row.postIds)
+    }
   },
   activated() {
     // 当从缓存中重新激活组件时，可以在此更新数据

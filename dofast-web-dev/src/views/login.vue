@@ -108,7 +108,7 @@ import { getPassword, getRememberMe, getTenantName, getUsername, removePassword,
 import Verify from '@/components/Verifition/Verify';
 import { resetUserPwd } from '@/api/system/user';
 import { getTenantIdByDomainPromise } from '@/api/system/tenant';
-import logoImage from '../assets/logo/login-logo1.jpg';
+import logoImage from '../assets/logo/login-logo2.png';
 
 export default {
   name: 'Login',

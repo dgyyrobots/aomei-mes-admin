@@ -83,6 +83,14 @@
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
+
+      <el-table-column label="ERP状态" align="center" prop="erpEnable" >
+        <template v-slot="scope">
+          <span v-if="scope.row.erpEnable === 'N'">未同步</span>
+          <span v-else>已同步</span>
+        </template>
+      </el-table-column>
+
       <el-table-column fixed="right" label="操作" align="center"  v-if="optType != 'view'" width="100px" class-name="small-padding fixed-width">
         <template slot-scope="scope">
 <!--
