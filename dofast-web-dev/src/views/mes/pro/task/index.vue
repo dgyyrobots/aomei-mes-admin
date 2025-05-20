@@ -307,7 +307,7 @@
           <el-col :span="8">
             <el-form-item label="设备列表">
               <el-select v-model="sendForm.machineryCodes" multiple placeholder="请选择">
-                <el-option v-for="item in machineryCodesOptions" :key="item.id" :label="item.machineryName" :value="item.id"></el-option>
+                <el-option v-for="item in machineryCodesOptions" :key="item.machineryCode" :label="item.machineryName" :value="item.machineryCode"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -355,7 +355,7 @@
 </template>
 
 <script>
-import {addProtask, updateTask, deleteTask, getTask, getTaskPage, listProtask, exportTaskExcel} from '@/api/mes/pro/protask';
+import {addProtask, updateTask, deleteTask, getTask, getTaskPage, listProtask, exportTaskExcel, updateTeamById} from '@/api/mes/pro/protask';
 import {getListByProcessCode} from '@/api/mes/dv/machinery';
 import {listAllProcess} from '@/api/mes/pro/process';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
@@ -574,6 +574,14 @@ export default {
             this.sendForm.teamName = teamInfo.teamName;
             this.sendForm.calendarType = teamInfo.calendarType;
             this.sendForm.principalName = teamInfo.principalName;
+            if(this.selectionObj[0].machineryCodes){
+              let machineryCodeList = new Array();
+              // this.selectionObj[0].machineryCodes转为list
+              this.selectionObj[0].machineryCodes.split(',').forEach(item => {
+                machineryCodeList.push(item);
+              });
+              this.sendForm.machineryCodes = machineryCodeList;
+              }
           }
         }).catch(error => {
           console.error('获取班组信息失败:', error);
@@ -827,7 +835,7 @@ export default {
       this.$refs.multipleTable.toggleRowSelection(row);
     },
     handleMachineryCodesChange(row){
-      console.log('修改后的岗位:', row.machineryCodes)
+      console.log('row.machineryCodes');
     },
     getTreeselect(processCode) {
       getListByProcessCode({"processCode":processCode}).then(response => {
