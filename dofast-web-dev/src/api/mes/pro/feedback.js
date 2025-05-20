@@ -117,3 +117,11 @@ export function initWarehouse(query) {
     params: query,
   });
 }
+
+// 查询生产报工记录详细
+export function updatePrintStatus(recordId) {
+  return request({
+    url: '/mes/pro/feedback/updatePrintStatus?id=' + recordId,
+    method: 'put',
+  });
+}

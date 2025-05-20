@@ -300,7 +300,9 @@ export default {
           type = data.type;
         }
         this.handleBlur(type);
-      } else {
+      } else if(typeof newVal === 'string' && newVal.includes('-') && !newVal.includes('{') && !newVal.includes('}')){
+        console.log('输入内容为批次号: ' + newVal);
+      }else {
         console.log('输入内容不包含完整的 "{" 和 "}"');
       }
     }
@@ -600,123 +602,6 @@ export default {
       this.startScanning();
     },
 
-    /*handleBlur: function(type) {
-      console.log("当前选中的设备信息: ",  this.form.machineryId, this.form.machineryCode, this.form.machineryName);
-
-      let finType = '';
-      if(type){
-        finType = type;
-      }
-      // 基于当前的采购单获取所有的物料数据
-      if (!this.purchaseId) {
-        return;
-      }
-      if (isNaN(this.purchaseId)) {
-        if ((this.purchaseId.includes('{') || this.purchaseId.includes('[') || this.purchaseId.includes('}') || this.purchaseId.includes(']'))) {
-          this.purchaseId = this.purchaseId.trim();
-          // 清理文本框内容的多余空格，并格式化为标准 JSON 格式
-          this.purchaseId = this.purchaseId
-            // 去除字段名和字段值之间的多余空格
-            .replace(/\s*[:]\s*!/g, ':')
-            .replace(/\s*,\s*!/g, ',')
-            .replace(/\s*{\s*!/g, '{')
-            .replace(/\s*}\s*!/g, '}')
-            .replace(/\s*\[\s*!/g, '[')
-            .replace(/\s*\]\s*!/g, ']');
-          // 给键和字符串值加上双引号
-          let formattedData = this.purchaseId
-            // 给所有键名加双引号
-            .replace(/([a-zA-Z0-9_]+)(?=\s*[:])/g, '"$1"')
-            // 给字符串值加双引号，排除数字和其他非字符串类型的值
-            .replace(/(:\s*)([a-zA-Z\u4e00-\u9fa5_-]+)(?=\s*,|\s*\})/g, '$1"$2"');
-          // Step 2: 处理数字和标识符类型的字符串，如 AMCG86-241030001 和 20241106805-01，需给它们加上双引号
-          formattedData = formattedData.replace(/(:\s*)([A-Za-z0-9-]+)(?=\s*,|\s*\})/g, '$1"$2"');
-          try {
-            // Step 3: 使用 JSON.parse 转换为对象
-            const parsedData = JSON.parse(formattedData);
-            // Step 4: 使用 JSON.stringify 格式化为标准 JSON 字符串
-            const data = JSON.stringify(parsedData, null, 2);
-            const transedData = JSON.parse(data);
-            // 检查是否包含 id 属性
-            if (transedData) {
-              // 更新 purchaseId
-              this.purchaseId = transedData.id;
-              finType = transedData.type;
-            }
-          } catch (error) {
-            this.$message.error('扫描结果不是有效的 JSON 字符串');
-          }
-        }
-      }
-      let obj = {
-        'id': Number.parseInt(this.purchaseId),
-        'type': finType
-      }
-      // 获取当前采购单身信息
-      getStockInfoByPurchaseId(obj).then(response => {
-        console.log(response.data);
-        const barcodeNumber = this.purchaseId;
-        this.purchaseId = null;
-        let obj = response.data;
-        // 追加生产领料表单身信息
-        obj.quantityIssued = obj.quantityOnhand;
-        const isItemExists = this.issuelineList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
-        // 如果物料Id不存在，则添加到this.allocatedList
-        if (!isItemExists) {
-          // 将当前数据传入领料单单身表
-          obj.issueId = this.issueId;
-          obj.barcodeNumber = barcodeNumber;
-          obj.machineryId = this.form.machineryId;
-          obj.machineryCode = this.form.machineryCode;
-          obj.machineryName = this.form.machineryName;
-          console.log("obj信息 :", obj);
-          let count = -1;
-          // 校验当前物料是否以61开头
-          let shouldAddIssue = true;
-          if (obj.itemCode.startsWith('61')) {
-            // 开始获取单身绑定报工单个数
-            checkMaxIssue(obj).then(response => {
-              console.log("获取的膜类物料对应报工单个数: ", response);
-              if(response.code !== 0){
-                shouldAddIssue = false;
-              }
-              count = response.data;
-            }).catch(error => {
-              console.log("error: ", error);
-              shouldAddIssue = false;
-            });
-          }
-          if(count > 0){
-            this.$confirm('当前已存在膜类物料, 绑定报工单个数为:  ' + count + ' 个, 是否继续上料?', '警告', {
-              confirmButtonText: '确定',
-              cancelButtonText: '取消',
-              type: 'warning'
-            }).then(async () => {
-              addIssueline(obj).then(response => {
-                this.$modal.msgSuccess('新增成功');
-                this.getList();
-              });
-            });
-          }else{
-            console.log("当前是否允许追加领料单行: " , shouldAddIssue);
-            if(shouldAddIssue){
-              addIssueline(obj).then(response => {
-                this.$modal.msgSuccess('新增成功');
-                this.getList();
-              });
-            }
-          }
-
-        } else {
-          this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
-        }
-      }).catch(error => {
-        console.log(error);
-        this.$message.error(`获取物料信息失败!`);
-        this.purchaseId = null;
-        });
-    },*/
-
     handleBlur: function(type) {
       console.log("当前选中的设备信息: ",  this.form.machineryId, this.form.machineryCode, this.form.machineryName);
 
@@ -727,6 +612,7 @@ export default {
       }
 
       let finType = '';
+      let batchCode = '';
       if(type){
         finType = type;
       }
@@ -770,16 +656,25 @@ export default {
             this.$message.error('扫描结果不是有效的 JSON 字符串');
             return; // 如果 JSON 解析失败，直接返回
           }
+        } else if(this.purchaseId.includes('-') && !this.purchaseId.includes('{') && !this.purchaseId.includes('}')){
+          console.log('输入内容包含完整的"-" ', this.purchaseId);
+          batchCode = this.purchaseId;
+          finType = null;
+
         }
       }
       let obj = {
         'id': Number.parseInt(this.purchaseId),
-        'type': finType
+        'type': finType,
+        'batchCode': batchCode
       }
       // 获取当前采购单身信息
       getStockInfoByPurchaseId(obj).then(response => {
-        console.log(response.data);
-        const barcodeNumber = this.purchaseId;
+        console.log("当前物料信息: ", response.data);
+        let barcodeNumber = null;
+        if(!batchCode){
+          barcodeNumber = this.purchaseId;
+        }
         this.purchaseId = null;
         let obj = response.data;
         // 追加生产领料表单身信息

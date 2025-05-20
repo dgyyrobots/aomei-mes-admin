@@ -67,6 +67,7 @@
       <el-table-column fixed label="任务编号" min-width="150" align="center" prop="taskCode"/>
       <el-table-column label="任务名称" min-width="150" :show-overflow-tooltip="true" align="center" prop="taskName"/>
       <el-table-column label="生产工单号" min-width="150" :show-overflow-tooltip="true" align="center" prop="workorderCode"/>
+
       <el-table-column label="工单名称" min-width="150" align="center" prop="workorderName"/>
       <el-table-column label="工作站名称" min-width="150" align="center" prop="workstationName"/>
       <el-table-column label="工序名称" min-width="150" align="center" prop="processName"/>
@@ -97,6 +98,11 @@
         </template>
       </el-table-column>
       <el-table-column label="生产状态" align="center" prop="status"/>
+      <el-table-column fixed="right"  label="派工状态" align="center" prop="taskStatus">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.pro_task_status" :value="scope.row.taskStatus" />
+        </template>
+      </el-table-column>
       <el-table-column  width="150" fixed="right"  label="操作" align="center" class-name="small-padding fixed-width">
         <template v-slot="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pro:task:update']">修改</el-button>
@@ -298,6 +304,14 @@
             </el-form-item>
           </el-col>
 
+          <el-col :span="8">
+            <el-form-item label="设备列表">
+              <el-select v-model="sendForm.machineryCodes" multiple placeholder="请选择">
+                <el-option v-for="item in machineryCodesOptions" :key="item.id" :label="item.machineryName" :value="item.id"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+
         </el-row>
 
       </el-form>
@@ -341,7 +355,8 @@
 </template>
 
 <script>
-import {addProtask, updateTask, deleteTask, getTask, getTaskPage, listProtask, exportTaskExcel, updateTeamById} from '@/api/mes/pro/protask';
+import {addProtask, updateTask, deleteTask, getTask, getTaskPage, listProtask, exportTaskExcel} from '@/api/mes/pro/protask';
+import {getListByProcessCode} from '@/api/mes/dv/machinery';
 import {listAllProcess} from '@/api/mes/pro/process';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
@@ -349,12 +364,14 @@ import {listProductprocess} from '@/api/mes/pro/routeprocess';
 import ItemSelect from '@/components/itemSelect/single.vue';
 import {listTeam, getTeam, delTeam, listAllTeam, addTeam, updateTeam} from '@/api/mes/cal/team';
 import UserSingleSelect from '@/components/userSelect/single.vue';
+import {listSimplePosts} from "@/api/system/post";
 
 export default {
   name: 'Task',
+
   components: {UserSingleSelect, ItemSelect, WorkorderSelect, WorkstationSelect},
 
-  dicts: ['mes_pro_task_status', 'mes_calendar_type'], // 生产任务状态字典
+  dicts: ['pro_task_status', 'mes_calendar_type'], // 生产任务状态字典
   data() {
     return {
       // 遮罩层
@@ -459,6 +476,8 @@ export default {
       workOrderProcessOptions: [],
       // 行选中项
       selectionObj: {},
+      // 设备选项
+      machineryCodesOptions: [],
     };
   },
   created() {
@@ -541,10 +560,13 @@ export default {
       this.title = '添加生产任务';
     },
     /*** 派工按钮操作 */
-    handleSend(row) {
+    async handleSend(row) {
       this.sendTitle = '派工';
+      console.log("当前选中行: " , this.selectionObj[0]);
+      this.getTreeselect(this.selectionObj[0].processCode);
       if (this.selectionObj[0].attr1) {
-        listTeam(this.selectionObj[0].attr1).then(response => {
+       await listTeam({teamCode: this.selectionObj[0].attr1}).then(response => {
+          console.log("当前返回信息: " , response);
           if (response.data.list) {
             const teamInfo = response.data.list[0];
             console.log(teamInfo);
@@ -798,10 +820,21 @@ export default {
         principalName: null,
       };
       this.getList();
+      this.machineryCodesOptions = [];
     },
     handleRowClick(row) {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
+    },
+    handleMachineryCodesChange(row){
+      console.log('修改后的岗位:', row.machineryCodes)
+    },
+    getTreeselect(processCode) {
+      getListByProcessCode({"processCode":processCode}).then(response => {
+        // 处理 postOptions 参数
+        this.machineryCodesOptions = [];
+        this.machineryCodesOptions.push(...response.data);
+      });
     },
 
   },

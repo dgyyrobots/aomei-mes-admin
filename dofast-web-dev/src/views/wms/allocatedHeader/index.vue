@@ -76,9 +76,11 @@
       <el-table-column label="操作" width="210" fixed="right" align="center" class-name="small-padding fixed-width">
         <template v-slot="scope">
           <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status != 'FINISHED'" @click="handleExecute(scope.row)" v-hasPermi="['wms:allocated-header:allocated']">执行领出</el-button>
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+          <el-button size="mini" type="text" icon="el-icon-edit" v-if="scope.row.status != 'FINISHED'" @click="handleUpdate(scope.row)"
                      v-hasPermi="['wms:allocated-header:update']">修改
           </el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status === 'FINISHED'" @click="handleShow(scope.row)" v-hasPermi="['wms:allocated-header:allocated']">查看</el-button>
+
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
                      v-hasPermi="['wms:allocated-header:delete']">删除
           </el-button>
@@ -235,7 +237,7 @@
     </el-dialog>
 
     <!--执行出库-->
-    <el-dialog :title="'执行出库'" :visible.sync="executeDialogVisible" width="960px" v-dialogDrag append-to-body>
+    <el-dialog :title="executeTitle" :visible.sync="executeDialogVisible" width="960px" v-dialogDrag append-to-body>
       <el-form ref="executeForm" :model="executeForm" label-width="100px">
         <!-- 这里添加与新增页面一致的表单项，但设置为禁用或只读 -->
         <el-row>
@@ -322,7 +324,7 @@
         </el-table>
 
         <el-divider content-position="center">调拨信息</el-divider>
-        <el-row :gutter="10" class="mb8">
+        <el-row v-if="executeForm.status != 'FINISHED'" :gutter="10" class="mb8">
           <el-col :span="8">
             <el-form-item label="单据信息" prop="purchaseId">
               <el-input v-model="purchaseId" placeholder="请输入"/>
@@ -346,7 +348,7 @@
           </el-col>
         </el-row>
         <el-table v-loading="loading" :data="allocatedList" @selection-change="allocatedHandleSelectionChange">
-          <el-table-column type="selection" width="55" align="center"/>
+          <el-table-column v-if="executeForm.status != 'FINISHED'" type="selection" width="55" align="center"/>
           <el-table-column label="序号" width="50" align="center">
             <template slot-scope="scope">
               {{ scope.$index + 1 }}
@@ -368,7 +370,7 @@
       </el-form>
       <span slot="footer" class="dialog-footer">
     <el-button @click="cancel">取 消</el-button>
-    <el-button type="primary" @click="executeAllocated">确 定</el-button>
+    <el-button v-if="executeForm.status != 'FINISHED'" type="primary" @click="executeAllocated">确 定</el-button>
   </span>
     </el-dialog>
 
@@ -441,6 +443,7 @@ export default {
       list: [],
       // 弹出层标题
       title: "",
+      executeTitle: "",
       // 是否显示弹出层
       open: false,
       // 查询参数
@@ -817,6 +820,7 @@ export default {
     },
     // 执行出库的弹出框方法
     handleExecute(row) {
+      this.executeTitle = "执行出库";
       this.openExecuteDialog(row.id);
     },
 
@@ -848,6 +852,11 @@ export default {
       this.executeDialogVisible = true; // 控制弹出框显示
 
     },
+    handleShow(row){
+      this.executeTitle = "出库详情";
+      this.openExecuteDialog(row.id);
+    },
+
     // 新增调拨数据
     allocatedHandleAdd() {
       if (!this.purchaseId.includes('{') || !this.purchaseId.includes('}')) {
@@ -941,7 +950,7 @@ export default {
         const isItemCodeExists = this.allocatedList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
         // 如果物料Id不存在，则添加到this.allocatedList
         if (!isItemCodeExists) {
-          this.allocatedList.push(obj);
+          this.allocatedList.unshift(obj);// 改为插入到数组开头
         } else {
           this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
         }
@@ -1176,7 +1185,7 @@ export default {
           const isItemCodeExists = this.allocatedList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
           // 如果物料Id不存在，则添加到this.allocatedList
           if (!isItemCodeExists) {
-            this.allocatedList.push(obj);
+            this.allocatedList.unshift(obj);// 插入到开头
           } else {
             this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
           }

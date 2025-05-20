@@ -42,3 +42,13 @@ export function delMachinery(machineryId) {
     method: 'delete',
   });
 }
+
+
+// 查询设备列表
+export function getListByProcessCode(query) {
+  return request({
+    url: '/mes/cmms/dv-machinery/getListByProcessCode',
+    method: 'get',
+    params: query,
+  });
+}
