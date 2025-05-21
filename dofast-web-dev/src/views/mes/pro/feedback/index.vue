@@ -496,7 +496,7 @@
 </template>
 
 <script>
-import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback, mergeFeedback, initWarehouse} from '@/api/mes/pro/feedback';
+import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback, mergeFeedback, initWarehouse , updatePrintStatus} from '@/api/mes/pro/feedback';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import UserSingleSelect from '@/components/userSelect/single.vue';
@@ -1211,7 +1211,7 @@ export default {
       LODOP.PREVIEW();
 
       // 开始修改单据, 状态变更已入库
-      for (const queryId of this.ids) {
+      /*for (const queryId of this.ids) {
         let obj = {};
         await getFeedback(queryId).then(response => {
           obj = response.data;
@@ -1223,10 +1223,18 @@ export default {
         }
 
         obj.status = 'PRINTED';
+        obj.feedbackMemberList = obj.memberList;
         await updateFeedback(obj).then(response => {
           console.log(response);
         });
+      }*/
+
+      for (const queryId of this.ids) {
+        await updatePrintStatus(queryId).then(response => {
+          console.log(response);
+        });
       }
+
       this.$modal.msgSuccess('批量打印成功');
       this.selectedRows = []; // 清空已选中的行
       this.getList(); // 刷新列表

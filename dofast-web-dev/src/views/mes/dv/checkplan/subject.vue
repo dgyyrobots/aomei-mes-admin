@@ -102,7 +102,10 @@ export default {
     onSubjectSelected(rows) {
       if (rows != null && rows.length > 0) {
         rows.forEach(row => {
+          console.log("row: " , row);
           row.planId = this.planId;
+          row.subjectId = row.id;
+          row.id = null;
           addChecksubject(row).then(response => {
             this.getList();
           });

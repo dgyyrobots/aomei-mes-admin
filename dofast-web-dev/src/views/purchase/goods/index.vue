@@ -194,6 +194,11 @@
 
         <!-- 设置el-table的高度 -->
         <el-table v-loading="loading" :data="wareList" height="500">
+          <el-table-column label="序号" width="50" align="center">
+            <template slot-scope="scope">
+              {{ scope.$index + 1 }}
+            </template>
+          </el-table-column>
           <el-table-column label="商品编号" align="center" prop="goodsNumber"/>
           <el-table-column label="商品名称" align="center" prop="goodsName"/>
           <el-table-column label="商品规格" align="center" prop="goodsSpecs"/>
