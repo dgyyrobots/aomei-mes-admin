@@ -99,6 +99,7 @@
 </template>
 
 <script>
+import cache from '@/utils/cache';
 import { sendSmsCode, socialAuthRedirect } from '@/api/login';
 import { getTenantIdByName } from '@/api/system/tenant';
 import { SystemUserSocialTypeEnum } from '@/utils/constants';
@@ -198,7 +199,7 @@ export default {
     const params = Object.fromEntries(searchParams.entries());
     if (params != null) {
       if (params.token != null) {
-        localStorage.setItem('ACCESS_TOKEN', params.token);
+        cache.set('ACCESS_TOKEN', params.token);
         location.reload();
       }
     }

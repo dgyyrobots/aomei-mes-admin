@@ -1,4 +1,5 @@
 import { decrypt, encrypt } from '@/utils/jsencrypt';
+import cache from '@/utils/cache';
 
 const AccessTokenKey = 'ACCESS_TOKEN';
 const RefreshTokenKey = 'REFRESH_TOKEN';
@@ -11,21 +12,21 @@ const GoViewTenantInfo = 'tenantInfo';
 // ========== Token 相关 ==========
 
 export function getAccessToken() {
-  return localStorage.getItem(AccessTokenKey);
+  return cache.get(AccessTokenKey);
 }
 
 export function getRefreshToken() {
-  return localStorage.getItem(RefreshTokenKey);
+  return cache.get(RefreshTokenKey);
 }
 
 export function setToken(token) {
-  localStorage.setItem(AccessTokenKey, token.accessToken);
-  localStorage.setItem(RefreshTokenKey, token.refreshToken);
+  cache.set(AccessTokenKey, token.accessToken);
+  cache.set(RefreshTokenKey, token.refreshToken);
 }
 
 export function removeToken() {
-  localStorage.removeItem(AccessTokenKey);
-  localStorage.removeItem(RefreshTokenKey);
+  cache.delete(AccessTokenKey);
+  cache.delete(RefreshTokenKey);
 }
 
 // ========== 账号相关 ==========
@@ -89,15 +90,15 @@ export function removeTenantName() {
 }
 
 export function getTenantId() {
-  return localStorage.getItem(TenantIdKey);
+  return cache.get(TenantIdKey);
 }
 
 export function setTenantId(username) {
-  localStorage.setItem(TenantIdKey, username);
+  cache.set(TenantIdKey, username);
 }
 
 export function removeTenantId() {
-  localStorage.removeItem(TenantIdKey);
+  cache.delete(TenantIdKey);
 }
 
 export function setGoView(userInfo, tenantInfo) {

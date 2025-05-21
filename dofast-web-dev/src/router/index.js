@@ -364,6 +364,18 @@ export const constantRoutes = [
       },
     ]
   },
+  {
+    name: 'MesProTaskDetail',
+    path: '/mes/pro/protask/:id(\\d+)',
+    hidden: true,
+    component: () => import('@/views/mes/pro/task/dashboard'),
+    meta: {
+      title: '任务详情',
+      keepAlive: true,
+      icon: 'example'
+    },
+    children: []
+  },
   /*{
     path: '/mes/wm/issue',
     component: Layout,

@@ -79,36 +79,140 @@
     </el-row>
 
     <!-- 列表 -->
-    <el-row :gutter="10">
-      <el-col :span="4" v-for="item in list" :key="item.id" class="mb-5 cursor-pointer" @click.native="jumpDashboard(item)">
-        <el-descriptions :column="1" :title="item.taskCode" class="pointer-events-none p-5" :style="getStatusColor(item.status)">
-          <el-descriptions-item label="任务名称">
-            <div>
-              <div class="text-ellipsis overflow-hidden" style="height: 22px;">{{ item.workorderName }} </div>
-              <div class="text-ellipsis overflow-hidden" style="height: 44px;">{{ item.taskName }}</div>
-            </div>
-          </el-descriptions-item>
-          <template v-if="item.status === 'NORMAL'">
-            <el-descriptions-item label="计划开工时间">{{ parseTime(item.startTime) }}</el-descriptions-item>
-            <el-descriptions-item label="计划完工时间">{{ parseTime(item.endTime) }}</el-descriptions-item>
-          </template>
-          <template v-else>
-            <el-descriptions-item label="开工时间">{{ parseTime(item.startTime) }}</el-descriptions-item>
-            <el-descriptions-item label="完工时间">{{ parseTime(item.endTime) }}</el-descriptions-item>
-          </template>
-          <el-descriptions-item label="排产数量">{{ item.quantity }}</el-descriptions-item>
-          <el-descriptions-item label="工序">{{ item.processName }}</el-descriptions-item>
-          <el-descriptions-item label="任务状态">
-            <el-popover placement="top-start" title="生产时间" width="220" trigger="hover">
-              <div>计划时间:{{ parseTime(item.startTime) }}</div>
-              <div>开始时间:{{ parseTime(item.actualStartTime) }}</div>
-              <div>完工时间:{{ parseTime(item.actualEndTime) }}</div>
-              <dict-tag style="cursor: pointer;" slot="reference" :type="DICT_TYPE.MES_PRO_TASK_STATUS" :value="item.status" />
-            </el-popover>
-          </el-descriptions-item>
-        </el-descriptions>
-      </el-col>
-    </el-row>
+    <el-table v-loading="loading" :data="list">
+      <el-table-column label="任务编号" align="center" prop="taskCode" width="150">
+        <template slot-scope="scope">
+          <el-button size="mini" type="text" @click="handleView(scope.row)" v-hasPermi="['pro:workorder:query']">
+            {{ scope.row.taskCode }}
+          </el-button>
+        </template>
+      </el-table-column>
+      <el-table-column label="工单/任务名称" align="center" prop="taskName" width="350" :show-overflow-tooltip="true">
+
+        <template slot-scope="scope">
+          {{ scope.row.workorderName }}<br/>{{ scope.row.taskName }}
+        </template>
+      </el-table-column>
+      <el-table-column label="产品编号/名称" align="center" prop="itemCode" width="150" :show-overflow-tooltip="true">
+
+        <template slot-scope="scope">
+          {{ scope.row.itemCode }}<br/>{{ scope.row.itemName }}
+        </template>
+      </el-table-column>
+      <el-table-column label="规格" align="center" prop="specification" fixed="right" :show-overflow-tooltip="true"/>
+      <!-- <el-table-column label="产品名称" align="center" prop="itemName" /> -->
+      <el-table-column label="工序名称" align="center" prop="processName"/>
+      <el-table-column label="任务/生产数量" align="center" prop="quantity">
+        <template v-slot="scope">
+          <span>{{ scope.row.quantity }}/{{ scope.row.quantityProduced }}</span>
+        </template>
+      </el-table-column>
+      <!-- <el-table-column label="生产数量" align="center" prop="quantityProduced" /> -->
+      <el-table-column label="良品/不良数量" align="center" prop="quantityQuanlify">
+
+        <template v-slot="scope">
+          <span>{{ scope.row.quantityQuanlify }}/{{ scope.row.quantityUnquanlify }}</span>
+        </template>
+      </el-table-column>
+      <!-- <el-table-column label="不良数量" align="center" prop="quantityUnquanlify" /> -->
+      <!-- <el-table-column label="计划时间" align="center" prop="startTime" class-name="small-padding fixed-width" fixed="right">
+        <template v-slot="scope">
+          <span>{{ parseTime(scope.row.startTime) }}</span>
+        </template>
+      </el-table-column> -->
+      <!--      <el-table-column label="备注" align="center" prop="remark" />-->
+
+      <!--      <el-table-column label="订单号" align="center" prop="sourceCode" fixed="right" width="140" />-->
+      <el-table-column label="需求日期" align="center" prop="requestDate" class-name="small-padding fixed-width" width="100"
+                       fixed="right">
+
+        <!--        <template v-slot="scope">
+                  <span>{{ parseTime(scope.row.requestDate, '{y}-{m}-{d}') }}</span><br /><span
+                    v-if="scope.row.requestDate < date && scope.row.status != 'FINISHED'" style="color: red;">延期{{
+              Math.ceil((date
+                - scope.row.requestDate) / (1000 * 3600 * 24)) }}天</span>
+                  <span
+                    v-if="scope.row.requestDate > date && scope.row.status != 'FINISHED' && (scope.row.requestDate - date) < (1000 * 3600 * 24)"
+                    style="color: #FFA500;">紧急</span>
+                </template>-->
+        <template v-slot="scope">
+          <!-- 当 scope.row.requestDate 不为空时，才渲染需求日期 -->
+          <span v-if="scope.row.requestDate">
+      {{ parseTime(scope.row.requestDate, '{y}-{m}-{d}') }}
+            <!-- 任务未完成时，才进行时间判定 -->
+      <span v-if="scope.row.status !== 'FINISHED'">
+        <!-- 如果当前日期大于需求日期，则表示延期 -->
+        <span v-if="new Date().toISOString() > new Date(scope.row.requestDate).toISOString()" style="color: red;">
+          延期{{ Math.ceil((new Date().getTime() - new Date(scope.row.requestDate).getTime()) / (1000 * 3600 * 24)) }}天
+        </span>
+        <!-- 如果当前日期小于需求日期，则表示未延期，展示未来的需求日期 -->
+        <span v-else style="color: green;">
+          剩余{{ Math.ceil((new Date(scope.row.requestDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24)) }}天
+        </span>
+      </span>
+    </span>
+          <!-- 当 requestDate 为空时，不显示任何内容 -->
+        </template>
+      </el-table-column>
+      <!-- <el-table-column label="打印状态" align="center" prop="isPrint" class-name="small-padding fixed-width" fixed="right">
+        <template v-slot="scope">
+          <el-tag type="info" v-if="!scope.row.isPrint">未打印</el-tag>
+          <span v-else>打印{{ scope.row.isPrint }}次</span>
+        </template>
+      </el-table-column> -->
+      <el-table-column label="报工/打印状态" align="center" prop="isReport" class-name="small-padding fixed-width"
+                       fixed="right" width="110">
+
+        <template v-slot="scope">
+          <el-tag type="info" v-if="!scope.row.isReport">未报工</el-tag>
+          <span v-else>报工{{ scope.row.isReport }}次</span><br/>
+          <el-tag type="info" v-if="scope.row.isPrint=='0'">未打印</el-tag>
+          <span v-else>已打印</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="生产状态" align="center" prop="status" class-name="small-padding fixed-width" fixed="right">
+
+        <template v-slot="scope">
+          <el-popover placement="top-start" title="生产时间" width="220" trigger="hover">
+            <div>计划时间:{{ parseTime(scope.row.startTime) }}</div>
+            <div>开始时间:{{ parseTime(scope.row.actualStartTime) }}</div>
+            <div>完工时间:{{ parseTime(scope.row.actualEndTime) }}</div>
+            <dict-tag style="cursor: pointer;" slot="reference" :type="DICT_TYPE.MES_PRO_TASK_STATUS"
+                      :value="scope.row.status"></dict-tag>
+          </el-popover>
+        </template>
+      </el-table-column>
+      <el-table-column label="工作" align="center" class-name="small-padding fixed-width" fixed="right">
+
+        <template v-slot="scope">
+          <el-button size="mini" v-if="scope.row.status == 'NORMAL'" type="text" icon="el-icon-edit"
+                     @click="handleUpdateStatus(scope.row, 'STARTED', '你确定要开始这个任务吗？')"
+                     v-hasPermi="['pro:task:update']">开始
+          </el-button>
+          <el-button size="mini" v-if="scope.row.status == 'PAUSE'" type="text" icon="el-icon-edit"
+                     @click="handleUpdateStatus(scope.row, 'STARTED', '你确定要继续这个任务吗？')"
+                     v-hasPermi="['pro:task:update']">继续
+          </el-button>
+          <el-button size="mini" v-if="scope.row.status == 'STARTED'" type="text" icon="el-icon-edit"
+                     @click="handleUpdateStatus(scope.row, 'FINISHED', '你确定要完成这个任务吗？')"
+                     v-hasPermi="['pro:task:update']">完成
+          </el-button>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
+
+        <template v-slot="scope">
+          <!-- <el-button size="mini" type="text" v-if="fag" icon="el-icon-edit" @click="yjbg(scope.row)">一键报工</el-button> -->
+          <!-- v-if="scope.row.status == 'FINISHED'" -->
+          <el-button size="mini" type="text" icon="el-icon-edit"
+                     @click="handleUpdateCount(scope.row)">报工
+          </el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handlePrint(scope.row)"
+                     v-hasPermi="['report:print-log:update']">打印
+          </el-button>
+        </template>
+      </el-table-column>
+    </el-table>
     <!-- 分页组件 -->
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
                 @pagination="getList"/>
@@ -516,14 +620,6 @@ export default {
     })
   },
   methods: {
-    getStatusColor(status) {
-      return {
-        PAUSE: 'background-color: #f39c12;color: #FFF;',
-        STARTED: 'background-color: #2ed573;color: #FFF;',
-        NORMAL: 'background-color: #e74c3c;color: #FFF;',
-        FINISHED: 'background-color: #bdc3c7;color: #000;'
-      }[status] || 'opacity:0.5'
-    },
     tabClick(tab) {
       this.activeTab = tab.value;
       this.queryParams.isOver = tab.value === 'all' ? undefined : tab.value;
@@ -722,10 +818,6 @@ export default {
       this.teamMembers = [];
       this.resetForm('form');
     },
-    jumpDashboard(item) {
-      // this.$router.push({ name: 'MesProTaskDetail', params: { id: item.id } });
-      window.open(`${location.origin}/mes/pro/protask/${item.id}`, '_blank');
-    },
     /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.pageNo = 1;
@@ -877,12 +969,3 @@ export default {
   },
 };
 </script>
-<style lang="scss" scoped>
-.app-container {
-  :deep() {
-    .el-descriptions__body{
-      background-color: transparent;
-    }
-  }
-}
-</style>
