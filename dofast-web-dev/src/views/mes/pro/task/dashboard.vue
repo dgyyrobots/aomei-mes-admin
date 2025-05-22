@@ -90,6 +90,7 @@ import CenterBottom from './components/CenterBottom.vue'
 import TimeRegistration from './dialogs/TimeRegistration.vue'
 import { getProtask } from '@/api/mes/pro/protask.js'
 import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
+import mqttTool from '@/utils/mqttTool.js'
 
 export default {
   components: {
@@ -183,6 +184,7 @@ export default {
   },
   created() {
     this.getDetail();
+    mqttTool.connect()
   },
   mounted() {
     this.updateDateTime() // 初始化时间

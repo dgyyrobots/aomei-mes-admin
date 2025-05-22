@@ -1,5 +1,5 @@
-import mqtt from 'mqtt'
-import { getToken, getUsername } from "@/utils/auth";
+import * as mqtt from 'mqtt'
+import { getUsername } from "@/utils/auth";
 
 let mqttTool = {
   client: null,
