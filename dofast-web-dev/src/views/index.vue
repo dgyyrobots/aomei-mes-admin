@@ -28,12 +28,16 @@
 
 <script>
 import { getOrderMonthCount } from '@/api/mall/trade/order.js';
+
+
 import { getOrderMonthTotal, getOrderMoneyMonthTotal } from '@/api/channel/order.js';
 import PanelGroup from './dashboard/PanelGroup';
 import LineChart from './dashboard/LineChart';
 import RaddarChart from './dashboard/RaddarChart';
 import PieChart from './dashboard/PieChart';
 import BarChart from './dashboard/BarChart';
+import {getWorkorderMonthCount} from "@/api/mes/pro/workorder";
+import {getTaskMonthCount} from "@/api/mes/pro/protask";
 
 const MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
 
@@ -77,7 +81,7 @@ export default {
   },
   methods: {
     async handleSetLineChartData(type) {
-      const [_previous, _current] = await Promise.all([getOrderMonthCount('previous').then(({ data }) => data), getOrderMonthCount().then(({ data }) => data)]);
+      const [_previous, _current] = await Promise.all([getWorkorderMonthCount('previous').then(({ data }) => data), getWorkorderMonthCount().then(({ data }) => data)]);
       const maxMonth = new Date().getMonth() + 1;
       const previous = [];
       const current = [];
@@ -95,7 +99,8 @@ export default {
       this.lineChartData = { previous, current, months }
     },
     async getOrderMoneyMonthTotal() {
-      let { data } = await getOrderMoneyMonthTotal();
+      // let { data } = await getOrderMoneyMonthTotal();
+      let { data } = await getTaskMonthCount('previous');
       let xse = [];
       Object.keys(data).forEach(r => xse[r.slice(-2) - 1] = data[r]);
       let yue = MONTHS;

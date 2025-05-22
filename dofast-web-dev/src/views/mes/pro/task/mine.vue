@@ -283,14 +283,14 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item :label="form2.status == 'NORMAL' ? '计划开工时间' : '开工时间'" prop="startTime" label-width="100"
+            <el-form-item :label="form2.status == 'NORMAL' ? '计划开工时间' : '开工时间'" prop="startTime" label-width="110"
                           style="transform:translateX('20px');">
               <el-date-picker clearable v-model="form2.startTime" type="date" value-format="timestamp"
                               disabled></el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="form2.status != 'FINISHED' ? '计划完工时间' : '完工时间'" prop="endTime" label-width="100"
+            <el-form-item :label="form2.status != 'FINISHED' ? '计划完工时间' : '完工时间'" prop="endTime" label-width="110"
                           style=" transform:translateX('20px');">
               <el-date-picker clearable v-model="form2.endTime" type="date" value-format="timestamp"
                               placeholder="请选择需求日期" disabled></el-date-picker>
@@ -518,10 +518,10 @@ export default {
   methods: {
     getStatusColor(status) {
       return {
-        PAUSE: 'background-color: #f39c12;color: #FFF;',
-        STARTED: 'background-color: #2ed573;color: #FFF;',
-        NORMAL: 'background-color: #e74c3c;color: #FFF;',
-        FINISHED: 'background-color: #bdc3c7;color: #000;'
+        PAUSE: 'background-color: #f39c12;color: #FFF;;border-radius: 12px;',
+        STARTED: 'background-color: #2ed573;color: #FFF;;border-radius: 12px;',
+        NORMAL: 'background-color: #FF7F50;color: #FFF;border-radius: 12px;',
+        FINISHED: 'background-color: #bdc3c7;color: #000;;border-radius: 12px;'
       }[status] || 'opacity:0.5'
     },
     tabClick(tab) {

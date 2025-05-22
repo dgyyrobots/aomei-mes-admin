@@ -84,3 +84,14 @@ export function finshWorkorder(data){
     data: data,
   });
 }
+
+export function getWorkorderMonthCount(year) {
+  year =
+    {
+      previous: 'lastYear',
+    }[year] || 'thisYear';
+  return request({
+    url: `/admin-api/mes/pro/workorder/count-month-workorder-${year}`,
+    method: 'get',
+  });
+}

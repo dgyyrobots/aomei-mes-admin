@@ -95,7 +95,7 @@ export default {
         ],
         series: [
           {
-            name: '销售额',
+            name: '任务产量',
             type: 'bar',
             stack: 'vistors',
             barWidth: '60%',
