@@ -38,19 +38,22 @@ export default {
     methods: {
         /** 连接Mqtt */
         connectMqtt(subscribeTopics) {
-            let randomClientId = 'web-' + Math.random().toString(16).substr(2);
+            let randomClientId = 'mes-' + Math.random().toString(16).substr(2) + '-' + getUsername()
             let options = {
-                username: "wumei-smart",
-                password: getToken(),
+                username: "fastbee",
+                password: 'fastbee',
                 cleanSession: false,
                 keepAlive: 30,
                 clientId: randomClientId,
                 connectTimeout: 10000
             }
             // 配置Mqtt地址
-            // let url = "ws://" + window.location.hostname + ":8083/mqtt";
-            console.log("mqtt地址：", process.env.VUE_APP_EMQX_SERVER_URL);
-            this.client = mqtt.connect(process.env.VUE_APP_EMQX_SERVER_URL, options);
+  // 配置Mqtt地址
+            let url = process.env.VUE_APP_EMQX_SERVER_URL;
+            if (!url) {
+              url = window.location.origin.replace(/^http/, 'ws') + "/mqtt";
+            }
+            this.client = mqtt.connect(url, options);
             this.client.on("connect", (e) => {
                 console.log("客户端：" + randomClientId + "，成功连接服务器:", e);
                 // 订阅主题

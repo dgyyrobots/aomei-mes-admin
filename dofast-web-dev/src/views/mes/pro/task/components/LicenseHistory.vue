@@ -1,5 +1,5 @@
 <template>
-  <Card class="LicenseHistory" content-padding="6px 0" title="历史生产版号">
+  <Card class="LicenseHistory" content-padding="6px 0" title="当前任务生产批次明细">
     <template #titleRight>
       <div class="search-container">
         <div class="input-wrapper">

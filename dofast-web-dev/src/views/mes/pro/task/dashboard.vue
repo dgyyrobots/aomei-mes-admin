@@ -38,7 +38,7 @@
               <PayInfo />
             </div>
             <div class="left-box box-2">
-              <StaffInfo />
+              <StaffInfo :current="staff" :data="staffInfo"/>
             </div>
             <div class="left-box box-3">
               <EquipmentTime />
@@ -88,6 +88,8 @@ import PayInfo from './components/PayInfo.vue'
 import StaffInfo from './components/StaffInfo.vue'
 import CenterBottom from './components/CenterBottom.vue'
 import TimeRegistration from './dialogs/TimeRegistration.vue'
+import { getProtask } from '@/api/mes/pro/protask.js'
+import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
 
 export default {
   components: {
@@ -109,6 +111,14 @@ export default {
       currentWeekday: '',
       greeting: '',
       $timer: null,
+      detail: {
+        attr1: '',
+      },
+      staffInfo: [
+        [],
+        []
+      ],
+      staff: 0
     }
   },
   computed: {
@@ -118,6 +128,22 @@ export default {
     })
   },
   methods: {
+    async getDetail() {
+      const id = this.$route.params.id;
+      const res = await getProtask(id);
+      this.detail = res.data;
+      this.getStaffInfo();
+    },
+    async getStaffInfo() {
+      const res = await Promise.all([
+        getByTeamCodeAndShiftInfo(this.detail.attr1, 0),
+        getByTeamCodeAndShiftInfo(this.detail.attr1, 1)
+      ])
+      this.staffInfo = res.map(({data}) => {
+        return data
+      });
+      console.log(res)
+    },
     formatDate(date) {
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -144,14 +170,19 @@ export default {
     },
     updateDateTime() {
       const now = new Date()
+      const hour = now.getHours()
       this.currentDate = this.formatDate(now)
       this.currentTime = this.formatTime(now)
       this.currentWeekday = this.getWeekday(now)
       this.greeting = this.getGreeting(now.getHours())
+      this.staff = (( hour <= 19 ) && ( hour >= 7 ) ) ? 0 : 1 // 根据时间判断当前班次
     },
     openTimeRegistration() {
       this.$refs.timeRegistrationRef.openDialog()
     },
+  },
+  created() {
+    this.getDetail();
   },
   mounted() {
     this.updateDateTime() // 初始化时间
