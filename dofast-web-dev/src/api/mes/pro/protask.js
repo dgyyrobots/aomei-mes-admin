@@ -112,3 +112,15 @@ export function updateTeamById(data) {
   });
 }
 
+export function getTaskMonthCount(year) {
+  year =
+    {
+      previous: 'lastYear',
+    }[year] || 'thisYear';
+  return request({
+    url: `/admin-api/mes/pro/task/count-month-task-${year}`,
+    method: 'get',
+  });
+}
+
+

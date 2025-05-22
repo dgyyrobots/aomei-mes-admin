@@ -125,3 +125,10 @@ export function updatePrintStatus(recordId) {
     method: 'put',
   });
 }
+
+export function feedbackErp(id) {
+  return request({
+    url: '/mes/pro/feedback/feedbackErp?id=' + id,
+    method: 'put',
+  });
+}

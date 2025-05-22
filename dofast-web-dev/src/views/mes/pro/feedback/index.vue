@@ -84,6 +84,14 @@
         <el-button type="warning" plain icon="el-icon-merge" size="mini" :disabled="multiple" v-hasPermi="['pro:feedback:merge']" @click="handleMerge">合并</el-button>
       </el-col>
 
+      <el-col :span="1.5">
+        <el-button type="success" plain icon="el-icon-merge" size="mini" :disabled="multiple" v-hasPermi="['pro:feedback:erpFeedback']" @click="handleFeedbackErp">ERP报工</el-button>
+      </el-col>
+
+<!--      <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-merge" size="mini" :disabled="multiple" v-hasPermi="['pro:feedback:merge']" @click="handleFeedbackErp">ERP入库</el-button>
+      </el-col>-->
+
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
     <el-table v-loading="loading" :data="feedbackList" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
@@ -112,7 +120,20 @@
           <dict-tag :options="dict.type.mes_order_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
-      <el-table-column fixed="right" label="操作" align="center" width="190px" class-name="small-padding fixed-width">
+      <el-table-column width="130" fixed="right" label="ERP报工状态" align="center" prop="erpFeedbackStatus">
+        <template v-slot="scope">
+          <span v-if="scope.row.erpFeedbackStatus === 'N'">未同步</span>
+          <span v-else>已同步</span>
+        </template>
+      </el-table-column>
+      <el-table-column width="130" fixed="right" label="ERP入库状态" align="center" prop="erpWarehousingStatus">
+        <template v-slot="scope">
+          <span v-if="scope.row.erpWarehousingStatus === 'N'">未同步</span>
+          <span v-else>已同步</span>
+        </template>
+      </el-table-column>
+
+      <el-table-column  fixed="right" label="操作" align="center" width="190px" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-query" @click="handleView(scope.row)"
                      v-hasPermi="['pro:feedback:query']">查看
@@ -270,6 +291,15 @@
               </el-input>
             </el-form-item>
             <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="任务状态" prop="taskStatus">
+              <el-select v-model="form.taskStatus" placeholder="请选择任务状态">
+                <el-option v-for="dict in dict.type.mes_pro_task_status" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
           </el-col>
 
           <el-col :span="8">
@@ -496,7 +526,7 @@
 </template>
 
 <script>
-import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback, mergeFeedback, initWarehouse , updatePrintStatus} from '@/api/mes/pro/feedback';
+import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback, mergeFeedback, initWarehouse , updatePrintStatus , feedbackErp} from '@/api/mes/pro/feedback';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import UserSingleSelect from '@/components/userSelect/single.vue';
@@ -519,7 +549,7 @@ import {listSimplePosts} from "@/api/system/post";
 export default {
   name: 'Feedback',
   components: {MachinerySelectSingle, WorkorderSelect, WorkstationSelect, UserSingleSelect, ProtaskSelect},
-  dicts: ['mes_order_status', 'mes_feedback_type', 'mes_shift_info'],
+  dicts: ['mes_order_status', 'mes_feedback_type', 'mes_shift_info' , 'mes_pro_task_status'],
   data() {
     return {
       optType: undefined,
@@ -751,6 +781,7 @@ export default {
       this.open = true;
       this.form.feedbackTime = new Date(); // 追加当前时间展示
       this.form.feedbackType ="UNI"; // 默认选中
+      this.form.taskStatus = "STARTED"; //默认选择已开工
       this.title = '添加生产报工记录';
       this.optType = 'add';
       // 初始化时读取设备缓存
@@ -869,6 +900,7 @@ export default {
     },
     /** 提交按钮 */
     submitForm() {
+      this.loading = true;
       this.$refs['form'].validate(valid => {
         this.form.processDefectList = this.processDefectList; // 追加缺陷项管控
         this.form.processDefectList.forEach((defect, index) => {
@@ -904,7 +936,6 @@ export default {
           return;
         }
 
-
         if (valid) {
           this.form.feedbackMemberList = this.teamMembers;
           if (this.form.id != null) {
@@ -914,6 +945,7 @@ export default {
               this.processDefectList = []; // 清空缺陷列表
               this.cascaderOptions = []; // 清空缺陷级联选择器
               this.open = false;
+              this.loading = false;
               this.getList();
             });
           } else {
@@ -924,6 +956,7 @@ export default {
               this.processDefectList = []; // 清空缺陷列表
               this.cascaderOptions = []; // 清空缺陷级联选择器
               this.open = false;
+              this.loading = false;
               this.getList();
             });
           }
@@ -1063,7 +1096,12 @@ export default {
           this.form.machineryName = result.machineryName;
           this.form.machineryId = result.machineryId;
         });*/
-        const shiftInfo = this.form.shiftInfo || 'default'; // 使用默认班次或当前选择的班次
+        // 判定时间, 若为当前时间为上午7点至晚上19点这段时间, shiftInfo为1, 否则为0
+        const now = new Date();
+        const hour = now.getHours();
+        const time = hour >= 7 && hour < 19 ? '0' : '1';
+        if(!this.form.shiftInfo) this.form.shiftInfo = time;
+        const shiftInfo = this.form.shiftInfo;
         getByTeamCodeAndShiftInfo(this.form.teamCode, shiftInfo).then(response => {
           let teamInfo = response.data;
           console.log("teamInfo: ", teamInfo);
@@ -1198,7 +1236,7 @@ export default {
         LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.batchCode);
 
         LODOP.ADD_PRINT_TEXT(335, 15, 120, 35, "日期:");
-        LODOP.ADD_PRINT_TEXT(335, 120, 280, 35, new Date(obj.createTime).toISOString().slice(0, 19).replace('T', ' '));
+        LODOP.ADD_PRINT_TEXT(335, 120, 280, 35, new Date(obj.feedbackTime).toISOString().slice(0, 19).replace('T', ' '));
 
         let jsonQc = {
           "id": obj.id,
@@ -1230,9 +1268,7 @@ export default {
       }*/
 
       for (const queryId of this.ids) {
-        await updatePrintStatus(queryId).then(response => {
-          console.log(response);
-        });
+        await updatePrintStatus(queryId);
       }
 
       this.$modal.msgSuccess('批量打印成功');
@@ -1984,7 +2020,29 @@ export default {
     },
     handlePostChange(row) {
       console.log('修改后的岗位:', row.postIds)
-    }
+    },
+    handleFeedbackErp(row){
+      // 只允许选择一行
+      if (this.selectedRows.length !== 1) {
+        this.$message.warning('请选择一行数据进行操作');
+        return;
+      }
+      const selectedRow = this.selectedRows[0];
+      if (selectedRow.status !== 'WAREHOUSED' && selectedRow.erpFeedbackStatus !== 'N') {
+        this.$message.warning('只有完成状态的报工单且未同步才能进行ERP反馈');
+        return;
+      }
+      this.$modal.confirm('确认进行ERP报工？').then(() => {
+        this.loading = true;
+        feedbackErp(selectedRow.id).then(response => {
+          this.$modal.msgSuccess("ERP反馈成功");
+          this.getList();
+        }).finally(() => {
+          this.loading = false;
+        });
+      });
+
+    },
   },
   activated() {
     // 当从缓存中重新激活组件时，可以在此更新数据

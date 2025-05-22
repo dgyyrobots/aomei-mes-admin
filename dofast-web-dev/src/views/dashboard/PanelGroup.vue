@@ -3,7 +3,7 @@
     <div :key="i" class="card-panel-col" v-for="(item, i) in data"
          v-hasPermi="['channel:order:query', 'trade:order:query']">
       <div class="card-panel sm:flex md:flex lg:block !sm:flex-justify-center !md:flex-justify-center"
-           @click="handleSetLineChartData('newVisitis')" :style="{ backgroundColor: item.color }">
+           @click="handleSetLineChartData(item.type)" :style="{ backgroundColor: item.color }">
         <div class="card-panel-icon-wrapper hidden-xm-and-down hiddens">
           <svg-icon :icon-class="item.icon" class-name="card-panel-icon" />
         </div>
@@ -12,7 +12,7 @@
           <div class="card-panel-text">
             {{ item.title }}
           </div>
-          <count-to :start-val="0" :end-val="item.value" :duration="2600" class="card-panel-num" />
+          <count-to v-if="item.type !== 'mineTask'" :start-val="0" :end-val="item.value" :duration="2600" class="card-panel-num" />
         </div>
       </div>
     </div>
@@ -35,10 +35,11 @@ export default {
           { icon: 'documentation', title: '应付款', value: 0, color: '#fe840f', span: { xs: 12, sm: 8, lg: 4 } },*/
         /* { icon: 'merchant', title: '客户总数', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } },
          { icon: 'pay', title: '供应商数', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } },*/
-        { icon: 'number', title: '物料总数', value: 0, color: '#fe840f', span: { xs: 12, sm: 8, lg: 4 } },
-        { icon: 'link', title: '工单总数', value: 0, color: '#fe840f', span: { xs: 12, sm: 8, lg: 4 } },
-        { icon: 'list', title: '委外工单', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } },
-        { icon: 'example', title: '待排产任务', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } },
+        { icon: 'number', title: '物料总数', value: 0, color: '#fe840f', span: { xs: 12, sm: 8, lg: 4 } , type: 'newVisitis'},
+        { icon: 'link', title: '工单总数', value: 0, color: '#fe840f', span: { xs: 12, sm: 8, lg: 4 } , type: 'newVisitis'},
+        { icon: 'list', title: '委外工单', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } , type: 'newVisitis'},
+        { icon: 'example', title: '待排产任务', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } , type: 'newVisitis'},
+        { icon: 'example', title: '我的任务', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } , type: 'mineTask'},
         /*  { icon: 'list', title: '待发货订单', value: 0, color: '#7d7efc', span: { xs: 12, sm: 8, lg: 4 } },
           { icon: 'example', title: '待出库订单', value: 0, color: '#fb644b', span: { xs: 12, sm: 8, lg: 4 } },*/
       ],
@@ -47,7 +48,11 @@ export default {
   methods: {
     handleSetLineChartData(type) {
       console.log(type);
-      this.$emit('handleSetLineChartData', type);
+      if(type === 'mineTask'){
+        this.$router.push({ name: 'myprotask' });
+      }else{
+        this.$emit('handleSetLineChartData', type);
+      }
     },
   },
   created() {

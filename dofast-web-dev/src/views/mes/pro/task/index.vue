@@ -575,13 +575,11 @@ export default {
             this.sendForm.calendarType = teamInfo.calendarType;
             this.sendForm.principalName = teamInfo.principalName;
             if(this.selectionObj[0].machineryCodes){
-              let machineryCodeList = new Array();
-              // this.selectionObj[0].machineryCodes转为list
-              this.selectionObj[0].machineryCodes.split(',').forEach(item => {
-                machineryCodeList.push(item);
-              });
-              this.sendForm.machineryCodes = machineryCodeList;
+              const machineryCodesString = this.selectionObj[0].machineryCodes.replace("[", '').replace("]", '').replace(/\s*/g,''); // 清理字符
+              if (machineryCodesString) {
+                this.sendForm.machineryCodes = machineryCodesString.split(',').map(String); // 转换为数组
               }
+            }
           }
         }).catch(error => {
           console.error('获取班组信息失败:', error);
