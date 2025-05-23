@@ -79,12 +79,12 @@
     </el-row>
 
     <!-- 列表 -->
-    <el-row :gutter="15">
-      <el-col :lg="{span: '4-8'}"  v-for="item in list" :key="item.id" class="mb-5 cursor-pointer" @click.native="jumpDashboard(item)"><!--:span="4" -->
+    <el-row :gutter="10">
+      <el-col :span="4.8" v-for="item in list" :key="item.id" class="mb-5 cursor-pointer" @click.native="jumpDashboard(item)">
         <el-descriptions :column="1" :title="item.taskCode" class="pointer-events-none p-5" :style="getStatusColor(item.status)">
           <el-descriptions-item label="任务名称">
             <div>
-              <div class="text-ellipsis overflow-hidden" style="height: 22px;">{{ item.workorderName }} </div>
+              <div class="text-ellipsis overflow-hidden whitespace-nowrap" style="height: 22px;">{{ item.workorderName }} </div>
               <div class="text-ellipsis overflow-hidden" style="height: 44px;">{{ item.taskName }}</div>
             </div>
           </el-descriptions-item>
@@ -880,13 +880,14 @@ export default {
 <style lang="scss" scoped>
 .app-container {
   :deep() {
+    [class~="el-col-4\.8"] {
+      width: 20%;
+    }
+  }
+  :deep() {
     .el-descriptions__body{
       background-color: transparent;
     }
   }
-}
-
-.el-col-lg-4-8 {
-  width: 20%;
 }
 </style>

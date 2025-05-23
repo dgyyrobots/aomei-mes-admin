@@ -239,9 +239,9 @@ export default {
       return;
     },
     getCookie() {
-      const username = getUsername();
-      const password = getPassword();
       const rememberMe = getRememberMe();
+      const username = rememberMe ? getUsername() : '';
+      const password = rememberMe ? getPassword() : '';
       const tenantName = getTenantName();
       this.loginForm = {
         ...this.loginForm,
@@ -256,12 +256,12 @@ export default {
         if (valid) {
           this.loading = true;
           // 设置 Cookie
+          setUsername(this.loginForm.username);
           if (this.loginForm.rememberMe) {
-            setUsername(this.loginForm.username);
             setPassword(this.loginForm.password);
             setRememberMe(this.loginForm.rememberMe);
           } else {
-            removeUsername();
+            // removeUsername();
             removePassword();
             removeRememberMe();
           }

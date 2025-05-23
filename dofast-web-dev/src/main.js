@@ -24,7 +24,7 @@ import './permission'; // permission control
 import './tongji'; // 百度统计
 import { getDicts } from '@/api/system/dict/data';
 import { getConfigKey } from '@/api/infra/config';
-import { parseTime, resetForm, handleTree, treeFilter, addBeginAndEndTime, divide, addDateRange, selectDictLabel, selectDictLabels } from '@/utils/ruoyi';
+import { parseTime, parseDate, resetForm, handleTree, treeFilter, addBeginAndEndTime, divide, addDateRange, selectDictLabel, selectDictLabels } from '@/utils/ruoyi';
 import Pagination from '@/components/Pagination';
 // 自定义表格工具扩展
 import RightToolbar from '@/components/RightToolbar';
@@ -41,6 +41,7 @@ import { DICT_TYPE, getDictDataLabel, getDictDatas, getDictDatas2 } from '@/util
 Vue.prototype.getDicts = getDicts;
 Vue.prototype.getConfigKey = getConfigKey;
 Vue.prototype.parseTime = parseTime;
+Vue.prototype.parseDate = parseDate;
 Vue.prototype.resetForm = resetForm;
 Vue.prototype.getDictDatas = getDictDatas;
 Vue.prototype.getDictDatas2 = getDictDatas2;

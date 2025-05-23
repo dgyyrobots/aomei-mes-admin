@@ -1,5 +1,5 @@
 <template>
-  <Card class="LicenseHistory" content-padding="6px 0" title="历史生产版号">
+  <Card class="LicenseHistory" content-padding="6px 0" title="批次产出明细">
     <template #titleRight>
       <div class="search-container">
         <div class="input-wrapper">
@@ -17,8 +17,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, index) in tableData" :key="index" :class="{ warning: row[3] === '警告' }">
-            <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
+          <tr v-for="(row, index) in data" :key="index" :class="{ warning: tableFields[3](row) === '警告' }">
+            <td v-for="(getField, cellIndex) in tableFields" :key="cellIndex">{{ getField(row) }}</td>
           </tr>
         </tbody>
       </table>
@@ -31,6 +31,14 @@ import Card from './Card.vue'
 
 export default {
   name: 'LicenseHistory',
+  props: {
+    data: {
+      type: Array,
+      default() {
+        return []
+      }
+    }
+  },
   components: {
     Card,
   },
@@ -38,11 +46,11 @@ export default {
     return {
       searchKeyword: '',
       tableHeaders: ['日期', '版号', '产量', '状态'],
-      tableData: [
-        ['2023-05-22', 'BH001', '2345', '正常'],
-        ['2023-05-21', 'BH002', '3456', '正常'],
-        ['2023-05-20', 'BH003', '1235', '警告'],
-        ['2023-05-19', 'BH004', '5432', '正常'],
+      tableFields: [
+        (row) => this.parseDate(row.feedbackTime),
+        (row) => row.batchCode,
+        (row) => row.quantityFeedback + row.unitOfMeasure,
+        (row) => '',
       ],
     }
   },

@@ -1,5 +1,5 @@
-import mqtt from 'mqtt'
-import { getToken } from "@/utils/auth";
+import * as mqtt from 'mqtt'
+import { getUsername } from "@/utils/auth";
 
 let mqttTool = {
   client: null,
@@ -7,18 +7,18 @@ let mqttTool = {
 
 /** 连接Mqtt */
 mqttTool.connect = function () {
-  let options = {
-    username: "wumei-smart",
-    password: getToken(),
+  const options = {
+    username: 'fastbee', // "wumei-smart",
+    password: 'fastbee',
     cleanSession: true,
     keepAlive: 30,
-    clientId: 'web-' + Math.random().toString(16).substr(2),
+    clientId: 'mes-' + Math.random().toString(16).substr(2) + '-' + getUsername(),
     connectTimeout: 10000
   }
   // 配置Mqtt地址
   let url = process.env.VUE_APP_EMQX_SERVER_URL;
-  if (url == '') {
-    url = "ws://" + window.location.hostname + ":8083/mqtt";
+  if (!url) {
+    url = window.location.origin.replace(/^http/, 'ws') + "/mqtt";
     console.log('自动获取地址');
   }
   console.log("mqtt地址：", url);

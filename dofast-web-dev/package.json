@@ -79,6 +79,7 @@
     "vue-quill-editor": "^3.0.6",
     "vue-router": "3.4.9",
     "vue-video-player": "^5.0.2",
+    "vue2-scale-box": "^0.1.7",
     "vuedraggable": "2.24.3",
     "vuex": "3.6.2",
     "web-storage-cache": "^1.1.1",

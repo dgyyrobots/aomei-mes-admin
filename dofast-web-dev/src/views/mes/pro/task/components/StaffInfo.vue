@@ -1,5 +1,11 @@
 <template>
-  <Card class="StaffInfo" content-padding="6px 0" title="员工信息">
+  <Card class="StaffInfo" content-padding="6px 0" :title="`员工信息(${currentName})`">
+    <template #titleRight>
+      <div class="tabs">
+        <span :class="{active: active == 0 }" class="tab" @click="active=0"> 白班 </span>
+        <span :class="{active: active == 1 }" class="tab" @click="active=1"> 夜班 </span>
+      </div>
+    </template>
     <div class="scroll-board">
       <table>
         <thead>
@@ -10,14 +16,14 @@
         <tbody>
           <tr v-for="(row, index) in tableData" :key="index" :class="{ warning: row[3] === '警告' }">
             <td
-              v-for="(cell, cellIndex) in row"
+              v-for="(getField, cellIndex) in tableFields"
               :key="cellIndex"
               :class="{
-                'status-online': cellIndex === 3 && cell === '在线',
-                'status-offline': cellIndex === 3 && cell === '离线',
+                'status-online': cellIndex === 3 && getField(row) === '在线',
+                'status-offline': cellIndex === 3 && getField(row) === '离线',
               }"
             >
-              {{ cell }}
+              {{ getField(row) }}
             </td>
           </tr>
         </tbody>
@@ -34,19 +40,61 @@ export default {
   components: {
     Card,
   },
+  props: {
+    current: {
+      type: Number,
+      default: 0,
+    },
+    data: {
+      type: Array,
+      default: () => [
+        [],
+        []
+      ]
+    }
+  },
   data() {
     return {
-      tableHeaders: ['姓名', '工号', '职位', '状态'],
-      tableData: [
-        ['张三', 'EMP001', '操作员', '在线'],
-        ['李四', 'EMP002', '技术员', '离线'],
+      active: this.current,
+      tableHeaders: ['姓名', '用户名', '职位'], // , '状态'],
+      tableFields: [
+        (row) => row.nickName,
+        (row) => row.userName,
+        (row) => row.principalName == row.nickName ? '组长' : '组员', // row.principalName,
+        // (row) => row.postIds
       ],
     }
   },
+  computed: {
+    tableData() {
+      return this.data[this.active]
+    },
+    currentName() {
+      return {
+        0: '白班',
+        1: '夜班',
+      }[this.current]
+    }
+  },
+  watch: {
+    current(v) {
+      this.active = v
+    }
+  }
 }
 </script>
 
 <style lang="scss" scoped>
+.tabs{
+  .tab {
+    padding: 5px 10px;
+    color: #fff;
+    &.active {
+      background: #00bcd4;
+      color: #0D6B8C;
+    }
+  }
+}
 .StaffInfo {
   width: 100%;
   height: 100%;

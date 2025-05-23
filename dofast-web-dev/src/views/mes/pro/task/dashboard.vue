@@ -35,20 +35,17 @@
           <!-- 左侧面板 -->
           <div class="panel left-panel">
             <div class="left-box box-1">
-              <PayInfo />
+              <LicenseHistory :data="feedbackInfo" @search="getFeedbackInfo"/>
             </div>
             <div class="left-box box-2">
-              <StaffInfo />
-            </div>
-            <div class="left-box box-3">
-              <EquipmentTime />
+              <StaffInfo :current="staff" :data="staffInfo"/>
             </div>
           </div>
 
           <!-- 中间面板 -->
           <div class="panel center-panel">
             <div class="center-box box-1">
-              <DashboardGauge />
+              <DashboardGauge :data="syncData"/>
             </div>
             <div class="center-box box-2">
               <CenterBottom />
@@ -58,13 +55,13 @@
           <!-- 右侧面板 -->
           <div class="panel right-panel">
             <div class="right-box box-1">
-              <TaskInfoBox />
+              <TaskInfoBox :data="detail"/>
             </div>
             <div class="right-box box-2">
               <EquipmentHistory />
             </div>
             <div class="right-box box-3">
-              <LicenseHistory />
+              <EquipmentTime />
             </div>
           </div>
         </div>
@@ -88,6 +85,10 @@ import PayInfo from './components/PayInfo.vue'
 import StaffInfo from './components/StaffInfo.vue'
 import CenterBottom from './components/CenterBottom.vue'
 import TimeRegistration from './dialogs/TimeRegistration.vue'
+import { getProtask } from '@/api/mes/pro/protask.js'
+import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
+import { listFeedback } from '@/api/mes/pro/feedback.js'
+import mqttTool from '@/utils/mqttTool.js'
 
 export default {
   components: {
@@ -109,6 +110,20 @@ export default {
       currentWeekday: '',
       greeting: '',
       $timer: null,
+      detail: {
+        attr1: '',
+        taskCode: ''
+      },
+      staffInfo: [
+        [],
+        []
+      ],
+      feedbackInfo: [],
+      staff: 0,
+      syncData: {
+        produced: 0,
+        speed: 0,
+      }
     }
   },
   computed: {
@@ -118,6 +133,41 @@ export default {
     })
   },
   methods: {
+    async getDetail() {
+      this.unsubscribe()
+      const id = this.$route.params.id;
+      const res = await getProtask(id);
+      this.detail = res.data;
+      this.getStaffInfo();
+      this.getFeedbackInfo();
+      this.subscribe();
+    },
+    async getStaffInfo() {
+      const res = await Promise.all([
+        getByTeamCodeAndShiftInfo(this.detail.attr1, 0),
+        getByTeamCodeAndShiftInfo(this.detail.attr1, 1)
+      ])
+      this.staffInfo = res.map(({data}) => {
+        return data
+      });
+      console.log(res)
+    },
+    async getFeedbackInfo(keyword) {
+      const res = await listFeedback({taskCode: this.detail.taskCode, pageSize: 100, });
+      this.feedbackInfo = res.data ? res.data.list: [];
+    },
+    subscribe() {
+      const productId = 138;
+      const deviceCode = 'DL01';
+      mqttTool.subscribe(`/${productId}/${deviceCode}/ws/service`, (topic, message) => {
+        console.log(topic, message)
+      });
+    },
+    unsubscribe() {
+      const productId = 138;
+      const deviceCode = 'DL01';
+      mqttTool.unsubscribe(`/${productId}/${deviceCode}/ws/service`);
+    },
     formatDate(date) {
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -144,20 +194,27 @@ export default {
     },
     updateDateTime() {
       const now = new Date()
+      const hour = now.getHours()
       this.currentDate = this.formatDate(now)
       this.currentTime = this.formatTime(now)
       this.currentWeekday = this.getWeekday(now)
       this.greeting = this.getGreeting(now.getHours())
+      this.staff = (( hour <= 19 ) && ( hour >= 7 ) ) ? 0 : 1 // 根据时间判断当前班次
     },
     openTimeRegistration() {
       this.$refs.timeRegistrationRef.openDialog()
     },
+  },
+  created() {
+    this.getDetail();
+    mqttTool.connect()
   },
   mounted() {
     this.updateDateTime() // 初始化时间
     this.$timer = setInterval(this.updateDateTime, 1000) // 每秒更新一次
   },
   beforeDestroy() {
+    this.unsubscribe(); // 取消订阅
     // 清除定时器
     if (this.$timer) {
       clearInterval(this.$timer)
@@ -284,14 +341,10 @@ export default {
         width: 100%;
 
         &.box-1 {
-          height: calc((100% - 16px) * 0.28);
+          height: calc((100% - 16px) * 0.64);
         }
 
         &.box-2 {
-          height: calc((100% - 16px) * 0.36);
-        }
-
-        &.box-3 {
           height: calc((100% - 16px) * 0.36);
         }
       }
