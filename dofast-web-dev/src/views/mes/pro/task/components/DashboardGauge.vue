@@ -28,7 +28,7 @@
     </div>
     <!-- 右上 -->
     <div class="gauge-label gauge-label-topright">
-      <div class="gauge-value yellow">3011</div>
+      <div class="gauge-value yellow">{{ produced }}</div>
       <div class="gauge-desc">正常产量</div>
       <svg class="gauge-fold-line" height="24" width="80">
         <polyline points="80,6 40,6 10,22" style="fill: none; stroke: #1ecfff; stroke-width: 2" />
@@ -71,16 +71,15 @@ export default {
   data() {
     return {
       switchValue: true,
+      speed: 0,
+      produced: 0,
     }
-  },
-  computed: {
-    speed() {
-      return this.data.speed || 0
-    },
   },
   watch: {
     data: {
       handler(newData) {
+        this.speed = newData.sd || 0
+        this.produced = newData.cl || 0
         if (this.chart) {
           this.chart.setOption({
             series: [

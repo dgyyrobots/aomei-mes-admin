@@ -19,15 +19,29 @@
 
         <!-- 按钮导航栏 -->
         <div class="button-nav">
+          <template>
+            <button class="nav-btn" v-if="detail.status === 'NORMAL' || detail.status === 'PAUSED' " @click="updateStatus('STARTED')">开工</button>
+            <button class="nav-btn" v-else-if="detail.status === 'STARTED'" @click="updateStatus('PAUSED')">暂停</button>
+            <button class="nav-btn" v-if="detail.status === 'STARTED'" @click="updateStatus('FINISHED')">完工</button>
+          </template>
           <button class="nav-btn">上机登记</button>
           <button class="nav-btn red">任务单操作</button>
-          <button class="nav-btn red">生产操作</button>
-          <button class="nav-btn" @click="openTimeRegistration">计时登记</button>
-          <button class="nav-btn">异常登记</button>
-          <button class="nav-btn">质量管理</button>
-          <button class="nav-btn">设备管理</button>
-          <button class="nav-btn">其他操作</button>
-          <button class="nav-btn">帮助</button>
+          <el-dropdown trigger="click" @command="onProCommand">
+            <button class="nav-btn red">生产操作</button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="">生产领料</el-dropdown-item>
+              <el-dropdown-item command="">生产上料</el-dropdown-item>
+              <el-dropdown-item command="">生产报工</el-dropdown-item>
+              <el-dropdown-item command="">打印条码</el-dropdown-item>
+              <el-dropdown-item command="">成品入库</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+          <!-- <button class="nav-btn" @click="openTimeRegistration">计时登记</button> -->
+          <!-- <button class="nav-btn">异常登记</button> -->
+          <button class="nav-btn" @click="toQcList">质量管理</button>
+          <button class="nav-btn" @click="toDeviceList">设备管理</button>
+          <!-- <button class="nav-btn">其他操作</button> -->
+          <!-- <button class="nav-btn">帮助</button> -->
         </div>
 
         <!-- 主要内容区 -->
@@ -85,7 +99,7 @@ import PayInfo from './components/PayInfo.vue'
 import StaffInfo from './components/StaffInfo.vue'
 import CenterBottom from './components/CenterBottom.vue'
 import TimeRegistration from './dialogs/TimeRegistration.vue'
-import { getProtask } from '@/api/mes/pro/protask.js'
+import { getProtask, updateProtask } from '@/api/mes/pro/protask.js'
 import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
 import { listFeedback } from '@/api/mes/pro/feedback.js'
 import mqttTool from '@/utils/mqttTool.js'
@@ -112,7 +126,8 @@ export default {
       $timer: null,
       detail: {
         attr1: '',
-        taskCode: ''
+        taskCode: '',
+        status: 'NORMAL'
       },
       staffInfo: [
         [],
@@ -121,8 +136,8 @@ export default {
       feedbackInfo: [],
       staff: 0,
       syncData: {
-        produced: 0,
-        speed: 0,
+        cl: 0,
+        sd: 0,
       }
     }
   },
@@ -157,16 +172,23 @@ export default {
       this.feedbackInfo = res.data ? res.data.list: [];
     },
     subscribe() {
-      const productId = 138;
-      const deviceCode = 'DL01';
-      mqttTool.subscribe(`/${productId}/${deviceCode}/ws/service`, (topic, message) => {
-        console.log(topic, message)
-      });
+      const productId = 144;
+      const deviceCode = 'FJ01';
+      mqttTool.subscribe(`/${productId}/${deviceCode}/ws/service`);
     },
     unsubscribe() {
-      const productId = 138;
-      const deviceCode = 'DL01';
+      const productId = 144;
+      const deviceCode = 'FJ01';
       mqttTool.unsubscribe(`/${productId}/${deviceCode}/ws/service`);
+    },
+    toQcList() {
+      this.$router.push({ path: '/mes/qc/ipqc' });
+    },
+    toDeviceList() {
+      this.$router.push({ path: '/app/mes/dv/machinery' });
+    },
+    onProCommand() {
+
     },
     formatDate(date) {
       const year = date.getFullYear()
@@ -192,6 +214,24 @@ export default {
       if (hour < 18) return '下午好!'
       return '晚上好!'
     },
+    updateStatus(status) {
+      const id = this.$route.params.id;
+      const params = {
+        id: id,
+        status: status
+      }
+      updateProtask(params).then(res => {
+        if (res.code === 0) {
+          this.$message.success('操作成功');
+          this.getDetail();
+        } else {
+          this.$message.error('操作失败');
+        }
+      }).catch(err => {
+        console.error(err);
+        this.$message.error('操作失败');
+      });
+    },
     updateDateTime() {
       const now = new Date()
       const hour = now.getHours()
@@ -208,6 +248,16 @@ export default {
   created() {
     this.getDetail();
     mqttTool.connect()
+    mqttTool.client.on('message', (topic, message) => {
+      const data = JSON.parse(message.toString());
+      if (topic === '/144/FJ01/ws/service') {
+        this.syncData = data.reduce((acc, item) => {
+          acc[item.id] = item.value;
+          return acc;
+        }, {  });
+        console.log(this.syncData)
+      }
+    });
   },
   mounted() {
     this.updateDateTime() // 初始化时间

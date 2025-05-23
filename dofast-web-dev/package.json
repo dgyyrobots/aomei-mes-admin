@@ -9,7 +9,7 @@
     "dev": "node --max_old_space_size=8192 ./node_modules/@vue/cli-service/bin/vue-cli-service.js serve --mode dev",
     "front": "vue-cli-service serve --mode front",
     "build": "npm run build:prod",
-    "build:prod": "vue-cli-service build --mode prod",
+    "build:prod": "node --max_old_space_size=8192 --openssl-legacy-provider ./node_modules/@vue/cli-service/bin/vue-cli-service.js build --mode prod",
     "build:stage": "vue-cli-service build --mode stage",
     "build:dev": "vue-cli-service build --mode dev",
     "build:static": "vue-cli-service build --mode static",
