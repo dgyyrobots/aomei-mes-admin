@@ -19,6 +19,11 @@
 
         <!-- 按钮导航栏 -->
         <div class="button-nav">
+          <template>
+            <button class="nav-btn" v-if="detail.status === 'NORMAL' || detail.status === 'PAUSED' " @click="updateStatus('STARTED')">开工</button>
+            <button class="nav-btn" v-else-if="detail.status === 'STARTED'" @click="updateStatus('PAUSED')">暂停</button>
+            <button class="nav-btn" v-if="detail.status === 'STARTED'" @click="updateStatus('FINISHED')">完工</button>
+          </template>
           <button class="nav-btn">上机登记</button>
           <button class="nav-btn red">任务单操作</button>
           <button class="nav-btn red">生产操作</button>
@@ -85,7 +90,7 @@ import PayInfo from './components/PayInfo.vue'
 import StaffInfo from './components/StaffInfo.vue'
 import CenterBottom from './components/CenterBottom.vue'
 import TimeRegistration from './dialogs/TimeRegistration.vue'
-import { getProtask } from '@/api/mes/pro/protask.js'
+import { getProtask, updateProtask } from '@/api/mes/pro/protask.js'
 import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
 import { listFeedback } from '@/api/mes/pro/feedback.js'
 import mqttTool from '@/utils/mqttTool.js'
@@ -112,7 +117,8 @@ export default {
       $timer: null,
       detail: {
         attr1: '',
-        taskCode: ''
+        taskCode: '',
+        status: 'NORMAL'
       },
       staffInfo: [
         [],
@@ -191,6 +197,24 @@ export default {
       if (hour < 14) return '中午好!'
       if (hour < 18) return '下午好!'
       return '晚上好!'
+    },
+    updateStatus(status) {
+      const id = this.$route.params.id;
+      const params = {
+        id: id,
+        status: status
+      }
+      updateProtask(params).then(res => {
+        if (res.code === 0) {
+          this.$message.success('操作成功');
+          this.getDetail();
+        } else {
+          this.$message.error('操作失败');
+        }
+      }).catch(err => {
+        console.error(err);
+        this.$message.error('操作失败');
+      });
     },
     updateDateTime() {
       const now = new Date()
