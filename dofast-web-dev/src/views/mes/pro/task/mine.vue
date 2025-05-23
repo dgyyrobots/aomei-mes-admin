@@ -80,7 +80,7 @@
 
     <!-- 列表 -->
     <el-row :gutter="10">
-      <el-col :span="4" v-for="item in list" :key="item.id" class="mb-5 cursor-pointer" @click.native="jumpDashboard(item)">
+      <el-col :span="4.8" v-for="item in list" :key="item.id" class="mb-5 cursor-pointer" @click.native="jumpDashboard(item)">
         <el-descriptions :column="1" :title="item.taskCode" class="pointer-events-none p-5" :style="getStatusColor(item.status)">
           <el-descriptions-item label="任务名称">
             <div>
@@ -879,6 +879,11 @@ export default {
 </script>
 <style lang="scss" scoped>
 .app-container {
+  :deep() {
+    [class~="el-col-4\.8"] {
+      width: 20%;
+    }
+  }
   :deep() {
     .el-descriptions__body{
       background-color: transparent;
