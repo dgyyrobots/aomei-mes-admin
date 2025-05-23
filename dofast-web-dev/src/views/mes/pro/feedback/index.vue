@@ -1,11 +1,9 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="100px">
-      <el-form-item label="报工类型" prop="feedbackType">
-        <el-select v-model="queryParams.feedbackType" placeholder="请选择报工类型" clearable>
-          <el-option v-for="dict in dict.type.mes_feedback_type" :key="dict.value" :label="dict.label"
-                     :value="dict.value"/>
-        </el-select>
+      <el-form-item label="报工单号" prop="feedbackCode">
+        <el-input v-model="queryParams.feedbackCode" placeholder="请输入报工单号" clearable
+                  @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="工作站名称" prop="workstationName">
         <el-input v-model="queryParams.workstationName" placeholder="请输入工作站名称" clearable
@@ -15,24 +13,21 @@
         <el-input v-model="queryParams.workorderCode" placeholder="请输入生产工单编号" clearable
                   @keyup.enter.native="handleQuery"/>
       </el-form-item>
-
-      <el-form-item label="报工单号" prop="feedbackCode">
-        <el-input v-model="queryParams.feedbackCode" placeholder="请输入报工单号" clearable
+      <el-form-item label="批次号" prop="workorderCode">
+        <el-input v-model="queryParams.batchCode" placeholder="请输入批次号" clearable
                   @keyup.enter.native="handleQuery"/>
       </el-form-item>
-
-      <el-form-item label="产品物料编码" prop="itemCode">
-        <el-input v-model="queryParams.itemCode" placeholder="请输入产品物料编码" clearable @keyup.enter.native="handleQuery"/>
+      <el-form-item label="物料编码" prop="itemCode">
+        <el-input v-model="queryParams.itemCode" placeholder="请输入物料编码" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
-      <el-form-item label="产品物料名称" prop="itemName">
-        <el-input v-model="queryParams.itemName" placeholder="请输入产品物料名称" clearable @keyup.enter.native="handleQuery"/>
+      <el-form-item label="物料名称" prop="itemName">
+        <el-input v-model="queryParams.itemName" placeholder="请输入物料名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
       <el-form-item label="生产工序" prop="processCode">
-        <el-select @change="val => { handleProcessChange(val) }" v-model="queryParams.processCode" placeholder="请选择生产工序" clearable>
+        <el-select @change="val => { handleProcessChange(val) }" v-model="queryParams.processCode" placeholder="请选择工序" clearable>
           <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"/>
         </el-select>
       </el-form-item>
-
 
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
@@ -94,7 +89,7 @@
 
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
-    <el-table v-loading="loading" :data="feedbackList" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
+    <el-table :row-class-name="tableRowClassName" v-loading="loading" :data="feedbackList" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center"/>
       <!--      <el-table-column label="报工类型" align="center" prop="feedbackType">
               <template slot-scope="scope">
@@ -120,18 +115,22 @@
           <dict-tag :options="dict.type.mes_order_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
-      <el-table-column width="130" fixed="right" label="ERP报工状态" align="center" prop="erpFeedbackStatus">
+      <el-table-column width="130"  label="ERP报工状态" align="center" prop="erpFeedbackStatus">
         <template v-slot="scope">
           <span v-if="scope.row.erpFeedbackStatus === 'N'">未同步</span>
           <span v-else>已同步</span>
         </template>
       </el-table-column>
-      <el-table-column width="130" fixed="right" label="ERP入库状态" align="center" prop="erpWarehousingStatus">
+      <el-table-column width="130"  label="ERP入库状态" align="center" prop="erpWarehousingStatus">
         <template v-slot="scope">
           <span v-if="scope.row.erpWarehousingStatus === 'N'">未同步</span>
           <span v-else>已同步</span>
         </template>
       </el-table-column>
+
+      <el-table-column width="150" label="来源单号" :show-overflow-tooltip="true" align="center" prop="originCode"/>
+
+      <el-table-column width="150" fixed="right" label="批次号" align="center" prop="batchCode"/>
 
       <el-table-column  fixed="right" label="操作" align="center" width="190px" class-name="small-padding fixed-width">
         <template slot-scope="scope">
@@ -302,12 +301,27 @@
             </el-form-item>
           </el-col>
 
+
+        </el-row>
+
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="合并需求" prop="mergeStatus">
+              <el-select v-model="form.mergeStatus" placeholder="请选择合并需求">
+                <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+
+          </el-col>
+
           <el-col :span="8">
             <el-form-item v-if=" form.status == 'APPROVING' " label="仓库信息">
               <el-cascader v-model="wareHouse" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
             </el-form-item>
           </el-col>
         </el-row>
+
 
         <el-collapse v-model="activeName" accordion>
           <el-collapse-item title="班组成员信息" name="1">
@@ -414,47 +428,6 @@
       </div>
     </el-dialog>
 
-
-    <!--  入库--报废  -->
-<!--    <el-dialog :title="title" :visible.sync="wareOpen" width="75%" v-dialogDrag append-to-body>
-      <el-form ref="form" :model="wareForm" :rules="rules" label-width="80px">
-        <el-row :gutter="20">
-          <el-col :span="8">
-            <el-form-item label="报工单" prop="id">
-              <el-input v-model="wareForm.id" placeholder="请扫描报工单" @blur="handleBlur"/>
-            </el-form-item>
-          </el-col>
-          <el-col :span="4">
-            <el-button type="primary" round @click="getCameraInfo()">摄像头</el-button>
-          </el-col>
-
-        </el-row>
-
-        &lt;!&ndash; 设置el-table的高度 &ndash;&gt;
-        <el-table v-loading="loading" :data="wareList" height="500">
-          <el-table-column label="产品编号" align="center" prop="itemCode"/>
-          <el-table-column label="产品名称" align="center" prop="itemName"/>
-          <el-table-column label="工单号" align="center" prop="workorderCode"/>
-          <el-table-column label="生产车间" align="center" prop="workstationName"/>
-          <el-table-column label="任务单号" align="center" prop="taskCode"/>
-          <el-table-column label="合格数量" align="center" prop="quantityQualified"/>
-          <el-table-column label="产品单位" align="center" prop="unitOfMeasure"/>
-          <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-            <template v-slot="scope">
-              <span>{{ parseTime(scope.row.createTime) }}</span>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-form>
-      <div>
-        <video ref="videoCamera" style="display: none;"></video>
-      </div>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitWareForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
-    </el-dialog>-->
-
     <!-- 摄像头预览弹出框 -->
     <el-dialog title="摄像头预览" :visible.sync="cameraPreviewVisible" width="50%" v-dialogDrag append-to-body>
       <div> <!--v-if="cameraPreviewVisible"-->
@@ -526,7 +499,7 @@
 </template>
 
 <script>
-import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback, mergeFeedback, initWarehouse , updatePrintStatus , feedbackErp} from '@/api/mes/pro/feedback';
+import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback, mergeFeedback, initWarehouse , updatePrintStatus , feedbackErp , checkProcess} from '@/api/mes/pro/feedback';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import UserSingleSelect from '@/components/userSelect/single.vue';
@@ -549,7 +522,7 @@ import {listSimplePosts} from "@/api/system/post";
 export default {
   name: 'Feedback',
   components: {MachinerySelectSingle, WorkorderSelect, WorkstationSelect, UserSingleSelect, ProtaskSelect},
-  dicts: ['mes_order_status', 'mes_feedback_type', 'mes_shift_info' , 'mes_pro_task_status'],
+  dicts: ['mes_order_status', 'mes_feedback_type', 'mes_shift_info' , 'mes_pro_task_status' , 'sys_yes_no'],
   data() {
     return {
       optType: undefined,
@@ -782,6 +755,7 @@ export default {
       this.form.feedbackTime = new Date(); // 追加当前时间展示
       this.form.feedbackType ="UNI"; // 默认选中
       this.form.taskStatus = "STARTED"; //默认选择已开工
+      this.form.mergeStatus = "N"; // 默认没有合并需求
       this.title = '添加生产报工记录';
       this.optType = 'add';
       // 初始化时读取设备缓存
@@ -1282,7 +1256,7 @@ export default {
       });
     },
     // 开始入库
-    warehousing() {
+    async warehousing() {
       // 初始化仓库信息
       // 弹出框
      /* this.wareOpen = true;
@@ -1303,7 +1277,41 @@ export default {
         }
       }
 
-      this.$modal.confirm('确认入库选中的 ' + this.selectedRows.length + ' 条报工单？').then(() => {
+      await checkProcess(this.selectedRows[0].id).then(response => {
+        console.log("response: ", response);
+        if (!response.data.process && response.data.taskStatus === 'FINISHED') {// 末工序且设置为'已完成'
+          // 追加判定
+          this.$modal.confirm('当前任务单确认完成吗? 任务单: ' + response.data.taskCode + ' , 计划数量: ' + response.data.planQuantity + ', 总报工合格数: ' + response.data.qualityQuantity).then(() => {
+            this.loading = true;
+            startWareHousing({"wareList": this.selectedRows}).then(response => {
+              this.$modal.msgSuccess("入库成功");
+              this.getList();
+            }).catch(error => {
+              console.error('入库失败:', error);
+              this.$message.error(`入库失败`);
+            }).finally(() => {
+              this.loading = false;
+              this.getList(); // 刷新列表
+            });
+          });
+        }else{
+          this.$modal.confirm('确认入库选中的 ' + this.selectedRows.length + ' 条报工单？').then(() => {
+            this.loading = true;
+            startWareHousing({"wareList": this.selectedRows}).then(response => {
+              this.$modal.msgSuccess("入库成功");
+              this.getList();
+            }).catch(error => {
+              console.error('入库失败:', error);
+              this.$message.error(`入库失败`);
+            }).finally(() => {
+              this.loading = false;
+              this.getList(); // 刷新列表
+            });
+          });
+        }
+      })
+
+      /*this.$modal.confirm('确认入库选中的 ' + this.selectedRows.length + ' 条报工单？').then(() => {
         this.loading = true;
         startWareHousing({"wareList": this.selectedRows}).then(response => {
           this.$modal.msgSuccess("入库成功");
@@ -1315,7 +1323,7 @@ export default {
           this.loading = false;
           this.getList(); // 刷新列表
         });
-      });
+      });*/
 
     },
     async getCameraInfo() {
@@ -1939,7 +1947,7 @@ export default {
       );
 
       if (!canMerge) {
-        this.$message.error('只能合并相同任务单、相同物料且状态为完成的报工单');
+        this.$message.error('只能合并相同任务单、相同物料且已入库的报工单');
         return;
       }
 
@@ -2043,6 +2051,12 @@ export default {
       });
 
     },
+    tableRowClassName({row, rowIndex}) {
+      if (row.mergeStatus === 'Y') {
+        return 'warning-row';
+      }
+      return '';
+    }
   },
   activated() {
     // 当从缓存中重新激活组件时，可以在此更新数据
@@ -2050,3 +2064,10 @@ export default {
   }
 };
 </script>
+
+
+<style>
+.el-table .warning-row {
+  background: #F8EBE9;
+}
+</style>

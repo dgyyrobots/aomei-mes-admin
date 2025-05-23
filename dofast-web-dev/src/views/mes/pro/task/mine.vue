@@ -79,8 +79,8 @@
     </el-row>
 
     <!-- 列表 -->
-    <el-row :gutter="10">
-      <el-col :span="4" v-for="item in list" :key="item.id" class="mb-5 cursor-pointer" @click.native="jumpDashboard(item)">
+    <el-row :gutter="15">
+      <el-col :lg="{span: '4-8'}"  v-for="item in list" :key="item.id" class="mb-5 cursor-pointer" @click.native="jumpDashboard(item)"><!--:span="4" -->
         <el-descriptions :column="1" :title="item.taskCode" class="pointer-events-none p-5" :style="getStatusColor(item.status)">
           <el-descriptions-item label="任务名称">
             <div>
@@ -884,5 +884,9 @@ export default {
       background-color: transparent;
     }
   }
+}
+
+.el-col-lg-4-8 {
+  width: 20%;
 }
 </style>

@@ -376,35 +376,15 @@ export const constantRoutes = [
     },
     children: []
   },
-  /*{
-    name: 'myprotask',
-    path: '/mes/pro/task/mine',
-    component: resolve => require(['@/views/mes/pro/task/mine'], resolve),
-    hidden: true,
-  },*/
-  /*{
-    name: 'myprotask',
-    path: 'mes/pro/task/mine',
-    hidden: true,
-    component: Layout,
-    children: [
-      {
-        name: 'Task',
-        path: 'index',
-        component: () => import('@/views/mes/pro/task/mine'),
-        meta: { title: '生产', activeMenu: 'mes/pro' },
-      }
-    ]
-  }*/
 
   {
-    path: '/mes/pro/task',
+    path: '/mes/pro',
     hidden: true,
     component: Layout,
     children: [
       {
         name: 'myprotask',
-        path: '/mine',
+        path: '/task/mine',
         component: () => import('@/views/mes/pro/task/mine'),
         meta: { title: '我的任务', activeMenu: '/mes/pro' },
       }

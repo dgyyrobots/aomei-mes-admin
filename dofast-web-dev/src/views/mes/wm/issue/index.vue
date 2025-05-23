@@ -50,6 +50,10 @@
       </el-col>
 
       <el-col :span="1.5">
+        <el-button type="success" plain icon="el-icon-download" size="mini" :disabled="single" @click="handleChanceTask" v-hasPermi="['wms:issue-header:update']">完成</el-button>
+      </el-col>
+
+      <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-download" size="mini" :disabled="single" @click="handleFinsh" v-hasPermi="['wms:issue-header:update']">完成</el-button>
       </el-col>
 
@@ -209,138 +213,44 @@
       </div>
     </el-dialog>
 
-<!--
-    &lt;!&ndash; 扫码上料对话框-弃用-嫌操作复杂 &ndash;&gt;
-    <el-dialog :title="title" :visible.sync="feedingOpen" width="960px" append-to-body>
+    <el-dialog :title="title" :visible.sync="taskChanceOpen" width="75%" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="8">
             <el-form-item label="领料单编号" prop="issueCode">
-              <el-input v-model="form.issueCode" disabled placeholder="请输入领料单编号"/>
+              <el-input disabled v-model="form.issueCode" placeholder="请输入领料单编号" />
             </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="领料单名称" prop="issueName">
-              <el-input v-model="form.issueName" disabled placeholder="请输入领料单名称"/>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="8">
-            <el-form-item label="领料日期" prop="issueDate">
-              <el-date-picker disabled clearable v-model="form.issueDate" type="date" value-format="timestamp" placeholder="请选择领料日期"></el-date-picker>
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="领料仓库">
-              <el-cascader disabled v-model="warehouseInfo" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="单据状态" prop="status">
-              <el-select disabled v-model="form.status" disabled>
-                <el-option v-for="dict in dict.type.mes_order_status" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="8">
-            <el-form-item label="生产工单" prop="workorderCode">
-              <el-input disabled v-model="form.workorderCode" placeholder="请选择生产工单">
-                <el-button disabled slot="append" icon="el-icon-search" @click="handleWorkorderSelect"></el-button>
-              </el-input>
-            </el-form-item>
-            <WorkorderSelect ref="woSelect" @onSelected="onWorkorderSelected"></WorkorderSelect>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="客户编号">
-              <el-input disabled v-model="form.clientCode" placeholder="请选择生产工单"></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="客户名称">
-              <el-input disabled v-model="form.clientName" placeholder="请选择生产工单"></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row>
-
-          <el-col :span="12">
-            <el-form-item label="任务信息" prop="taskName">
-              <el-input v-model="form.taskName" placeholder="请选择任务信息" disabled>
-                <el-button slot="append" icon="el-icon-search" @click="handleTaskSelect"></el-button>
-              </el-input>
-            </el-form-item>
-            <TaskSelectSingle :workorderId="form.workorderId" ref="taskSelect" @onSelected="onTaskSelected"></TaskSelectSingle>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="工作站" prop="workstationName">
-              <el-input v-model="form.workstationName" placeholder="请选择工作站" disabled>
-                &lt;!&ndash;                <el-button slot="append" icon="el-icon-search" @click="handleWorkstationSelect"></el-button>&ndash;&gt;
-              </el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row>
-
-        </el-row>
-
-
-        <el-row>
-          <el-col :span="24">
-            <el-form-item label="备注" prop="remark">
-              <el-input disabled v-model="form.remark" type="textarea" placeholder="请输入内容"/>
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <el-divider v-if="form.id != null" content-position="center">上料信息</el-divider>
-      <el-card shadow="always" v-if="form.id != null" class="box-card">
-        <el-row v-if="optType != 'view'" :gutter="10" class="mb8">
-          <el-col :span="8">
-            <el-input v-model="purchaseId" placeholder="请输入采购ID"/>
           </el-col>
           <el-col :span="4">
-            <el-button type="primary" round @click="getCameraInfo()">摄像头</el-button>
+            <el-form-item label-width="80">
+              <el-switch disabled v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成" @change="handleAutoGenChange(autoGenFlag)" v-if="optType != 'view' && form.status == 'PREPARE'"></el-switch>
+            </el-form-item>
           </el-col>
-
-          <el-col :span="1.5">
-            <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleBlur()" v-hasPermi="['wms:issue-header:create']">新增</el-button>
+          <el-col :span="12">
+            <el-form-item label="领料单名称" prop="issueName">
+              <el-input disabled v-model="form.issueName" placeholder="请输入领料单名称" :disabled="optType !== 'add'"/>
+            </el-form-item>
           </el-col>
-          &lt;!&ndash;      <el-col :span="1.5">
-                  <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
-                </el-col>&ndash;&gt;
-          <el-col :span="1.5">
-            <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleFeedDelete" v-hasPermi="['wms:issue-header:delete']">删除</el-button>
-          </el-col>
-          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
-        <el-table v-loading="loading" :data="feedLineList" @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="55" align="center"/>
-          <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode"/>
-          <el-table-column label="产品物料名称" width="120px" align="center" prop="itemName" :show-overflow-tooltip="true"/>
-          <el-table-column label="规格型号" align="center" prop="specification" :show-overflow-tooltip="true"/>
-          <el-table-column label="领料状态" align="center" prop="status"/>
-          <el-table-column label="单位" align="center" prop="unitOfMeasure"/>
-          <el-table-column label="领料数量" align="center" prop="quantityIssued"/>
-          <el-table-column label="批次号" align="center" prop="batchCode"/>
-          <el-table-column label="仓库名称" align="center" prop="warehouseName"/>
-          <el-table-column label="库区名称" align="center" prop="locationName"/>
-          <el-table-column label="库位名称" align="center" prop="areaName"/>
-        </el-table>
-      </el-card>
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="任务信息" prop="taskCode">
+              <el-input v-model="form.taskCode" placeholder="请选择任务信息" disabled>
+                <el-button disabled slot="append" icon="el-icon-search" ></el-button>
+              </el-input>
+            </el-form-item>
+          </el-col>
+
+        </el-row>
+      </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="feedSubmitForm">确 定</el-button>
-        <el-button @click="feedCancel">取 消</el-button>
+        <el-button type="primary" @click="cancel" v-if="optType == 'view' || form.status != 'PREPARE'">返回</el-button>
+        <el-button type="primary" @click="submitForm" v-if="form.status == 'PREPARE' && optType != 'view'">确 定</el-button>
+        <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
--->
+
 
     <!-- 摄像头预览弹出框 -->
     <el-dialog title="摄像头预览" :visible.sync="cameraPreviewVisible" width="50%" v-dialogDrag append-to-body>
@@ -405,6 +315,7 @@ export default {
       title: '',
       // 是否显示弹出层
       open: false,
+      taskChanceOpen: false,
       feedingOpen: false,
       // 查询参数
       queryParams: {
@@ -523,6 +434,7 @@ export default {
     cancel() {
       this.preventingWatch = true; // 禁用watch
       this.open = false;
+      this.taskChanceOpen = false;
       this.reset();
       this.preventingWatch = false; // 启用watch
     },
@@ -903,7 +815,12 @@ export default {
         localStorage.removeItem('cachedProcessCode');
         this.cachedProcessCode = null;
       }
-    }
+    },
+    handleChanceTask(){
+      this.reset();
+      this.taskChanceOpen = true;
+      this.title = '修改任务单';
+    },
   },
   activated() {
     // 当从缓存中重新激活组件时，可以在此更新数据

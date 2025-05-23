@@ -132,3 +132,10 @@ export function feedbackErp(id) {
     method: 'put',
   });
 }
+
+export function checkProcess(recordId) {
+  return request({
+    url: '/mes/pro/feedback/checkProcess?id=' + recordId,
+    method: 'get',
+  });
+}
