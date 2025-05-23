@@ -136,8 +136,8 @@ export default {
       feedbackInfo: [],
       staff: 0,
       syncData: {
-        produced: 0,
-        speed: 0,
+        cl: 0,
+        sd: 0,
       }
     }
   },
@@ -172,15 +172,13 @@ export default {
       this.feedbackInfo = res.data ? res.data.list: [];
     },
     subscribe() {
-      const productId = 138;
-      const deviceCode = 'DL01';
-      mqttTool.subscribe(`/${productId}/${deviceCode}/ws/service`, (topic, message) => {
-        console.log(topic, message)
-      });
+      const productId = 144;
+      const deviceCode = 'FJ01';
+      mqttTool.subscribe(`/${productId}/${deviceCode}/ws/service`);
     },
     unsubscribe() {
-      const productId = 138;
-      const deviceCode = 'DL01';
+      const productId = 144;
+      const deviceCode = 'FJ01';
       mqttTool.unsubscribe(`/${productId}/${deviceCode}/ws/service`);
     },
     toQcList() {
@@ -250,6 +248,16 @@ export default {
   created() {
     this.getDetail();
     mqttTool.connect()
+    mqttTool.client.on('message', (topic, message) => {
+      const data = JSON.parse(message.toString());
+      if (topic === '/144/FJ01/ws/service') {
+        this.syncData = data.reduce((acc, item) => {
+          acc[item.id] = item.value;
+          return acc;
+        }, {  });
+        console.log(this.syncData)
+      }
+    });
   },
   mounted() {
     this.updateDateTime() // 初始化时间
