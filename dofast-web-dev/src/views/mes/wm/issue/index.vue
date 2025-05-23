@@ -50,7 +50,7 @@
       </el-col>
 
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-download" size="mini" :disabled="single" @click="handleChanceTask" v-hasPermi="['wms:issue-header:update']">完成</el-button>
+        <el-button type="success" plain icon="el-icon-refresh-right" size="mini" :disabled="single" @click="handleChanceTask" v-hasPermi="['wms:issue-header:update']">任务状态</el-button>
       </el-col>
 
       <el-col :span="1.5">
@@ -214,39 +214,62 @@
     </el-dialog>
 
     <el-dialog :title="title" :visible.sync="taskChanceOpen" width="75%" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="taskForm" :model="taskForm" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="8">
             <el-form-item label="领料单编号" prop="issueCode">
-              <el-input disabled v-model="form.issueCode" placeholder="请输入领料单编号" />
+              <el-input disabled v-model="taskForm.issueCode" placeholder="请输入领料单编号" />
             </el-form-item>
           </el-col>
-          <el-col :span="4">
-            <el-form-item label-width="80">
-              <el-switch disabled v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成" @change="handleAutoGenChange(autoGenFlag)" v-if="optType != 'view' && form.status == 'PREPARE'"></el-switch>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
+
+          <el-col :span="8">
             <el-form-item label="领料单名称" prop="issueName">
-              <el-input disabled v-model="form.issueName" placeholder="请输入领料单名称" :disabled="optType !== 'add'"/>
+              <el-input disabled v-model="taskForm.issueName" placeholder="请输入领料单名称" />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="任务编号" prop="taskCode">
+              <el-input disabled v-model="taskForm.taskCode" placeholder="请输入任务编号" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row>
           <el-col :span="8">
-            <el-form-item label="任务信息" prop="taskCode">
-              <el-input v-model="form.taskCode" placeholder="请选择任务信息" disabled>
-                <el-button disabled slot="append" icon="el-icon-search" ></el-button>
-              </el-input>
+            <el-form-item label="任务信息" prop="taskName">
+              <el-input disabled v-model="taskForm.taskName" placeholder="请输入任务名称" />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="排产数量" prop="quantity">
+              <el-input disabled v-model="taskForm.quantity" placeholder="请输入" />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="已生产数量" prop="produced">
+              <el-input disabled v-model="taskForm.produced" placeholder="请输入" />
             </el-form-item>
           </el-col>
 
         </el-row>
+
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="任务状态" prop="taskStatus">
+              <el-select @change="handleChooseTool" style="width: 100%" v-model="taskForm.taskStatus" placeholder="请选择">
+                <el-option v-for="dict in dict.type.mes_pro_task_status" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="cancel" v-if="optType == 'view' || form.status != 'PREPARE'">返回</el-button>
-        <el-button type="primary" @click="submitForm" v-if="form.status == 'PREPARE' && optType != 'view'">确 定</el-button>
+        <el-button type="primary" @click="submitChance" >变 更</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
@@ -266,7 +289,7 @@
 </template>
 
 <script>
-import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, updateIssueMachinery, execute, finshIssueHeader} from '@/api/mes/wm/issueheader';
+import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, updateIssueMachinery, execute, finshIssueHeader , initTaskInfoByIssueId} from '@/api/mes/wm/issueheader';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import TaskSelectSingle from "@/components/TaskSelect/taskSelectSingle.vue";
@@ -280,11 +303,12 @@ import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
 import {listProcess} from '@/api/mes/pro/process';
 import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
 import {finshAllocatedHeader} from "@/api/wms/allocatedHeader";
+import {updateTasks} from "@/api/mes/pro/protask";
 
 
 export default {
   name: 'Issue',
-  dicts: ['mes_order_status'],
+  dicts: ['mes_order_status' , 'mes_pro_task_status'],
   components: {ProtaskSelect, MachinerySelectSingle, Issueline, WorkstationSelect, WorkorderSelect, TaskSelectSingle},
   data() {
     return {
@@ -347,6 +371,7 @@ export default {
         machineryName: null,
         machineryId: null,
       },
+      taskForm: {},
       // 表单校验
       rules: {
         issueCode: [{required: true, message: '领料单编号不能为空', trigger: 'blur'}],
@@ -484,6 +509,7 @@ export default {
         machineryCode: null,
         machineryId: null,
       };
+      this.taskForm = {};
       this.warehouseInfo = []; // 重置领料仓库信息
       this.autoGenFlag = false;
       this.resetForm('form');
@@ -816,11 +842,38 @@ export default {
         this.cachedProcessCode = null;
       }
     },
-    handleChanceTask(){
-      this.reset();
-      this.taskChanceOpen = true;
-      this.title = '修改任务单';
+    handleChanceTask(row){
+      this.taskForm = {};
+      let id =  row.id || this.ids;
+      this.loading = true;
+      // 获取数据
+      initTaskInfoByIssueId(id).then(response => {
+        this.taskForm.issueCode = response.data.issueCode;
+        this.taskForm.issueName = response.data.issueName;
+        this.taskForm.taskCode = response.data.taskCode;
+        this.taskForm.taskName = response.data.taskName;
+        this.taskForm.id = response.data.id;
+        this.taskForm.taskStatus = response.data.taskStatus;
+        this.taskForm.quantity = response.data.quantity;
+        this.taskForm.quantityProduced = response.data.quantityProduced;
+        this.taskForm.produced = response.data.produced;
+        this.taskChanceOpen = true;
+        this.title = '变更任务状态';
+        this.loading = false;
+      });
     },
+    submitChance(){
+      console.log("变更任务状态: ", this.taskForm.taskStatus);
+      updateTasks(this.taskForm).then(response => {
+        this.$modal.msgSuccess('任务状态变更成功!');
+        this.taskForm = {};
+        this.taskChanceOpen = false;
+      });
+    },
+    handleChooseTool(e) {
+      this.$forceUpdate()
+      this.taskForm.taskStatus = e
+    }
   },
   activated() {
     // 当从缓存中重新激活组件时，可以在此更新数据

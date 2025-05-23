@@ -68,3 +68,11 @@ export function finshIssueHeader(id) {
     method: 'get',
   })
 }
+
+
+export function initTaskInfoByIssueId(id) {
+  return request({
+    url: '/wms/issue-header/initTaskInfoByIssueId?id=' + id,
+    method: 'get',
+  })
+}
