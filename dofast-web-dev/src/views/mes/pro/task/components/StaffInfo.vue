@@ -2,8 +2,8 @@
   <Card class="StaffInfo" content-padding="6px 0" :title="`员工信息(${currentName})`">
     <template #titleRight>
       <div class="tabs">
-        <span :calss="{active: active == 0 }" class="tab" @click="active=0"> 白班 </span>
-        <span :calss="{active: active == 1 }" class="tab" @click="active=1"> 夜班 </span>
+        <span :class="{active: active == 0 }" class="tab" @click="active=0"> 白班 </span>
+        <span :class="{active: active == 1 }" class="tab" @click="active=1"> 夜班 </span>
       </div>
     </template>
     <div class="scroll-board">
@@ -56,12 +56,12 @@ export default {
   data() {
     return {
       active: this.current,
-      tableHeaders: ['姓名', '工号', '职位', '状态'],
+      tableHeaders: ['姓名', '用户名', '职位'], // , '状态'],
       tableFields: [
         (row) => row.nickName,
         (row) => row.userName,
-        (row) => row.principalName == row.nickName ? '组长' : row.principalName,
-        (row) => row.postIds
+        (row) => row.principalName == row.nickName ? '组长' : '组员', // row.principalName,
+        // (row) => row.postIds
       ],
     }
   },
@@ -75,6 +75,11 @@ export default {
         1: '夜班',
       }[this.current]
     }
+  },
+  watch: {
+    current(v) {
+      this.active = v
+    }
   }
 }
 </script>
@@ -82,11 +87,11 @@ export default {
 <style lang="scss" scoped>
 .tabs{
   .tab {
-    padding: 0 10px;
+    padding: 5px 10px;
     color: #fff;
     &.active {
       background: #00bcd4;
-      color: #fff;
+      color: #0D6B8C;
     }
   }
 }

@@ -1,5 +1,5 @@
 <template>
-  <Card class="PayInfo" :show-empty="true" title="薪资信息" />
+  <Card class="PayInfo" :show-empty="true" title="批次生产明细" />
 </template>
 
 <script setup>

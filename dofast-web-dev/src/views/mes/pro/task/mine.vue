@@ -84,7 +84,7 @@
         <el-descriptions :column="1" :title="item.taskCode" class="pointer-events-none p-5" :style="getStatusColor(item.status)">
           <el-descriptions-item label="任务名称">
             <div>
-              <div class="text-ellipsis overflow-hidden" style="height: 22px;">{{ item.workorderName }} </div>
+              <div class="text-ellipsis overflow-hidden whitespace-nowrap" style="height: 22px;">{{ item.workorderName }} </div>
               <div class="text-ellipsis overflow-hidden" style="height: 44px;">{{ item.taskName }}</div>
             </div>
           </el-descriptions-item>

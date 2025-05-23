@@ -433,8 +433,8 @@ export default {
 }
 
 /* 强制覆盖Element Plus对话框样式 */
-.el-overlay-dialog {
-  .el-dialog.time-registration-dialog {
+.el-dialog__wrapper.time-registration-dialog {
+  .el-dialog {
     background-color: rgba(0, 21, 41, 0.85);
     border: 1px solid #1ecfff;
     border-radius: 2px;

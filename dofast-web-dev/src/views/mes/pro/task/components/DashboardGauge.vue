@@ -20,7 +20,7 @@
     </div>
     <!-- 左下 -->
     <div class="gauge-label gauge-label-bottomleft">
-      <div class="gauge-value yellow">93</div>
+      <div class="gauge-value yellow">{{ speed }}</div>
       <div class="gauge-desc">当前速度</div>
       <svg class="gauge-fold-line" height="24" width="80">
         <polyline points="0,18 40,18 70,2" style="fill: none; stroke: #1ecfff; stroke-width: 2" />
@@ -60,10 +60,39 @@
 import * as echarts from 'echarts'
 
 export default {
+  props: {
+    data: {
+      type: Object,
+      default() {
+        return {}
+      },
+    },
+  },
   data() {
     return {
       switchValue: true,
     }
+  },
+  computed: {
+    speed() {
+      return this.data.speed || 0
+    },
+  },
+  watch: {
+    data: {
+      handler(newData) {
+        if (this.chart) {
+          this.chart.setOption({
+            series: [
+              {
+                data: [newData.value],
+              },
+            ],
+          })
+        }
+      },
+      deep: true,
+    },
   },
   mounted() {
     this.initChart()

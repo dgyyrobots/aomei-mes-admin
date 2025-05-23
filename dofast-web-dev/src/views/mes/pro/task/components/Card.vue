@@ -13,7 +13,7 @@
     <div class="corner bottom-left"></div>
     <div class="corner bottom-right"></div>
     <div class="card-content" :style="contentPaddingStyle">
-      <el-empty v-if="showEmpty" :image-size="90" />
+      <el-empty v-if="showEmpty" :image-size="100" />
       <slot v-else />
     </div>
   </div>

@@ -3,25 +3,29 @@
     <div class="info-list">
       <div class="row">
         <span class="label">生产工单：</span>
-        <span class="value">2311274B</span>
-        <span class="highlight">[202312070009]</span>
+        <span class="value">{{ data.taskCode }}</span>
+        <span class="highlight">[{{ data.parentBatchCode }}]</span>
         <span class="normal">[正常工单]</span>
       </div>
       <div class="row">
+        <span class="label">任务名称：</span>
+        <span class="value text-ellipsis overflow-hidden whitespace-nowrap">{{ data.taskName }}</span>
+      </div>
+      <div class="row">
         <span class="label">工&nbsp;&nbsp;&nbsp;&nbsp;序：</span>
-        <span class="value">模切/模凸</span>
+        <span class="value text-ellipsis overflow-hidden whitespace-nowrap">{{ data.processName }}</span>
       </div>
       <div class="row">
         <span class="label">产&nbsp;&nbsp;&nbsp;&nbsp;品：</span>
-        <span class="value">好猫(招财猫1600)条盒-JY [2001090017]</span>
+        <span class="value text-ellipsis overflow-hidden whitespace-nowrap">{{ data.itemName }} [{{  data.itemCode }}]</span>
       </div>
       <div class="row">
         <span class="label">计划时间：</span>
-        <span class="value">2023-12-07 23:06:15 —— 2023-12-07 23:06:...</span>
+        <span class="value text-ellipsis overflow-hidden whitespace-nowrap">{{ parseTime(data.startTime) }} —— {{ parseTime(parseTime) }}</span>
       </div>
       <div class="row">
         <span class="label">实际开始：</span>
-        <span class="value">2023-12-07 23:06:15 [计划数量：231400大张]</span>
+        <span class="value">{{ parseTime(data.actualStartTime) }} [计划数量：{{ data.quantity }}{{ data.unitOfMeasure }}]</span>
       </div>
       <div class="row">
         <span class="label">超&nbsp;&nbsp;&nbsp;&nbsp;时：</span>
@@ -30,20 +34,20 @@
     </div>
     <div class="progress-row">
       <div class="progress-bar-bg">
-        <div class="progress-bar" :style="{ width: '14.08%' }"></div>
+        <div class="progress-bar" :style="{ width: percent }"></div>
       </div>
-      <span class="progress-percent">14.08%</span>
+      <span class="progress-percent">{{ percent }}</span>
     </div>
     <div class="footer">
       <span class="done">
         已完成：
-        <span class="done-num">32591</span>
-        大张
+        <span class="done-num">{{ data.quantityProduced }}</span>
+        {{ data.unitOfMeasure }}
       </span>
       <span class="remain">
         未完成：
-        <span class="remain-num">198809</span>
-        大张
+        <span class="remain-num">{{ data.quantity - data.quantityProduced }}</span>
+        {{ data.unitOfMeasure }}
       </span>
     </div>
   </Card>
@@ -54,6 +58,17 @@ import Card from './Card.vue'
 
 export default {
   name: 'TaskInfoBox',
+  props: {
+    data: {
+      type: Object,
+      default: () => ({
+        taskCode: '',
+        taskName: '',
+        itemCode: '',
+        itemName: '',
+      }),
+    }
+  },
   components: {
     Card,
   },
@@ -64,6 +79,14 @@ export default {
   },
   computed: {
     // 这里可以定义一些计算属性
+    percent() {
+      const { quantityProduced, quantity } = this.data
+      if (!quantity || !quantityProduced) {
+        return '0%'
+      }
+      const percent = (quantityProduced / quantity) * 100
+      return `${percent.toFixed(2)}%`
+    }
   },
   methods: {
     // 这里可以定义一些方法
@@ -95,11 +118,12 @@ export default {
 .label {
   color: #b6eaff;
   min-width: 80px;
-  display: inline-block;
+  display: block;
 }
 .value {
   color: #fff;
   margin-right: 6px;
+  flex: 1
 }
 .highlight {
   color: #ffe600;

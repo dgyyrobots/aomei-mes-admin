@@ -35,20 +35,17 @@
           <!-- 左侧面板 -->
           <div class="panel left-panel">
             <div class="left-box box-1">
-              <PayInfo />
+              <LicenseHistory :data="feedbackInfo" @search="getFeedbackInfo"/>
             </div>
             <div class="left-box box-2">
               <StaffInfo :current="staff" :data="staffInfo"/>
-            </div>
-            <div class="left-box box-3">
-              <EquipmentTime />
             </div>
           </div>
 
           <!-- 中间面板 -->
           <div class="panel center-panel">
             <div class="center-box box-1">
-              <DashboardGauge />
+              <DashboardGauge :data="syncData"/>
             </div>
             <div class="center-box box-2">
               <CenterBottom />
@@ -58,13 +55,13 @@
           <!-- 右侧面板 -->
           <div class="panel right-panel">
             <div class="right-box box-1">
-              <TaskInfoBox />
+              <TaskInfoBox :data="detail"/>
             </div>
             <div class="right-box box-2">
               <EquipmentHistory />
             </div>
             <div class="right-box box-3">
-              <LicenseHistory />
+              <EquipmentTime />
             </div>
           </div>
         </div>
@@ -90,6 +87,7 @@ import CenterBottom from './components/CenterBottom.vue'
 import TimeRegistration from './dialogs/TimeRegistration.vue'
 import { getProtask } from '@/api/mes/pro/protask.js'
 import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
+import { listFeedback } from '@/api/mes/pro/feedback.js'
 import mqttTool from '@/utils/mqttTool.js'
 
 export default {
@@ -114,12 +112,18 @@ export default {
       $timer: null,
       detail: {
         attr1: '',
+        taskCode: ''
       },
       staffInfo: [
         [],
         []
       ],
-      staff: 0
+      feedbackInfo: [],
+      staff: 0,
+      syncData: {
+        produced: 0,
+        speed: 0,
+      }
     }
   },
   computed: {
@@ -130,10 +134,13 @@ export default {
   },
   methods: {
     async getDetail() {
+      this.unsubscribe()
       const id = this.$route.params.id;
       const res = await getProtask(id);
       this.detail = res.data;
       this.getStaffInfo();
+      this.getFeedbackInfo();
+      this.subscribe();
     },
     async getStaffInfo() {
       const res = await Promise.all([
@@ -144,6 +151,22 @@ export default {
         return data
       });
       console.log(res)
+    },
+    async getFeedbackInfo(keyword) {
+      const res = await listFeedback({taskCode: this.detail.taskCode, pageSize: 100, });
+      this.feedbackInfo = res.data ? res.data.list: [];
+    },
+    subscribe() {
+      const productId = 138;
+      const deviceCode = 'DL01';
+      mqttTool.subscribe(`/${productId}/${deviceCode}/ws/service`, (topic, message) => {
+        console.log(topic, message)
+      });
+    },
+    unsubscribe() {
+      const productId = 138;
+      const deviceCode = 'DL01';
+      mqttTool.unsubscribe(`/${productId}/${deviceCode}/ws/service`);
     },
     formatDate(date) {
       const year = date.getFullYear()
@@ -191,6 +214,7 @@ export default {
     this.$timer = setInterval(this.updateDateTime, 1000) // 每秒更新一次
   },
   beforeDestroy() {
+    this.unsubscribe(); // 取消订阅
     // 清除定时器
     if (this.$timer) {
       clearInterval(this.$timer)
@@ -317,14 +341,10 @@ export default {
         width: 100%;
 
         &.box-1 {
-          height: calc((100% - 16px) * 0.28);
+          height: calc((100% - 16px) * 0.64);
         }
 
         &.box-2 {
-          height: calc((100% - 16px) * 0.36);
-        }
-
-        &.box-3 {
           height: calc((100% - 16px) * 0.36);
         }
       }
