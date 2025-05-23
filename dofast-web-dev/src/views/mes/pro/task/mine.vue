@@ -103,7 +103,9 @@
               <div>计划时间:{{ parseTime(item.startTime) }}</div>
               <div>开始时间:{{ parseTime(item.actualStartTime) }}</div>
               <div>完工时间:{{ parseTime(item.actualEndTime) }}</div>
-              <dict-tag style="cursor: pointer;" slot="reference" :type="DICT_TYPE.MES_PRO_TASK_STATUS" :value="item.status" />
+              <div slot="reference" style="height: 30px;">
+                <dict-tag style="cursor: pointer;" :type="DICT_TYPE.MES_PRO_TASK_STATUS" :value="item.status" />
+              </div>
             </el-popover>
           </el-descriptions-item>
         </el-descriptions>
@@ -518,7 +520,7 @@ export default {
   methods: {
     getStatusColor(status) {
       return {
-        PAUSE: 'background-color: #f39c12;color: #FFF;;border-radius: 12px;',
+        PAUSED: 'background-color: #f39c12;color: #FFF;;border-radius: 12px;',
         STARTED: 'background-color: #2ed573;color: #FFF;;border-radius: 12px;',
         NORMAL: 'background-color: #FF7F50;color: #FFF;border-radius: 12px;',
         FINISHED: 'background-color: #bdc3c7;color: #000;;border-radius: 12px;'

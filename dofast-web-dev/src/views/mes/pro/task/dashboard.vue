@@ -26,13 +26,22 @@
           </template>
           <button class="nav-btn">上机登记</button>
           <button class="nav-btn red">任务单操作</button>
-          <button class="nav-btn red">生产操作</button>
-          <button class="nav-btn" @click="openTimeRegistration">计时登记</button>
-          <button class="nav-btn">异常登记</button>
-          <button class="nav-btn">质量管理</button>
-          <button class="nav-btn">设备管理</button>
-          <button class="nav-btn">其他操作</button>
-          <button class="nav-btn">帮助</button>
+          <el-dropdown trigger="click" @command="onProCommand">
+            <button class="nav-btn red">生产操作</button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="">生产领料</el-dropdown-item>
+              <el-dropdown-item command="">生产上料</el-dropdown-item>
+              <el-dropdown-item command="">生产报工</el-dropdown-item>
+              <el-dropdown-item command="">打印条码</el-dropdown-item>
+              <el-dropdown-item command="">成品入库</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+          <!-- <button class="nav-btn" @click="openTimeRegistration">计时登记</button> -->
+          <!-- <button class="nav-btn">异常登记</button> -->
+          <button class="nav-btn" @click="toQcList">质量管理</button>
+          <button class="nav-btn" @click="toDeviceList">设备管理</button>
+          <!-- <button class="nav-btn">其他操作</button> -->
+          <!-- <button class="nav-btn">帮助</button> -->
         </div>
 
         <!-- 主要内容区 -->
@@ -173,6 +182,15 @@ export default {
       const productId = 138;
       const deviceCode = 'DL01';
       mqttTool.unsubscribe(`/${productId}/${deviceCode}/ws/service`);
+    },
+    toQcList() {
+      this.$router.push({ path: '/mes/qc/ipqc' });
+    },
+    toDeviceList() {
+      this.$router.push({ path: '/app/mes/dv/machinery' });
+    },
+    onProCommand() {
+
     },
     formatDate(date) {
       const year = date.getFullYear()
