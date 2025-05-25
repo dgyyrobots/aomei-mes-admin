@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container theme-dark">
     <ScaleBox :width="1920" :height="1080" bgc="#000000" :delay="100" :isFlat="false" >
       <div class="home">
         <!-- 顶部标题 -->
@@ -28,7 +28,7 @@
           <button class="nav-btn red">任务单操作</button>
           <el-dropdown trigger="click" @command="onProCommand">
             <button class="nav-btn red">生产操作</button>
-            <el-dropdown-menu slot="dropdown">
+            <el-dropdown-menu slot="dropdown" class="technological-theme">
               <el-dropdown-item command="">生产领料</el-dropdown-item>
               <el-dropdown-item command="">生产上料</el-dropdown-item>
               <el-dropdown-item command="">生产报工</el-dropdown-item>
@@ -82,12 +82,15 @@
 
         <!-- 对话框组件 -->
         <TimeRegistration ref="timeRegistrationRef" />
+        <MesDvMachinery ref="mesDvMachineryRef" />
+        <MesQcIpqc ref="mesQcIpqcRef" />
       </div>
     </ScaleBox>
   </div>
 </template>
 
 <script>
+import 'element-theme-darkplus/lib/index.css'
 import { mapGetters } from 'vuex'
 import ScaleBox from 'vue2-scale-box'
 import TaskInfoBox from './components/TaskInfoBox.vue'
@@ -99,6 +102,8 @@ import PayInfo from './components/PayInfo.vue'
 import StaffInfo from './components/StaffInfo.vue'
 import CenterBottom from './components/CenterBottom.vue'
 import TimeRegistration from './dialogs/TimeRegistration.vue'
+import MesDvMachinery from './dialogs/MesDvMachinery.vue'
+import MesQcIpqc from './dialogs/MesQcIpqc.vue'
 import { getProtask, updateProtask } from '@/api/mes/pro/protask.js'
 import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
 import { listFeedback } from '@/api/mes/pro/feedback.js'
@@ -115,6 +120,8 @@ export default {
     StaffInfo,
     CenterBottom,
     TimeRegistration,
+    MesDvMachinery,
+    MesQcIpqc,
     ScaleBox
   },
   data() {
@@ -182,10 +189,10 @@ export default {
       mqttTool.unsubscribe(`/${productId}/${deviceCode}/ws/service`);
     },
     toQcList() {
-      this.$router.push({ path: '/mes/qc/ipqc' });
+      this.$refs.mesQcIpqcRef.openDialog();
     },
     toDeviceList() {
-      this.$router.push({ path: '/app/mes/dv/machinery' });
+      this.$refs.mesDvMachineryRef.openDialog();
     },
     onProCommand() {
 
@@ -260,10 +267,12 @@ export default {
     });
   },
   mounted() {
+    document.documentElement.classList.add("dark")
     this.updateDateTime() // 初始化时间
     this.$timer = setInterval(this.updateDateTime, 1000) // 每秒更新一次
   },
   beforeDestroy() {
+    document.documentElement.classList.remove("dark")
     this.unsubscribe(); // 取消订阅
     // 清除定时器
     if (this.$timer) {

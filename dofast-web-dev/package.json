@@ -50,6 +50,7 @@
     "crypto-js": "^4.0.0",
     "dhtmlx-gantt": "^7.1.11",
     "echarts": "5.4.0",
+    "element-theme-darkplus": "^2.1.4",
     "element-ui": "2.15.12",
     "file-saver": "2.0.5",
     "fuse.js": "6.6.2",
