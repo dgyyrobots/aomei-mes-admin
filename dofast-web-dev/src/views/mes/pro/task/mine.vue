@@ -19,7 +19,7 @@
       <el-form-item label="客户名称" prop="clientName">
         <el-input v-model="queryParams.clientName" placeholder="请输入客户名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
-      <el-form-item label="开始时间" prop="startTime">
+      <el-form-item label="开始" prop="startTime">
         <el-date-picker v-model="queryParams.startTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
                         type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
                         :default-time="['00:00:00', '23:59:59']"/>
@@ -39,7 +39,7 @@
           <el-option label="未打印" :value="0"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="完成时间" prop="endTime">
+      <el-form-item label="完成" prop="endTime">
         <el-date-picker v-model="queryParams.endTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss"
                         type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"
                         :default-time="['00:00:00', '23:59:59']"/>
@@ -83,29 +83,29 @@
       <el-col :span="4.8" v-for="item in list" :key="item.id" class="mb-5 cursor-pointer" @click.native="jumpDashboard(item)">
         <el-descriptions :column="1" :title="item.taskCode" class="pointer-events-none p-5" :style="getStatusColor(item.status)">
           <el-descriptions-item label="任务名称">
-            <div>
-              <div class="text-ellipsis overflow-hidden whitespace-nowrap" style="height: 22px;">{{ item.workorderName }} </div>
-              <div class="text-ellipsis overflow-hidden" style="height: 44px;">{{ item.taskName }}</div>
-            </div>
           </el-descriptions-item>
+		  <el-descriptions>
+		    <div>
+		      <div class="text-ellipsis overflow-hidden" style="height: 22px;">{{ item.workorderName }} </div>
+		      <div class="text-ellipsis overflow-hidden" style="height: 44px;">{{ item.taskName }}</div>
+		    </div>
+		  </el-descriptions>
           <template v-if="item.status === 'NORMAL'">
-            <el-descriptions-item label="计划开工时间">{{ parseTime(item.startTime) }}</el-descriptions-item>
-            <el-descriptions-item label="计划完工时间">{{ parseTime(item.endTime) }}</el-descriptions-item>
+            <el-descriptions-item label="计划开工">{{ parseTime(item.startTime) }}</el-descriptions-item>
+            <el-descriptions-item label="计划完工">{{ parseTime(item.endTime) }}</el-descriptions-item>
           </template>
           <template v-else>
-            <el-descriptions-item label="开工时间">{{ parseTime(item.startTime) }}</el-descriptions-item>
-            <el-descriptions-item label="完工时间">{{ parseTime(item.endTime) }}</el-descriptions-item>
+            <el-descriptions-item label="实际开工">{{ parseTime(item.actualStartTime) }}</el-descriptions-item>
+            <el-descriptions-item label="实际完工">{{ parseTime(item.actualEndTime) }}</el-descriptions-item>
           </template>
           <el-descriptions-item label="排产数量">{{ item.quantity }}</el-descriptions-item>
           <el-descriptions-item label="工序">{{ item.processName }}</el-descriptions-item>
           <el-descriptions-item label="任务状态">
-            <el-popover placement="top-start" title="生产时间" width="220" trigger="hover">
-              <div>计划时间:{{ parseTime(item.startTime) }}</div>
-              <div>开始时间:{{ parseTime(item.actualStartTime) }}</div>
-              <div>完工时间:{{ parseTime(item.actualEndTime) }}</div>
-              <div slot="reference" style="height: 30px;">
-                <dict-tag style="cursor: pointer;" :type="DICT_TYPE.MES_PRO_TASK_STATUS" :value="item.status" />
-              </div>
+            <el-popover placement="top-start" title="生产" width="220" trigger="hover">
+              <div>计划:{{ parseTime(item.startTime) }}</div>
+              <div>实际开始:{{ parseTime(item.actualStartTime) }}</div>
+              <div>实际完工:{{ parseTime(item.actualEndTime) }}</div>
+              <dict-tag style="cursor: pointer;" slot="reference" :type="DICT_TYPE.MES_PRO_TASK_STATUS" :value="item.status" />
             </el-popover>
           </el-descriptions-item>
         </el-descriptions>
@@ -210,9 +210,9 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="报工时间" prop="feedbackTime">
+            <el-form-item label="报工" prop="feedbackTime">
               <el-date-picker disabled clearable v-model="form.feedbackTime" type="date" value-format="timestamp"
-                              placeholder="请选择报工时间"></el-date-picker>
+                              placeholder="请选择报工"></el-date-picker>
             </el-form-item>
           </el-col>
         </el-row>
@@ -285,14 +285,14 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item :label="form2.status == 'NORMAL' ? '计划开工时间' : '开工时间'" prop="startTime" label-width="110"
+            <el-form-item :label="form2.status == 'NORMAL' ? '计划开工' : '开工'" prop="startTime" label-width="110"
                           style="transform:translateX('20px');">
               <el-date-picker clearable v-model="form2.startTime" type="date" value-format="timestamp"
                               disabled></el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="form2.status != 'FINISHED' ? '计划完工时间' : '完工时间'" prop="endTime" label-width="110"
+            <el-form-item :label="form2.status != 'FINISHED' ? '计划完工' : '完工'" prop="endTime" label-width="110"
                           style=" transform:translateX('20px');">
               <el-date-picker clearable v-model="form2.endTime" type="date" value-format="timestamp"
                               placeholder="请选择需求日期" disabled></el-date-picker>
@@ -520,7 +520,7 @@ export default {
   methods: {
     getStatusColor(status) {
       return {
-        PAUSED: 'background-color: #f39c12;color: #FFF;;border-radius: 12px;',
+        PAUSE: 'background-color: #f39c12;color: #FFF;;border-radius: 12px;',
         STARTED: 'background-color: #2ed573;color: #FFF;;border-radius: 12px;',
         NORMAL: 'background-color: #FF7F50;color: #FFF;border-radius: 12px;',
         FINISHED: 'background-color: #bdc3c7;color: #000;;border-radius: 12px;'
@@ -879,6 +879,71 @@ export default {
   },
 };
 </script>
+<style lang="scss">
+/* 全局样式，不使用scoped */
+.cyber-modal {
+  background-color: rgba(0, 21, 41, 0.85) !important;
+  backdrop-filter: blur(5px);
+}
+
+/* 强制覆盖Element Plus对话框样式 */
+.el-dialog__wrapper.time-registration-dialog {
+  .el-dialog {
+    background-color: rgba(0, 21, 41, 0.85);
+    border: 1px solid #1ecfff;
+    border-radius: 2px;
+    box-shadow: 0 0 20px rgba(30, 207, 255, 0.4);
+    margin-top: 8vh !important; /* 确保优先级足够高 */
+
+    .el-dialog__body {
+      padding: 0 !important;
+    }
+
+    .el-dialog__header {
+      height: 40px !important;
+      color: #1ecfff !important;
+      border-bottom: 1px solid rgba(30, 207, 255, 0.3);
+    }
+
+    .el-dialog__title {
+      color: #1ecfff !important;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px rgba(30, 207, 255, 0.5);
+      font-size: 16px;
+    }
+
+    .el-dialog__headerbtn .el-dialog__close {
+      color: #1ecfff !important;
+
+      &:hover {
+        color: #4fdcff !important;
+      }
+    }
+
+    .el-dialog__body {
+      padding: 0 !important;
+    }
+  }
+}
+
+/* 修改loading样式 */
+.el-loading-mask {
+  background-color: rgba(0, 21, 41, 0.7) !important;
+
+  .el-loading-spinner {
+    .circular {
+      .path {
+        stroke: #1ecfff !important;
+      }
+    }
+
+    .el-loading-text {
+      color: #1ecfff !important;
+    }
+  }
+}
+</style>
 <style lang="scss" scoped>
 .app-container {
   :deep() {

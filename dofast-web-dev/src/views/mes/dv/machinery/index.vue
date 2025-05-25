@@ -83,7 +83,7 @@
     </el-row>
 
     <!-- 添加或修改设备对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="960px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="960px" :append-to-body="modalAppendToBody" :modal-append-to-body="modalAppendToBody" destroy-on-close :modal-class="modalClass" :class="mainClass">
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-row>
           <el-col :span="8">
@@ -150,7 +150,7 @@
     </el-dialog>
 
     <!-- 物料导入对话框 -->
-    <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
+    <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" :append-to-body="modalAppendToBody" :modal-append-to-body="modalAppendToBody"  :modal-class="modalClass" :class="mainClass">
       <el-upload ref="upload" :limit="1" accept=".xlsx, .xls" :headers="upload.headers" :action="upload.url + '?updateSupport=' + upload.updateSupport" :disabled="upload.isUploading" :on-progress="handleFileUploadProgress" :on-success="handleFileSuccess" :auto-upload="false" drag>
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
@@ -184,7 +184,22 @@ export default {
   name: 'Machinery',
   dicts: ['sys_yes_no', 'mes_machinery_status'],
   components: {Treeselect},
+  props: {
+    modalAppendToBody: {
+      type: Boolean,
+      default: true,
+    },
+    modalClass: {
+      type: String,
+      default: '',
+    },
+    mainClass: {
+      type: String,
+      default: '',
+    },
+  },
   data() {
+    console.log(this.modalClass)
     return {
       //自动生成编码
       autoGenFlag: false,

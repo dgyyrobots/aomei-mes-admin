@@ -91,7 +91,7 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList" />
 
     <!-- 添加或修改过程检验单对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="960px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="960px" :append-to-body="true" :modal-append-to-body="true" destroy-on-close :custom-class="modalClass" :class="mainClass">
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="8">
@@ -285,6 +285,20 @@ import Ipqcline from './line.vue';
 
 export default {
   name: 'Ipqc',
+  props: {
+    modalAppendToBody: {
+      type: Boolean,
+      default: false,
+    },
+    modalClass: {
+      type: String,
+      default: '',
+    },
+    mainClass: {
+      type: String,
+      default: '',
+    },
+  },
   components: { WorkorderSelect, WorkstationSelect, Ipqcline },
   dicts: ['mes_ipqc_type', 'mes_qc_result', 'mes_order_status'],
   data() {

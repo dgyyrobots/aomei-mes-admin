@@ -4,14 +4,15 @@
     class="time-registration-dialog"
     :close-on-click-modal="false"
     :destroy-on-close="false"
-    :modal-append-to-body="false"
-    modal-class="cyber-modal"
-    title="设备管理"
+    :append-to-body="true"
+    :modal-append-to-body="true"
+    custom-class="cyber-modal"
+    title="质量管理"
     :top="'8vh'"
     width="1200px"
   >
     <div class="dialog-content">
-      <MesQcIpqcView />
+      <MesQcIpqcView modal-class="cyber-modal" main-class="time-registration-dialog"/>
     </div>
 
   </el-dialog>

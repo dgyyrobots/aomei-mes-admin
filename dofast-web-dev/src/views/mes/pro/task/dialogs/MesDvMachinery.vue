@@ -4,14 +4,15 @@
     class="time-registration-dialog"
     :close-on-click-modal="false"
     :destroy-on-close="false"
-    :modal-append-to-body="false"
+    :append-to-body="true"
+    :modal-append-to-body="true"
     modal-class="cyber-modal"
     title="设备管理"
     :top="'8vh'"
     width="1200px"
   >
     <div class="dialog-content">
-      <MesDvMachineryView />
+      <MesDvMachineryView :modal-append-to-baody="true" modal-class="cyber-modal" main-class="time-registration-dialog"/>
     </div>
 
   </el-dialog>
