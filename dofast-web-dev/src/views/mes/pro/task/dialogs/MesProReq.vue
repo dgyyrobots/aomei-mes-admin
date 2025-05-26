@@ -108,13 +108,13 @@
         <Issueline ref="line" :issueId="form.id" :warehouseId="form.warehouseId" :locationId="form.locationId" :areaId="form.areaId" :optType="optType"></Issueline>
       </el-card>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="cancel" v-if="optType == 'view' || form.status != 'PREPARE'">返回</el-button>
-        <el-button type="primary" @click="submitForm" v-if="form.status == 'PREPARE' && optType != 'view'">确 定</el-button>
+        <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
 </template>
 <script>
+import {addIssueheader} from '@/api/mes/wm/issueheader';
 import Issueline from '@/views/mes/wm/issue/line.vue';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
@@ -245,12 +245,15 @@ export default {
       this.preventingWatch = false; // 启用watch
       this.$emit('cancel');
     },
+    /** 提交按钮 */
     submitForm() {
-      this.$refs.form.validate(valid => {
+      this.$refs['form'].validate(valid => {
         if (valid) {
-          this.$emit('submit', this.form);
-        } else {
-          this.$message.error('请填写完整信息');
+          addIssueheader(this.form).then(response => {
+            this.$modal.msgSuccess('新增成功');
+            this.open = false;
+            this.$emit('success', response.data);
+          });
         }
       });
     },
@@ -298,9 +301,17 @@ export default {
         console.log(this.form)
       }
     },
-    handleWarehouseChanged(value) {
-      // 处理仓库变更逻辑
-      console.log('Selected warehouse:', value);
+    //选择默认的仓库、库区、库位
+    handleWarehouseChanged(obj) {
+      if (obj !== null) {
+        this.form.warehouseId = obj[0]; // 仓库
+        this.form.locationId = obj[1]; // 库区
+        this.form.areaId = obj[2]; // 库位
+      } else {
+        this.form.warehouseId = null;
+        this.form.locationId = null;
+        this.form.areaId = null;
+      }
     },
     openDialog() {
       this.reset();
