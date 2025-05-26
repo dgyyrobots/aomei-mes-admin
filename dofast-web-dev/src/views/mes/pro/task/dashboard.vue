@@ -29,11 +29,11 @@
           <el-dropdown trigger="click" @command="onProCommand">
             <button class="nav-btn red">生产操作</button>
             <el-dropdown-menu slot="dropdown" class="technological-theme">
-              <el-dropdown-item command="">生产领料</el-dropdown-item>
-              <el-dropdown-item command="">生产上料</el-dropdown-item>
-              <el-dropdown-item command="">生产报工</el-dropdown-item>
-              <el-dropdown-item command="">打印条码</el-dropdown-item>
-              <el-dropdown-item command="">成品入库</el-dropdown-item>
+              <el-dropdown-item command="request">生产领料</el-dropdown-item>
+              <el-dropdown-item command="loader">生产上料</el-dropdown-item>
+              <el-dropdown-item command="report">生产报工</el-dropdown-item>
+              <el-dropdown-item command="print">打印条码</el-dropdown-item>
+              <el-dropdown-item command="store">成品入库</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
           <!-- <button class="nav-btn" @click="openTimeRegistration">计时登记</button> -->
@@ -59,7 +59,7 @@
           <!-- 中间面板 -->
           <div class="panel center-panel">
             <div class="center-box box-1">
-              <DashboardGauge :data="syncData"/>
+              <DashboardGauge :data="syncData" :detail="detail"/>
             </div>
             <div class="center-box box-2">
               <CenterBottom />
@@ -84,6 +84,16 @@
         <TimeRegistration ref="timeRegistrationRef" />
         <MesDvMachinery ref="mesDvMachineryRef" />
         <MesQcIpqc ref="mesQcIpqcRef" />
+        <!-- 生产上料 -->
+        <MesProLoader ref="mesProLoaderRef" />
+        <!-- 打印条码 -->
+        <MesProPrint ref="mesProPrintRef" />
+        <!-- 生产报工 -->
+        <MesProReport ref="mesProReportRef" />
+        <!-- 生产领料 -->
+        <MesProReq v-bind="detail" :taskId="detail.id" ref="mesProReqRef" />
+        <!-- 成品入库 -->
+        <MesProStore ref="mesProStoreRef" />
       </div>
     </ScaleBox>
   </div>
@@ -104,6 +114,11 @@ import CenterBottom from './components/CenterBottom.vue'
 import TimeRegistration from './dialogs/TimeRegistration.vue'
 import MesDvMachinery from './dialogs/MesDvMachinery.vue'
 import MesQcIpqc from './dialogs/MesQcIpqc.vue'
+import MesProLoader from './dialogs/MesProLoader.vue'
+import MesProPrint from './dialogs/MesProPrint.vue'
+import MesProReport from './dialogs/MesProReport.vue'
+import MesProReq from './dialogs/MesProReq.vue'
+import MesProStore from './dialogs/MesProStore.vue'
 import { getProtask, updateProtask } from '@/api/mes/pro/protask.js'
 import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
 import { listFeedback } from '@/api/mes/pro/feedback.js'
@@ -122,6 +137,11 @@ export default {
     TimeRegistration,
     MesDvMachinery,
     MesQcIpqc,
+    MesProLoader,
+    MesProPrint,
+    MesProReport,
+    MesProReq,
+    MesProStore,
     ScaleBox
   },
   data() {
@@ -134,7 +154,12 @@ export default {
       detail: {
         attr1: '',
         taskCode: '',
-        status: 'NORMAL'
+        status: 'NORMAL',
+        mechineryName: '',
+        quantity: 0,
+        quantityProduced: 0,
+        quantityUnquanlify: 0,
+        quantityQuanlify: 0,
       },
       staffInfo: [
         [],
@@ -194,8 +219,26 @@ export default {
     toDeviceList() {
       this.$refs.mesDvMachineryRef.openDialog();
     },
-    onProCommand() {
-
+    onProCommand(command) {
+      switch (command) {
+        case 'request':
+          this.$refs.mesProReqRef.openDialog();
+          break;
+        case 'loader':
+          this.$refs.mesProLoaderRef.openDialog();
+          break;
+        case 'report':
+          this.$refs.mesProReportRef.openDialog();
+          break;
+        case 'print':
+          this.$refs.mesProPrintRef.openDialog();
+          break;
+        case 'store':
+          this.$refs.mesProStoreRef.openDialog();
+          break;
+        default:
+          console.warn('未知的命令:', command);
+      }
     },
     formatDate(date) {
       const year = date.getFullYear()

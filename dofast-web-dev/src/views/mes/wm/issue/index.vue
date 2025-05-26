@@ -292,16 +292,16 @@
 import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, updateIssueMachinery, execute, finshIssueHeader , initTaskInfoByIssueId} from '@/api/mes/wm/issueheader';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
-import TaskSelectSingle from "@/components/TaskSelect/taskSelectSingle.vue";
+import TaskSelectSingle from '@/components/TaskSelect/taskSelectSingle.vue';
+import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
+import ProtaskSelect from '@/components/TaskSelect/taskSelectSingle.vue';
 import {getTreeList} from '@/api/mes/wm/warehouse';
 import {genCode} from '@/api/mes/autocode/rule';
 import Issueline from './line.vue';
 import {deleteGoods, getStockInfoByPurchaseId} from "@/api/purchase/goods";
 import {createFeedLine, getByIssueId, createFeedLineList, createFeedLineListByIssueId} from "@/api/wms/feedLine";
 import jsQR from "jsqr";
-import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
 import {listProcess} from '@/api/mes/pro/process';
-import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
 import {finshAllocatedHeader} from "@/api/wms/allocatedHeader";
 import {updateTasks} from "@/api/mes/pro/protask";
 

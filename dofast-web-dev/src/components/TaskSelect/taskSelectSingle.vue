@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="生产任务选择" v-if="showFlag" :visible.sync="showFlag" :modal="false" width="80%" center>
+  <el-dialog title="生产任务选择" v-if="showFlag" :visible.sync="showFlag" :modal="false" width="80%" center :class="mainClass" :append-to-body="appendToBody">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="100px">
       <el-row>
         <el-col :span="8">
@@ -81,6 +81,14 @@ export default {
   name: 'ProtaskSelect',
   components: { WorkstationSelect },
   props: {
+    appendToBody: {
+      type: Boolean,
+      default: false,
+    },
+    mainClass: {
+      type: String,
+      default: '',
+    },
     workorderId: null,
     workorderCode: null,
     processId: null,
