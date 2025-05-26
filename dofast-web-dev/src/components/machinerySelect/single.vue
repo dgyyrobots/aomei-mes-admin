@@ -110,6 +110,10 @@ export default {
           type: Number,
           default: null,
         },
+        workshopId:{
+          type: Number,
+          default: null,
+        }
       },
       // 查询参数
       queryParams: {
@@ -122,7 +126,7 @@ export default {
         machineryTypeId: this.machineryTypeId,
         machineryTypeCode: null,
         machineryTypeName: null,
-        workshopId: null,
+        workshopId: this.workshopId,
         workshopCode: null,
         workshopName: null,
         status: null,
