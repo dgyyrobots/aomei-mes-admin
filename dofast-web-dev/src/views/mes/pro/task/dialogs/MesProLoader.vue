@@ -6,28 +6,28 @@
     :destroy-on-close="false"
     :append-to-body="true"
     :modal-append-to-body="true"
-    modal-class="cyber-modal"
-    title="设备管理"
+    custom-class="cyber-modal"
+    title="生产上料"
     :top="'8vh'"
     width="1200px"
   >
     <div class="dialog-content">
-      <MesDvMachineryView ref="view" :machinery-code="machineryCode" :modal-append-to-baody="true" modal-class="cyber-modal" main-class="time-registration-dialog"/>
+      <MesWmIssueView ref="view" :task-code="taskCode" modal-class="cyber-modal" main-class="time-registration-dialog"/>
     </div>
 
   </el-dialog>
 </template>
 
 <script>
-import MesDvMachineryView from '@/views/mes/dv/machinery/index.vue'
+import MesWmIssueView from '@/views/mes/wm/issue/index.vue'
 // 控制对话框显示状态
 export default {
-  name: 'MesDvMachineryDialog',
+  name: 'MesWmIssueDialog',
   props: {
-    machineryCode: {
+    taskCode: {
       type: String,
-      default: ''
-    }
+      default: '',
+    },
   },
   data() {
     return {
@@ -35,7 +35,7 @@ export default {
     }
   },
   components: {
-    MesDvMachineryView,
+    MesWmIssueView,
   },
   methods: {
     async openDialog() {

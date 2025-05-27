@@ -83,13 +83,11 @@
       <el-col :span="4.8" v-for="item in list" :key="item.id" class="mb-5 cursor-pointer" @click.native="jumpDashboard(item)">
         <el-descriptions :column="1" :title="item.taskCode" class="pointer-events-none p-5" :style="getStatusColor(item.status)">
           <el-descriptions-item label="任务名称">
+            <div>
+              <div class="text-ellipsis overflow-hidden" style="height: 22px;">{{ item.workorderName }} </div>
+              <div class="text-ellipsis overflow-hidden" style="height: 44px;">{{ item.taskName }}</div>
+            </div>
           </el-descriptions-item>
-		  <el-descriptions>
-		    <div>
-		      <div class="text-ellipsis overflow-hidden" style="height: 22px;">{{ item.workorderName }} </div>
-		      <div class="text-ellipsis overflow-hidden" style="height: 44px;">{{ item.taskName }}</div>
-		    </div>
-		  </el-descriptions>
           <template v-if="item.status === 'NORMAL'">
             <el-descriptions-item label="计划开工">{{ parseTime(item.startTime) }}</el-descriptions-item>
             <el-descriptions-item label="计划完工">{{ parseTime(item.endTime) }}</el-descriptions-item>

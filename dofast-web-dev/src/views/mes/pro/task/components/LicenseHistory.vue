@@ -45,12 +45,12 @@ export default {
   data() {
     return {
       searchKeyword: '',
-      tableHeaders: ['日期', '版号', '产量', '状态'],
+      tableHeaders: ['日期', '版号', '产量', '负责人'],
       tableFields: [
         (row) => this.parseDate(row.feedbackTime),
         (row) => row.batchCode,
         (row) => row.quantityFeedback + row.unitOfMeasure,
-        (row) => '',
+        (row) => row.principalName,
       ],
     }
   },

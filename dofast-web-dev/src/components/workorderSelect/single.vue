@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="工单选择" v-if="showFlag" :visible.sync="showFlag" :modal="false" width="80%" center>
+  <el-dialog title="工单选择" v-if="showFlag" :visible.sync="showFlag" :modal="false" width="80%" center :append-to-body="appendToBody" :class="mainClass">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="工单编码" prop="workorderCode">
         <el-input v-model="queryParams.workorderCode" placeholder="请输入工单编码" clearable @keyup.enter.native="handleQuery" />
@@ -61,6 +61,16 @@
 import { listWorkorder } from '@/api/mes/pro/workorder';
 export default {
   name: 'WorkOrderSelectSingle',
+  props: {
+    appendToBody: {
+      type: Boolean,
+      default: false,
+    },
+    mainClass: {
+      type: String,
+      default: '',
+    },
+  },
   components: {},
   dicts: ['mes_order_status', 'mes_workorder_sourcetype'],
   data() {

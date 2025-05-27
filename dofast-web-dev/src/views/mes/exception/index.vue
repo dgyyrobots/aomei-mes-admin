@@ -123,7 +123,7 @@
                 @pagination="getList"/>
 
     <!-- 对话框(添加 / 修改) -->
-    <el-dialog :title="title" :visible.sync="open" width="65%" v-dialogDrag append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="65%" v-dialogDrag append-to-body :modal-class="modalClass" :class="mainClass">
       <el-form ref="form" :model="form" :rules="rules" label-width="130px">
         <el-row>
           <el-col :span="8">
@@ -302,6 +302,20 @@ import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
 export default {
   name: "Exception",
   dicts: ['mes_exception_type', 'mes_exception_status'],
+  props: {
+    modalClass: {
+      type: String,
+      default: ''
+    },
+    mainClass: {
+      type: String,
+      default: ''
+    },
+    taskCode: {
+      type: String,
+      default: ''
+    }
+  },
   components: {
     ProtaskSelect,
     FileUpload,
@@ -410,6 +424,11 @@ export default {
     /** 查询列表 */
     getList() {
       this.loading = true;
+      if (this.taskCode) {
+        this.queryParams.relatedTaskCode = this.taskCode
+      } else {
+        this.queryParams.relatedTaskCode = ''
+      }
       // 执行查询
       getExceptionPage(this.queryParams).then(response => {
         this.list = response.data.list;
@@ -452,6 +471,7 @@ export default {
         attr3: undefined,
         attr4: undefined,
       };
+      this.form.relatedTaskCode = this.taskCode || ''
       this.resetForm("form");
     },
     /** 搜索按钮操作 */

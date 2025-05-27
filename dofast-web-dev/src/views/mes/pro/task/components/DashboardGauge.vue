@@ -3,16 +3,16 @@
     <div ref="gaugeRef" class="gauge-echart"></div>
     <!-- 文本和按钮叠加层 -->
     <div class="gauge-overlay">
-      <div class="detail-text">长荣有恒平张模切机2#</div>
+      <div class="detail-text">{{ detail.machineryName }}</div>
       <div class="detail-button">当前产量清零</div>
-      <div class="target-text">
+      <!-- <div class="target-text">
         <el-icon class="no-inherit" color="#ff5555" />
         <span>预警数量： 3000</span>
-      </div>
+      </div> -->
     </div>
     <!-- 左上 -->
     <div class="gauge-label gauge-label-topleft">
-      <div class="gauge-value yellow">0</div>
+      <div class="gauge-value yellow">{{ detail.quantityUnquanlify }}</div>
       <div class="gauge-desc">剔废数量</div>
       <svg class="gauge-fold-line" height="24" width="80">
         <polyline points="0,6 40,6 70,22" style="fill: none; stroke: #1ecfff; stroke-width: 2" />
@@ -28,7 +28,7 @@
     </div>
     <!-- 右上 -->
     <div class="gauge-label gauge-label-topright">
-      <div class="gauge-value yellow">{{ produced }}</div>
+      <div class="gauge-value yellow">{{ detail.quantityQuanlify }}</div>
       <div class="gauge-desc">正常产量</div>
       <svg class="gauge-fold-line" height="24" width="80">
         <polyline points="80,6 40,6 10,22" style="fill: none; stroke: #1ecfff; stroke-width: 2" />
@@ -36,7 +36,7 @@
     </div>
     <!-- 右下 -->
     <div class="gauge-label gauge-label-bottomright">
-      <div class="gauge-value yellow">0</div>
+      <div class="gauge-value yellow">{{ overVersion }}</div>
       <div class="gauge-desc">过版数量</div>
       <svg class="gauge-fold-line" height="24" width="80">
         <polyline points="80,18 40,18 10,2" style="fill: none; stroke: #1ecfff; stroke-width: 2" />
@@ -49,9 +49,9 @@
         style="--el-switch-on-color: #22e222; --el-switch-off-color: #444" />
     </div>
     <!-- 顶部右侧：黄色圆点 + 空转 -->
-    <div class="top-abs top-right">
+    <div class="top-abs top-right" :class="statusColor">
       <span class="dot"></span>
-      <span class="dot-label">空转</span>
+      <span class="dot-label">{{ statusName }}</span>
     </div>
   </div>
 </template>
@@ -61,10 +61,26 @@ import * as echarts from 'echarts'
 
 export default {
   props: {
+    statusName: {
+      type: String,
+      default: '',
+    },
     data: {
       type: Object,
       default() {
         return {}
+      },
+    },
+    detail: {
+      type: Object,
+      default() {
+        return {
+          machineryName: '',
+          quantity: 0,
+          quantityProduced: 0,
+          quantityUnquanlify: 0,
+          quantityQuanlify: 0,
+        }
       },
     },
   },
@@ -73,6 +89,24 @@ export default {
       switchValue: true,
       speed: 0,
       produced: 0,
+      overVersion: 0
+    }
+  },
+  computed: {
+    percent() {
+      const { quantity, quantityQuanlify } = this.detail
+      if (!quantity || !quantityQuanlify) {
+        return 0
+      }
+      return Math.min((quantityQuanlify / quantity) * 100, 100)
+    },
+    statusColor() {
+      return {
+        '故障': 'red',
+        '待机': 'orange',
+        '运行': 'green',
+        '未知': 'blue'
+      }[this.statusName] || ''
     }
   },
   watch: {
@@ -81,19 +115,14 @@ export default {
         this.speed = newData.sd || 0
         this.produced = newData.cl || 0
         if (this.chart) {
-          this.chart.setOption({
-            series: [
-              {
-                data: [newData.value],
-              },
-            ],
-          })
+          this.initChart()
         }
       },
       deep: true,
     },
   },
   mounted() {
+    this.chart = echarts.init(this.$refs.gaugeRef)
     this.initChart()
   },
   beforeDestroy() {
@@ -104,11 +133,10 @@ export default {
   methods: {
     initChart() {
       const newData = {
-        value: 23864,
+        value: this.percent,
         name: '当前产量',
         max: 100,
       }
-      this.chart = echarts.init(this.$refs.gaugeRef)
 
       const option = {
         title: [
@@ -125,7 +153,7 @@ export default {
             },
           },
           {
-            text: newData.value.toString(),
+            text: this.produced.toString(),
             x: '50%',
             y: '39%',
             textAlign: 'center',
@@ -524,5 +552,37 @@ export default {
   margin-left: 16px;
   letter-spacing: 1px;
   text-shadow: 0 0 4px #000;
+}
+.red{
+  .dot{
+    background: #ff5555;
+  }
+  .dot-lable{
+    color: #ff5555;
+  }
+}
+.orange{
+  .dot{
+    background: #ff8800;
+  }
+  .dot-lable{
+    color: #ff8800;
+  }
+}
+.green{
+  .dot{
+    background: #22e222;
+  }
+  .dot-lable{
+    color: #22e222;
+  }
+}
+.blue{
+  .dot{
+    background: #1ecfff;
+  }
+  .dot-lable{
+    color: #1ecfff;
+  }
 }
 </style>

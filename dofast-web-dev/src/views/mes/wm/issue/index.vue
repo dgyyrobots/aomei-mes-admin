@@ -13,7 +13,7 @@
       <el-form-item label="领料日期" prop="issueDate">
         <el-date-picker clearable v-model="queryParams.issueDate" type="date" value-format="timestamp" placeholder="请选择领料日期"></el-date-picker>
       </el-form-item>
-      <el-form-item label="任务单号" prop="taskCode">
+      <el-form-item label="任务单号" prop="taskCode" v-if="!taskCode">
         <el-input v-model="queryParams.taskCode" placeholder="请输入任务单号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
 
@@ -99,7 +99,7 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList"/>
 
     <!-- 添加或修改生产领料单头对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="75%" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="75%" append-to-body :custom-class="modalClass" :class="mainClass">
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="8">
@@ -213,7 +213,7 @@
       </div>
     </el-dialog>
 
-    <el-dialog :title="title" :visible.sync="taskChanceOpen" width="75%" append-to-body>
+    <el-dialog :title="title" :visible.sync="taskChanceOpen" width="75%" append-to-body :custom-class="modalClass" :class="mainClass">
       <el-form ref="taskForm" :model="taskForm" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="8">
@@ -292,16 +292,16 @@
 import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, updateIssueMachinery, execute, finshIssueHeader , initTaskInfoByIssueId} from '@/api/mes/wm/issueheader';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
-import TaskSelectSingle from "@/components/TaskSelect/taskSelectSingle.vue";
+import TaskSelectSingle from '@/components/TaskSelect/taskSelectSingle.vue';
+import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
+import ProtaskSelect from '@/components/TaskSelect/taskSelectSingle.vue';
 import {getTreeList} from '@/api/mes/wm/warehouse';
 import {genCode} from '@/api/mes/autocode/rule';
 import Issueline from './line.vue';
 import {deleteGoods, getStockInfoByPurchaseId} from "@/api/purchase/goods";
 import {createFeedLine, getByIssueId, createFeedLineList, createFeedLineListByIssueId} from "@/api/wms/feedLine";
 import jsQR from "jsqr";
-import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
 import {listProcess} from '@/api/mes/pro/process';
-import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
 import {finshAllocatedHeader} from "@/api/wms/allocatedHeader";
 import {updateTasks} from "@/api/mes/pro/protask";
 
@@ -310,6 +310,20 @@ export default {
   name: 'Issue',
   dicts: ['mes_order_status' , 'mes_pro_task_status'],
   components: {ProtaskSelect, MachinerySelectSingle, Issueline, WorkstationSelect, WorkorderSelect, TaskSelectSingle},
+  props: {
+    taskCode: {
+      type: String,
+      default: ''
+    },
+    mainClass: {
+      type: String,
+      default: ''
+    },
+    modalClass: {
+      type: String,
+      default: ''
+    },
+  },
   data() {
     return {
       autoGenFlag: false,
@@ -439,6 +453,9 @@ export default {
     /** 查询生产领料单头列表 */
     getList() {
       this.loading = true;
+      if (this.taskCode) {
+        this.queryParams.taskCode = this.taskCode;
+      }
       listIssueheader(this.queryParams).then(response => {
         console.log(response.data)
         this.issueheaderList = response.data.list;

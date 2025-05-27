@@ -56,7 +56,7 @@ export default {
   data() {
     return {
       active: this.current,
-      tableHeaders: ['姓名', '用户名', '职位'], // , '状态'],
+      tableHeaders: ['姓名', '用户名', '岗位'], // , '状态'],
       tableFields: [
         (row) => row.nickName,
         (row) => row.userName,

@@ -6,28 +6,28 @@
     :destroy-on-close="false"
     :append-to-body="true"
     :modal-append-to-body="true"
-    modal-class="cyber-modal"
-    title="设备管理"
+    custom-class="cyber-modal"
+    title="异常登记"
     :top="'8vh'"
     width="1200px"
   >
     <div class="dialog-content">
-      <MesDvMachineryView ref="view" :machinery-code="machineryCode" :modal-append-to-baody="true" modal-class="cyber-modal" main-class="time-registration-dialog"/>
+      <MesExceptionView ref="view" :task-code="taskCode" modal-class="cyber-modal" main-class="time-registration-dialog"/>
     </div>
 
   </el-dialog>
 </template>
 
 <script>
-import MesDvMachineryView from '@/views/mes/dv/machinery/index.vue'
+import MesExceptionView from '@/views/mes/exception/index.vue'
 // 控制对话框显示状态
 export default {
-  name: 'MesDvMachineryDialog',
+  name: 'MesExceptionDialog',
   props: {
-    machineryCode: {
+    taskCode: {
       type: String,
-      default: ''
-    }
+      default: '',
+    },
   },
   data() {
     return {
@@ -35,7 +35,7 @@ export default {
     }
   },
   components: {
-    MesDvMachineryView,
+    MesExceptionView,
   },
   methods: {
     async openDialog() {

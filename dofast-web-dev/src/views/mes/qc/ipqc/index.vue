@@ -12,7 +12,7 @@
       <el-form-item label="工单编号" prop="workorderCode">
         <el-input v-model="queryParams.workorderCode" placeholder="请输入工单编码" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="产品物料编码" prop="itemCode">
+      <el-form-item label="产品物料编码" prop="itemCode" v-if="!itemCode">
         <el-input v-model="queryParams.itemCode" placeholder="请输入产品物料编码" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="产品物料名称" prop="itemName">
@@ -286,6 +286,10 @@ import Ipqcline from './line.vue';
 export default {
   name: 'Ipqc',
   props: {
+    itemCode: {
+      type: String,
+      default: '',
+    },
     modalAppendToBody: {
       type: Boolean,
       default: false,
@@ -381,6 +385,9 @@ export default {
     /** 查询过程检验单列表 */
     getList() {
       this.loading = true;
+      if (this.itemCode) {
+        this.queryParams.itemCode = this.itemCode;
+      }
       listIpqc(this.queryParams).then(response => {
         this.ipqcList = response.data.list;
         this.total = response.data.total;

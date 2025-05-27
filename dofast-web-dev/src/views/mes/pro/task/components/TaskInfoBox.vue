@@ -41,12 +41,12 @@
     <div class="footer">
       <span class="done">
         已完成：
-        <span class="done-num">{{ data.quantityProduced }}</span>
+        <span class="done-num">{{ data.quantityQuanlify }}</span>
         {{ data.unitOfMeasure }}
       </span>
       <span class="remain">
         未完成：
-        <span class="remain-num">{{ data.quantity - data.quantityProduced }}</span>
+        <span class="remain-num">{{ left }}</span>
         {{ data.unitOfMeasure }}
       </span>
     </div>
@@ -66,6 +66,8 @@ export default {
         taskName: '',
         itemCode: '',
         itemName: '',
+        quantityQuanlify: 0,
+        quantity: 0,
       }),
     }
   },
@@ -80,12 +82,23 @@ export default {
   computed: {
     // 这里可以定义一些计算属性
     percent() {
-      const { quantityProduced, quantity } = this.data
-      if (!quantity || !quantityProduced) {
+      const { quantityQuanlify, quantity } = this.data
+      if (!quantity || !quantityQuanlify) {
         return '0%'
       }
-      const percent = (quantityProduced / quantity) * 100
+      let percent = (quantityQuanlify / quantity) * 100
+      if (percent > 100) {
+        percent = 100
+      }
       return `${percent.toFixed(2)}%`
+    },
+    left() {
+      const { quantityQuanlify, quantity } = this.data
+      if (!quantity || !quantityQuanlify) {
+        return '0'
+      }
+      const left = quantity - quantityQuanlify
+      return left < 0 ? '0' : left
     }
   },
   methods: {
