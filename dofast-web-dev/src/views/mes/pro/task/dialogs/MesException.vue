@@ -40,7 +40,7 @@ export default {
   methods: {
     async openDialog() {
       this.visible = true
-      await this.$nexxtTick()
+      await this.$nextTick()
       this.$refs.view.getList()
     },
   },
