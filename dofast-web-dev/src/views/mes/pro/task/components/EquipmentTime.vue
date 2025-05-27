@@ -1,7 +1,7 @@
 <template>
   <Card class="EquipmentTime" content-padding="6px 0" title="设备计时">
     <template #titleRight>
-      <button class="query-btn">查看明细</button>
+      <!-- <button class="query-btn">查看明细</button> -->
     </template>
     <div class="scroll-board">
       <table>

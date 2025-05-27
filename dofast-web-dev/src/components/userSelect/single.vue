@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="人员选择" v-if="showFlag" :visible.sync="showFlag" :modal="false" width="80%" center>
+  <el-dialog title="人员选择" v-if="showFlag" :visible.sync="showFlag" :modal="false" width="80%" center :append-to-body="appendToBody" :class="mainClass">
     <el-row :gutter="20">
       <!--部门数据-->
       <el-col :span="4" :xs="24">
@@ -80,6 +80,16 @@ import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
 
 export default {
+  props: {
+    appendToBody: {
+      type: Boolean,
+      default: true,
+    },
+    mainClass: {
+      type: String,
+      default: '',
+    },
+  },
   name: 'UserSingleSelect',
   dicts: ['sys_normal_disable', 'sys_user_sex'],
   components: { Treeselect },

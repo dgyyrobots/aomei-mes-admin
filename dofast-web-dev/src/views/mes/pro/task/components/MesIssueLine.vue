@@ -37,82 +37,23 @@
             </defs>
           </svg>
         </div>
-        <div class="panel-title">当板信息</div>
+        <div class="panel-title">上料明细</div>
         <div class="panel-content">
-          <div class="info-row">
-            <div class="info-label">流程号：</div>
-            <div class="info-value flow-no">11</div>
-            <div class="action-buttons">
-              <button class="query-btn">查询</button>
-            </div>
+          <div class="scroll-board" v-if="data && data.length">
+            <table>
+              <thead>
+                <tr>
+                  <th v-for="(header, index) in tableHeaders" :key="index">{{ header }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, index) in tableData" :key="index">
+                  <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="info-row">
-            <div class="info-label">物理板号：</div>
-            <div class="info-value flow-no">物理板号</div>
-            <div class="icon-placeholder"></div>
-            <div class="info-label-right">被识别：</div>
-            <div class="info-value">0</div>
-            <div class="icon-placeholder"></div>
-          </div>
-
-          <div class="info-row">
-            <div class="info-label">流程类型：</div>
-            <div class="info-value flow-no">
-              <div class="select-box">
-                <span>合格品</span>
-                <i class="el-icon-arrow-down" />
-              </div>
-            </div>
-            <div class="icon-placeholder"></div>
-            <div class="info-label-right">制程数：</div>
-            <div class="info-value">0</div>
-            <div class="icon-placeholder"></div>
-          </div>
-        </div>
-
-        <div class="timestamp">2023-12-08 13:55:40</div>
-      </div>
-
-      <!-- 右侧产量信息 -->
-      <div class="right-panel">
-        <div class="cyber-divider divider2">
-          <svg height="8" viewBox="0 0 148 8" width="148">
-            <!-- 左4个短条 -->
-            <rect fill="#1ecfff" filter="url(#glow)" height="2" rx="2" width="6" x="0" y="2" />
-            <rect fill="#1ecfff" filter="url(#glow)" height="2" rx="2" width="6" x="9" y="2" />
-            <rect fill="#1ecfff" filter="url(#glow)" height="2" rx="2" width="6" x="18" y="2" />
-            <rect fill="#1ecfff" filter="url(#glow)" height="2" rx="2" width="6" x="27" y="2" />
-            <!-- 中间长条 -->
-            <rect fill="#1ecfff" filter="url(#glow)" height="2" rx="2" width="40" x="36" y="2" />
-            <!-- 右3个短条 -->
-            <rect fill="#1ecfff" filter="url(#glow)" height="2" rx="2" width="6" x="82" y="2" />
-            <rect fill="#1ecfff" filter="url(#glow)" height="2" rx="2" width="6" x="91" y="2" />
-            <rect fill="#1ecfff" filter="url(#glow)" height="2" rx="2" width="6" x="100" y="2" />
-            <defs>
-              <filter id="glow" height="24" width="40" x="-10" y="-10">
-                <feGaussianBlur result="coloredBlur" stdDeviation="2" />
-                <feMerge>
-                  <feMergeNode in="coloredBlur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-          </svg>
-        </div>
-        <div class="panel-title">上板\转产量</div>
-        <div class="panel-content">
-          <div class="right-row">
-            <div class="right-label">正常产量：</div>
-            <div class="right-value">3118/分钟</div>
-          </div>
-          <div class="right-row">
-            <div class="right-label">剔废数量：</div>
-            <div class="right-value">0/分钟</div>
-          </div>
-          <div class="right-row">
-            <div class="right-label">过版数量：</div>
-            <div class="right-value">0/分钟</div>
-          </div>
+          <el-empty title="请双击批次产出明细"/>
         </div>
       </div>
     </div>
@@ -120,6 +61,30 @@
 </template>
 
 <script>
+
+export default {
+  name: 'MesIssueLine',
+  props: {
+    data: {
+      type: Array,
+      default() {
+        return []
+      }
+    }
+  },
+  data() {
+    return {
+      searchKeyword: '',
+      tableHeaders: ['日期', '版号', '产量', '负责人'],
+      tableFields: [
+        (row) => this.parseDate(row.feedbackTime),
+        (row) => row.batchCode,
+        (row) => row.quantityFeedback + row.unitOfMeasure,
+        (row) => row.principalName,
+      ],
+    }
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -353,5 +318,51 @@
   color: #1ecfff;
   vertical-align: middle;
   flex-shrink: 0;
+}
+
+.scroll-board {
+  height: 100%;
+  overflow: hidden;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 15px;
+      color: #00bcd4;
+      border-bottom: 1px solid rgba(0, 188, 212, 0.3);
+    }
+
+    td {
+      padding: 12px 6px;
+      text-align: center;
+      font-size: 15px;
+      color: #86c9f2;
+      border-bottom: 1px solid rgba(0, 161, 255, 0.2);
+    }
+
+    tr {
+      transition: all 0.3s;
+
+      &:nth-child(even) {
+        background: rgba(#00a1ff, 0.05);
+      }
+
+      &.warning {
+        background: rgba(#ffb74d, 0.1);
+
+        td {
+          color: #ffb74d;
+        }
+      }
+
+      &:hover {
+        background: rgba(#00a1ff, 0.15);
+      }
+    }
+  }
 }
 </style>

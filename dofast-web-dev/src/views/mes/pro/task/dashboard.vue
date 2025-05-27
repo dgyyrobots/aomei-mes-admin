@@ -62,7 +62,7 @@
               <DashboardGauge :data="syncData" :detail="detail"/>
             </div>
             <div class="center-box box-2">
-              <CenterBottom />
+              <MesIssueLine :data="issueList"/>
             </div>
           </div>
 
@@ -81,19 +81,19 @@
         </div>
 
         <!-- 对话框组件 -->
-        <TimeRegistration ref="timeRegistrationRef" />
-        <MesDvMachinery ref="mesDvMachineryRef" />
+        <TimeRegistration ref="timeRegistrationRef"  @success="getDetail"/>
+        <MesDvMachinery ref="mesDvMachineryRef"  @success="getDetail"/>
         <MesQcIpqc ref="mesQcIpqcRef" />
         <!-- 生产上料 -->
-        <MesProLoader ref="mesProLoaderRef" />
+        <MesProLoader ref="mesProLoaderRef"  @success="getDetail"/>
         <!-- 打印条码 -->
-        <MesProPrint ref="mesProPrintRef" />
+        <MesProPrint ref="mesProPrintRef"  @success="getDetail"/>
         <!-- 生产报工 -->
-        <MesProReport ref="mesProReportRef" />
+        <MesProReport ref="mesProReportRef"  @success="getDetail"/>
         <!-- 生产领料 -->
-        <MesProReq v-bind="detail" :taskId="detail.id" ref="mesProReqRef" />
+        <MesProReq v-bind="detail" :taskId="detail.id" ref="mesProReqRef"  @success="getDetail"/>
         <!-- 成品入库 -->
-        <MesProStore ref="mesProStoreRef" />
+        <MesProStore ref="mesProStoreRef" :taskCode="detail.taskCode" @success="getDetail"/>
       </div>
     </ScaleBox>
   </div>
@@ -119,9 +119,11 @@ import MesProPrint from './dialogs/MesProPrint.vue'
 import MesProReport from './dialogs/MesProReport.vue'
 import MesProReq from './dialogs/MesProReq.vue'
 import MesProStore from './dialogs/MesProStore.vue'
+import MesIssueLine from './components/MesIssueLine.vue'
 import { getProtask, updateProtask } from '@/api/mes/pro/protask.js'
 import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
 import { listFeedback } from '@/api/mes/pro/feedback.js'
+import { listIssueline } from '@/api/mes/wm/issueline.js'
 import mqttTool from '@/utils/mqttTool.js'
 
 export default {
@@ -134,6 +136,7 @@ export default {
     PayInfo,
     StaffInfo,
     CenterBottom,
+    MesIssueLine,
     TimeRegistration,
     MesDvMachinery,
     MesQcIpqc,
@@ -170,7 +173,8 @@ export default {
       syncData: {
         cl: 0,
         sd: 0,
-      }
+      },
+      issueList: []
     }
   },
   computed: {
@@ -188,6 +192,15 @@ export default {
       this.getStaffInfo();
       this.getFeedbackInfo();
       this.subscribe();
+      this.getIssueList()
+    },
+    getIssueList() {
+
+      listIssueline({ taskCode: this.detail.taskCode, pageSize: 100 }).then(res => {
+        this.issueList = res.data ? res.data.list : [];
+      }).catch(err => {
+        console.error('获取问题列表失败:', err);
+      });
     },
     async getStaffInfo() {
       const res = await Promise.all([
@@ -222,19 +235,19 @@ export default {
     onProCommand(command) {
       switch (command) {
         case 'request':
-          this.$refs.mesProReqRef.openDialog();
+          this.$refs.mesProReqRef.openDialog(this.detail);
           break;
         case 'loader':
-          this.$refs.mesProLoaderRef.openDialog();
+          this.$refs.mesProLoaderRef.openDialog(this.detail);
           break;
         case 'report':
-          this.$refs.mesProReportRef.openDialog();
+          this.$refs.mesProReportRef.openDialog(this.detail);
           break;
         case 'print':
-          this.$refs.mesProPrintRef.openDialog();
+          this.$refs.mesProPrintRef.openDialog(this.detail);
           break;
         case 'store':
-          this.$refs.mesProStoreRef.openDialog();
+          this.$refs.mesProStoreRef.openDialog(this.detail);
           break;
         default:
           console.warn('未知的命令:', command);
@@ -312,7 +325,7 @@ export default {
   mounted() {
     document.documentElement.classList.add("dark")
     this.updateDateTime() // 初始化时间
-    this.$timer = setInterval(this.updateDateTime, 1000) // 每秒更新一次
+    this.$timer = setInterval(this.updateDateTime, 100) // 每秒更新一次
   },
   beforeDestroy() {
     document.documentElement.classList.remove("dark")
