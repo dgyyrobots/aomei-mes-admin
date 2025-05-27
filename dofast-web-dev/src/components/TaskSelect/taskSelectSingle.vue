@@ -92,6 +92,9 @@ export default {
     workorderId(v) {
       this.queryParams.workorderId = v;
     },
+    workorderCode(v) {
+      this.queryParams.workorderCode = v;
+    },
   },
   data() {
     return {
@@ -123,7 +126,7 @@ export default {
         taskCode: null,
         taskName: null,
         workorderId: this.workorderId,
-        workorderCode: null,
+        workorderCode: this.workorderCode,
         workorderName: null,
         workstationId: null,
         workstationCode: null,

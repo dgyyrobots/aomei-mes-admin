@@ -170,9 +170,10 @@
           </el-col>
         </el-row>
       </el-form>
-      <el-divider v-if="form.repairId != null" content-position="center">维修内容</el-divider>
-      <el-card shadow="always" v-if="form.repairId != null" class="box-card">
-        <Repairline ref="line" :repairId="form.repairId" :optType="optType"></Repairline>
+      <!--   repairId   -->
+      <el-divider v-if="form.id != null" content-position="center">维修内容</el-divider>
+      <el-card shadow="always" v-if="form.id != null" class="box-card">
+        <Repairline ref="line" :repairId="form.id" :optType="optType"></Repairline>
       </el-card>
 
       <div slot="footer" class="dialog-footer">
@@ -311,7 +312,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.repairId);
+      this.ids = selection.map(item => item.id);// repairId
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
     },
@@ -324,7 +325,7 @@ export default {
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const repairId = row.repairId || this.ids;
+      const repairId = row.id || this.ids;
       getRepair(repairId).then(response => {
         this.form = response.data;
         this.open = true;
@@ -335,7 +336,8 @@ export default {
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
-          if (this.form.repairId != null) {
+          console.log("this.form " , this.form);
+          if (this.form.id != null) {
             updateRepair(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
               this.open = false;
@@ -353,7 +355,7 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const repairIds = row.repairId || this.ids;
+      const repairIds = row.id || this.ids;
       this.$modal
         .confirm('是否确认删除设备维修单编号为"' + repairIds + '"的数据项？')
         .then(function () {
@@ -381,7 +383,8 @@ export default {
     },
     //设备资源选择回调
     onMachineryAdd(row) {
-      this.form.machineryId = row.machineryId;
+      console.log("row: " , row);
+      this.form.machineryId = row.id;
       this.form.machineryTypeId = row.machineryTypeId;
       this.form.machineryCode = row.machineryCode;
       this.form.machineryName = row.machineryName;

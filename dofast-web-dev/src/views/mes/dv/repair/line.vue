@@ -13,12 +13,13 @@
     <el-table v-loading="loading" :data="repairlineList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="项目名称" align="center" prop="subjectName" />
-      <el-table-column label="故障描述" align="center" prop="malfunction">
+<!--      <el-table-column label="故障描述" align="center" prop="malfunction">
         <template slot-scope="scope">
           <el-input type="textarea">{{ scope.row.malfunction }}</el-input>
         </template>
-      </el-table-column>
-      <el-table-column label="故障描述资源" align="center" prop="malfunctionUrl"></el-table-column>
+      </el-table-column>-->
+      <el-table-column label="故障描述" align="center" prop="malfunction"/>
+      <el-table-column label="故障描述资源" align="center" prop="malfunctionUrl"/>
       <el-table-column label="维修情况" align="center" prop="repairDes" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">

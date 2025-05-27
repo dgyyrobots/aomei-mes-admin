@@ -293,14 +293,20 @@
           </el-col>
 
           <el-col :span="8">
-            <el-form-item label="任务状态" prop="taskStatus">
+<!--            <el-form-item label="任务状态" prop="taskStatus">
               <el-select v-model="form.taskStatus" placeholder="请选择任务状态">
                 <el-option v-for="dict in dict.type.mes_pro_task_status" :key="dict.value" :label="dict.label"
                            :value="dict.value"></el-option>
               </el-select>
+            </el-form-item>-->
+
+            <el-form-item label="任务状态" prop="taskStatus" >
+              <el-radio-group v-model="form.taskStatus" @change="updateRadio()">
+                <el-radio label="STARTED" >已开工</el-radio>
+                <el-radio label="FINISHED" >已完工</el-radio>
+              </el-radio-group>
             </el-form-item>
           </el-col>
-
 
         </el-row>
 
@@ -906,6 +912,12 @@ export default {
         // 卡控报工数量不能为0
         if (!this.form.quantityFeedback) {
           this.$message.error(`请输入正确的报工数量!`);
+          valid = false;
+          return;
+        }
+
+        if(!this.form.taskStatus){
+          this.$message.error(`请选择当前任务单状态!`);
           valid = false;
           return;
         }
@@ -2056,12 +2068,16 @@ export default {
         return 'warning-row';
       }
       return '';
+    },
+    updateRadio(){
+      this.$forceUpdate();
     }
   },
   activated() {
     // 当从缓存中重新激活组件时，可以在此更新数据
     this.getList();
-  }
+  },
+
 };
 </script>
 

@@ -168,20 +168,29 @@
           </el-col>
 
           <el-col :span="8">
-            <el-form-item label="关联物料" prop="relatedMaterial">
-              <el-input disabled v-model="form.relatedMaterial" placeholder="请输入关联物料"/>
+            <el-form-item label="关联物料" prop="relatedMaterialCode">
+              <el-input disabled v-model="form.relatedMaterialCode" placeholder="请输入关联物料"/>
             </el-form-item>
           </el-col>
 
+          <el-col :span="8">
+            <el-form-item label="生产任务" prop="relatedTaskCode">
+              <el-input v-model="form.relatedTaskCode" placeholder="请选择生产任务">
+                <el-button slot="append" icon="el-icon-search" @click="handleTaskSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <ProtaskSelect ref="taskSelect" :workorderCode="form.relatedWorkorder" @onSelected="onTaskSelected"></ProtaskSelect>
+          </el-col>
+
+        </el-row>
+
+        <el-row>
           <el-col :span="8">
             <el-form-item label="起始时间" prop="startTime">
               <el-date-picker disabled clearable v-model="form.startTime" type="datetime"  placeholder="选择起始时间"/>
             </el-form-item>
           </el-col>
 
-        </el-row>
-
-        <el-row>
           <el-col :span="8">
             <el-form-item label="结束时间" prop="endTime">
               <el-date-picker disabled clearable v-model="form.endTime" type="datetime" placeholder="选择结束时间"/>
@@ -212,10 +221,12 @@ import {genCode} from "@/api/mes/autocode/rule";
 import MachinerySelectSingle from "@/components/machinerySelect/single.vue";
 import WorkorderSelect from "@/components/workorderSelect/single.vue";
 import {listAllWorkshop} from "@/api/mes/md/workshop";
+import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
 
 export default {
   name: "Registration",
   components: {
+    ProtaskSelect,
     WorkorderSelect,
     MachinerySelectSingle
   },
@@ -487,7 +498,25 @@ export default {
         this.optType = 'view';
         this.title = "查看计时登记";
       });
-    }
+    },
+    handleTaskSelect() {
+      this.$refs.taskSelect.showFlag = true;
+      this.$refs.taskSelect.getList();
+    },
+    onTaskSelected(row) {
+      if (row != undefined && row != null) {
+        this.form.relatedTaskId = row.id;
+        this.form.relatedTaskCode = row.taskCode;
+        this.form.workstationId = row.workstationId;
+        this.form.workstationCode = row.workstationCode;
+        this.form.workstationName = row.workstationName;
+        this.form.processId = row.processId;
+        this.form.processCode = row.processCode;
+        this.form.processName = row.processName;
+      }
+      console.log("this.form: ", this.form);
+      this.$forceUpdate();
+    },
   }
 };
 </script>

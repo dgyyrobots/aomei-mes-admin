@@ -175,7 +175,7 @@
 import { listCheckplan, getCheckplan, delCheckplan, addCheckplan, updateCheckplan } from '@/api/mes/dv/checkplan';
 import Checkmachinery from './machinery.vue';
 import Checksubject from './subject.vue';
-import { genCode } from '@/api/system/autocode/rule';
+import {genCode} from "@/api/mes/autocode/rule";
 export default {
   name: 'Checkplan',
   dicts: ['mes_cycle_type', 'mes_order_status', 'dv_plan_type'],

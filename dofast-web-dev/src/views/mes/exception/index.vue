@@ -215,6 +215,21 @@
             </el-form-item>
           </el-col>
 
+
+          <el-col :span="8">
+            <el-form-item label="生产任务" prop="relatedTaskCode">
+              <el-input v-model="form.relatedTaskCode" placeholder="请选择生产任务">
+                <el-button slot="append" icon="el-icon-search" @click="handleTaskSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <ProtaskSelect ref="taskSelect" :workorderCode="form.relatedWorkorder" @onSelected="onTaskSelected"></ProtaskSelect>
+          </el-col>
+
+
+
+        </el-row>
+
+        <el-row>
           <el-col :span="8">
             <el-form-item label="状态" prop="status">
               <el-select v-model="form.status" placeholder="请选择">
@@ -223,10 +238,7 @@
             </el-form-item>
           </el-col>
 
-        </el-row>
-
-        <el-row>
-          <el-col :span="24">
+          <el-col :span="16">
             <el-form-item label="附件" prop="attachments">
               <file-upload :isShowTips="isShowDelete" v-model="form.attachments" :file-type="adjunctTypes" :limit="20" :file-size="100"></file-upload>
             </el-form-item>
@@ -284,12 +296,14 @@ import { getExceptionLevelConfigAllList } from "@/api/mes/exceptionLevelConfig";
 
 import {getSubclassExceptionAllList} from "@/api/mes/subclassException";
 import FileUpload from "@/components/FileUpload/index3.vue";
+import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
 
 
 export default {
   name: "Exception",
   dicts: ['mes_exception_type', 'mes_exception_status'],
   components: {
+    ProtaskSelect,
     FileUpload,
     MachinerySelectSingle,
     WorkorderSelect,
@@ -634,7 +648,23 @@ export default {
         this.title = "查看异常登记";
       });
 
-    }
+    },
+    handleTaskSelect() {
+      this.$refs.taskSelect.showFlag = true;
+      this.$refs.taskSelect.getList();
+    },
+    onTaskSelected(row) {
+      if (row != undefined && row != null) {
+        this.form.relatedTaskId = row.id;
+        this.form.relatedTaskCode = row.taskCode;
+        this.form.workstationId = row.workstationId;
+        this.form.workstationCode = row.workstationCode;
+        this.form.workstationName = row.workstationName;
+        this.form.processId = row.processId;
+        this.form.processCode = row.processCode;
+        this.form.processName = row.processName;
+      }
+    },
   }
 };
 </script>
