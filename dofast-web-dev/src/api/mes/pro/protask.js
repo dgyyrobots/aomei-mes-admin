@@ -124,3 +124,10 @@ export function getTaskMonthCount(year) {
 }
 
 
+export function getTaskDetail(taskCode) {
+  return request({
+    url: '/mes/pro/task/getTaskDetail',
+    method: 'get',
+    params: {'taskCode': taskCode},
+  });
+}

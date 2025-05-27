@@ -61,7 +61,19 @@ export function finshRegistration(id) {
     url: '/mes/registration/finshRegistration',
     method: 'put',
     data: {
-      id: id
+      id: Number(id)
+    }
+  })
+}
+
+
+export function recordByRegistration(id, type) {
+  return request({
+    url: '/mes/registration/recordByRegistration',
+    method: 'put',
+    data: {
+      id: Number(id),
+      type: type
     }
   })
 }

@@ -125,7 +125,7 @@
     <!-- 对话框(添加 / 修改) -->
     <el-dialog :title="title" :visible.sync="open" width="65%" v-dialogDrag append-to-body :modal-class="modalClass" :class="mainClass">
       <el-form ref="form" :model="form" :rules="rules" label-width="130px">
-        <el-row>
+<!--        <el-row>
           <el-col :span="8">
             <el-form-item label="异常编号" prop="exceptionCode">
               <el-input v-model="form.exceptionCode" placeholder="请输入异常编号" :disabled="optType !== 'add'"/>
@@ -143,7 +143,7 @@
               <el-input v-model="form.title" placeholder="请输入异常标题"/>
             </el-form-item>
           </el-col>
-        </el-row>
+        </el-row>-->
 
         <el-row>
           <el-col :span="8">
@@ -246,32 +246,63 @@
         </el-row>
 
         <el-collapse accordion>
-          <el-collapse-item title="详情 DETAIL">
-            <el-row>
-              <el-col :span="24">
-                <el-form-item label="预计影响">
-                  <el-input type="textarea" :rows="2" placeholder="请输入预计影响" v-model="form.estimatedImpact"/>
+          <el-collapse-item title="详情 DETAIL" name="detail">
+            <el-row :gutter="20">
+              <!-- 预计影响 -->
+              <el-col :span="24" class="detail-item">
+                <el-form-item label="预计影响" prop="estimatedImpact">
+                  <div class="input-header">
+                    <i class="el-icon-warning-outline" style="color: #e6a23c"></i>
+                    <span class="tip-text">（请描述异常可能对生产造成的影响）</span>
+                  </div>
+                  <el-input
+                    type="textarea"
+                    :rows="3"
+                    placeholder="例如：预计导致生产线停机2小时，影响当日产量约500件"
+                    v-model="form.estimatedImpact"
+                    class="custom-textarea"
+                    resize="none"
+                  ></el-input>
                 </el-form-item>
               </el-col>
-            </el-row>
 
-            <el-row>
-              <el-col :span="24">
-                <el-form-item label="解决方案">
-                  <el-input type="textarea" :rows="2" placeholder="请输入解决方案" v-model="form.solution"/>
+              <!-- 解决方案 -->
+              <el-col :span="24" class="detail-item">
+                <el-form-item label="解决方案" prop="solution">
+                  <div class="input-header">
+                    <i class="el-icon-tools" style="color: #409EFF"></i>
+                    <span class="tip-text">（请描述处理异常的具体措施和方法）</span>
+                  </div>
+                  <el-input
+                    type="textarea"
+                    :rows="3"
+                    placeholder="例如：1. 立即切换备用设备 2. 联系供应商更换损坏部件"
+                    v-model="form.solution"
+                    class="custom-textarea"
+                    resize="none"
+                  ></el-input>
                 </el-form-item>
               </el-col>
-            </el-row>
 
-            <el-row>
-              <el-col :span="24">
-                <el-form-item label="详细描述">
-                  <editor v-model="form.description"/>
+              <!-- 详细描述 -->
+              <el-col :span="24" class="detail-item">
+                <el-form-item label="详细描述" prop="description">
+                  <div class="input-header">
+                    <i class="el-icon-document" style="color: #67C23A"></i>
+                    <span class="tip-text">（请详细描述异常现象和发生过程）</span>
+                  </div>
+                  <editor
+                    v-model="form.description"
+                    class="rich-editor"
+                    placeholder="请详细描述异常发生的时间、现象、相关操作人员等信息..."
+                    :style="{ minHeight: '150px' }"
+                  />
                 </el-form-item>
               </el-col>
             </el-row>
           </el-collapse-item>
         </el-collapse>
+
 
 
       </el-form>
@@ -297,6 +328,7 @@ import { getExceptionLevelConfigAllList } from "@/api/mes/exceptionLevelConfig";
 import {getSubclassExceptionAllList} from "@/api/mes/subclassException";
 import FileUpload from "@/components/FileUpload/index3.vue";
 import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
+import {getTaskDetail} from "@/api/mes/pro/protask";
 
 
 export default {
@@ -488,6 +520,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
+      if (this.taskCode) this.handleTaskCodeChange(this.taskCode);
       this.title = "添加异常登记";
       this.form.status = 'CONFIRMED';
       this.isShowDelete = true;
@@ -685,6 +718,86 @@ export default {
         this.form.processName = row.processName;
       }
     },
+    handleTaskCodeChange(taskCode) {
+      getTaskDetail(taskCode).then(response => {
+        const data = response.data;
+        this.form.relatedWorkorder = data.workorderCode;
+        this.form.relatedMaterial = data.itemCode;
+        this.form.relatedTaskId = data.taskId;
+        this.form.relatedTaskCode = data.taskCode;
+        this.form.workshopId = data.workshopId;
+        this.form.workshopCode = data.workshopCode;
+        this.form.workshopName = data.workshopName;
+        this.form.workstationId = data.workstationId;
+        this.form.workstationCode = data.workstationCode;
+        this.form.workstationName = data.workstationName;
+        this.form.processId = data.processId;
+        this.form.processCode = data.processCode;
+        this.form.processName = data.processName;
+        this.form.relatedMachineryCode = data.machineryCode;
+        this.form.relatedMachineryName = data.machineryName;
+        this.form.relatedErpMachinery = data.erpMachineryCode;
+      })
+    },
+
   }
 };
 </script>
+
+
+<style scoped>
+
+.detail-item {
+  padding: 15px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.detail-item:hover {
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+}
+
+.input-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tip-text {
+  color: #909399;
+  font-size: 12px;
+}
+
+.custom-textarea ::v-deep .el-textarea__inner {
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  transition: all 0.3s;
+  padding: 12px;
+  line-height: 1.5;
+}
+
+.custom-textarea:hover ::v-deep .el-textarea__inner {
+  border-color: #c0c4cc;
+}
+
+.custom-textarea:focus ::v-deep .el-textarea__inner {
+  border-color: #409EFF;
+  box-shadow: 0 0 8px rgba(64,158,255,0.1);
+}
+
+.rich-editor {
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.rich-editor:hover {
+  border-color: #c0c4cc;
+}
+
+.rich-editor:focus-within {
+  border-color: #409EFF;
+  box-shadow: 0 0 8px rgba(64,158,255,0.1);
+}
+</style>

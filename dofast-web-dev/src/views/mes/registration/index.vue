@@ -15,14 +15,14 @@
                      :value="dict.value"/>
         </el-select>
       </el-form-item>
-      <el-form-item label="起始时间" prop="startTime">
-        <el-date-picker v-model="queryParams.startTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
-                        range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"/>
-      </el-form-item>
-      <el-form-item label="结束时间" prop="endTime">
-        <el-date-picker v-model="queryParams.endTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
-                        range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"/>
-      </el-form-item>
+      <!--      <el-form-item label="起始时间" prop="startTime">
+              <el-date-picker v-model="queryParams.startTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
+                              range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"/>
+            </el-form-item>
+            <el-form-item label="结束时间" prop="endTime">
+              <el-date-picker v-model="queryParams.endTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
+                              range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"/>
+            </el-form-item>-->
 
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜索</el-button>
@@ -50,11 +50,11 @@
         </el-button>
       </el-col>
 
-      <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-circle-check" size="mini" @click="handleFinsh"
-                   v-hasPermi="['mes:registration:update']">完成
-        </el-button>
-      </el-col>
+      <!--      <el-col :span="1.5">
+              <el-button type="success" plain icon="el-icon-circle-check" size="mini" @click="handleFinsh"
+                         v-hasPermi="['mes:registration:update']">完成
+              </el-button>
+            </el-col>-->
 
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" :loading="exportLoading"
@@ -69,7 +69,7 @@
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column width="150" label="登记编码" align="center" prop="registrationCode"/>
       <el-table-column width="180" label="登记名称" align="center" prop="registrationName"/>
-      <el-table-column label="登记类型" align="center" prop="registrationType">
+      <el-table-column width="180" label="登记类型" align="center" prop="registrationType" :show-overflow-tooltip="true">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.mes_registration_type" :value="scope.row.registrationType"/>
         </template>
@@ -78,24 +78,33 @@
       <el-table-column width="180" label="关联设备" align="center" prop="relatedMachineryName"/>
       <el-table-column width="180" label="关联工单" align="center" prop="relatedWorkorder"/>
       <el-table-column width="180" label="关联物料" align="center" prop="relatedMaterialCode"/>
-      <el-table-column width="180" label="关联物料名称" align="center" prop="relatedMaterialName" :show-overflow-tooltip="true" />
-      <el-table-column fixed="right" width="120" label="历经时间(分钟)" align="center" prop="durationTime"/>
-      <el-table-column fixed="right" width="180" label="起始时间" align="center" prop="startTime">
-        <template v-slot="scope">
-          <span>{{ parseTime(scope.row.startTime) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column fixed="right" width="180" label="结束时间" align="center" prop="endTime">
-        <template v-slot="scope">
-          <span>{{ parseTime(scope.row.endTime) }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column width="180" label="关联物料名称" align="center" prop="relatedMaterialName" :show-overflow-tooltip="true"/>
+      <el-table-column fixed="right" width="120" label="历经总时间(分钟)" align="center" prop="durationTime"/>
+      <!--      <el-table-column fixed="right" width="180" label="起始时间" align="center" prop="startTime">
+              <template v-slot="scope">
+                <span>{{ parseTime(scope.row.startTime) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column fixed="right" width="180" label="结束时间" align="center" prop="endTime">
+              <template v-slot="scope">
+                <span>{{ parseTime(scope.row.endTime) }}</span>
+              </template>
+            </el-table-column>-->
 
-      <el-table-column  fixed="right" label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column fixed="right" label="操作" align="center" class-name="small-padding fixed-width">
         <template v-slot="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-                     v-hasPermi="['mes:registration:update']">修改
+          <el-button size="mini" type="text" icon="el-icon-circle-check" @click="handleRecordStart(scope.row)"
+                     v-hasPermi="['mes:registration:update']">开始
           </el-button>
+
+          <el-button size="mini" type="text" icon="el-icon-circle-close" @click="handleRecordStop(scope.row)"
+                     v-hasPermi="['mes:registration:update']">结束
+          </el-button>
+
+<!--          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+                     v-hasPermi="['mes:registration:update']">修改
+          </el-button>-->
+
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
                      v-hasPermi="['mes:registration:delete']">删除
           </el-button>
@@ -106,11 +115,49 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
                 @pagination="getList"/>
 
+    <el-collapse accordion>
+      <el-collapse-item>
+        <template slot="title">
+          当日清单<i class="header-icon el-icon-info"></i>
+        </template>
+        <el-table v-loading="loading" :data="detailList">
+          <el-table-column width="150" label="登记编码" align="center" prop="registrationCode"/>
+          <el-table-column width="180" label="登记类型" align="center" prop="registrationType" :show-overflow-tooltip="true">
+            <template slot-scope="scope">
+              <dict-tag :options="dict.type.mes_registration_type" :value="scope.row.registrationType"/>
+            </template>
+          </el-table-column>
+          <el-table-column width="180" label="所属车间" align="center" prop="workshopName"/>
+          <el-table-column width="180" label="关联设备" align="center" prop="relatedMachineryName"/>
+          <el-table-column width="180" label="关联工单" align="center" prop="relatedWorkorder"/>
+          <el-table-column width="180" label="关联物料" align="center" prop="relatedMaterialCode"/>
+          <el-table-column width="180" label="关联物料名称" align="center" prop="relatedMaterialName" :show-overflow-tooltip="true"/>
+          <el-table-column fixed="right" width="120" label="历经总时间(分钟)" align="center" prop="durationTime"/>
+          <el-table-column fixed="right" width="180" label="起始时间" align="center" prop="startTime">
+            <template v-slot="scope">
+              <span>{{ parseTime(scope.row.startTime) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column fixed="right" width="180" label="结束时间" align="center" prop="endTime">
+            <template v-slot="scope">
+              <span>{{ parseTime(scope.row.endTime) }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+        <!-- 分页组件 -->
+        <pagination v-show="detailTotal > 0" :total="detailTotal" :page.sync="lineQueryParams.pageNo" :limit.sync="lineQueryParams.pageSize"
+                    @pagination="getDetailList"/>
+
+      </el-collapse-item>
+    </el-collapse>
+
+
+
     <!-- 对话框(添加 / 修改) -->
     <el-dialog :title="title" :visible.sync="open" width="65%" v-dialogDrag append-to-body :class="mainClass" :custom-class="modalClass">
       <el-form ref="form" :model="form" :rules="rules" label-width="130px">
 
-        <el-row>
+<!--        <el-row>
           <el-col :span="8">
             <el-form-item label="登记编码" prop="registrationCode">
               <el-input v-model="form.registrationCode" placeholder="请输入登记编码" :disabled="optType !== 'add'"/>
@@ -128,7 +175,7 @@
               <el-input v-model="form.registrationName" placeholder="请输入登记名称"/>
             </el-form-item>
           </el-col>
-        </el-row>
+        </el-row>-->
 
         <el-row>
           <el-col :span="8">
@@ -181,27 +228,12 @@
             </el-form-item>
             <ProtaskSelect ref="taskSelect" :workorderCode="form.relatedWorkorder" @onSelected="onTaskSelected"></ProtaskSelect>
           </el-col>
-
-        </el-row>
-
-        <el-row>
-          <el-col :span="8">
-            <el-form-item label="起始时间" prop="startTime">
-              <el-date-picker disabled clearable v-model="form.startTime" type="datetime"  placeholder="选择起始时间"/>
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="8">
-            <el-form-item label="结束时间" prop="endTime">
-              <el-date-picker disabled clearable v-model="form.endTime" type="datetime" placeholder="选择结束时间"/>
-            </el-form-item>
-          </el-col>
         </el-row>
 
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
-              <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" rows="6"/>
+              <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" rows="3"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -216,12 +248,17 @@
 </template>
 
 <script>
-import {createRegistration, updateRegistration, deleteRegistration, getRegistration, getRegistrationPage, exportRegistrationExcel , finshRegistration} from "@/api/mes/registration";
+import {createRegistration, updateRegistration, deleteRegistration, getRegistration, getRegistrationPage, exportRegistrationExcel, finshRegistration, recordByRegistration} from "@/api/mes/registration";
+
+import {getRegistrationLinePage} from "@/api/mes/registrationLine";
+
 import {genCode} from "@/api/mes/autocode/rule";
 import MachinerySelectSingle from "@/components/machinerySelect/single.vue";
 import WorkorderSelect from "@/components/workorderSelect/single.vue";
 import {listAllWorkshop} from "@/api/mes/md/workshop";
 import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
+import {getTaskDetail} from '@/api/mes/pro/protask';
+
 
 export default {
   name: "Registration",
@@ -255,8 +292,12 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
+      // 计时登记列表总数
+      detailTotal: 0,
       // 计时登记列表
       list: [],
+      // 计时登记记录表
+      detailList: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -277,6 +318,7 @@ export default {
         relatedMachineryName: null,
         relatedErpMachineryCode: null,
         relatedWorkorder: null,
+        relatedTaskCode: this.taskCode,
         relatedMaterialCode: null,
         relatedMaterialName: null,
         remark: null,
@@ -285,6 +327,14 @@ export default {
         attr3: null,
         attr4: null,
         createTime: [],
+      },
+      lineQueryParams: {
+        pageNo: 1,
+        pageSize: 10,
+        registrationId: null,
+        registrationType: null,
+        registrationCode: null,
+        relatedTaskCode: null,
       },
       // 表单参数
       form: {},
@@ -305,7 +355,18 @@ export default {
   created() {
     this.getList();
     this.getWorkshops();
-
+    this.lineQueryParams.relatedTaskCode = this.taskCode;
+    this.getDetailList();
+  },
+  watch: {  // 新增监听器
+    taskCode: {
+      immediate: true, // 立即触发
+      handler(newVal) {
+        if (newVal) {
+          this.handleTaskCodeChange(newVal);
+        }
+      }
+    }
   },
   methods: {
     /** 查询列表 */
@@ -321,6 +382,16 @@ export default {
         this.loading = false;
       });
     },
+    getDetailList() {
+      this.loading = true;
+      // 执行查询
+      getRegistrationLinePage(this.lineQueryParams).then(response => {
+        this.detailList = response.data.list;
+        this.detailTotal = response.data.total;
+        this.loading = false;
+      });
+    },
+
     /** 取消按钮 */
     cancel() {
       this.open = false;
@@ -366,9 +437,10 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
+      if (this.taskCode) this.handleTaskCodeChange(this.taskCode);
       this.open = true;
       // 获取当前时间
-      this.form.startTime = new Date().getTime();
+      // this.form.startTime = new Date().getTime();
       this.title = "添加计时登记";
       this.optType = 'add';
     },
@@ -471,7 +543,7 @@ export default {
         this.form.workshopName = selected.name;
       }
     },
-    handleFinsh(row){
+    handleFinsh(row) {
       this.reset();
       let id = row.id || this.ids;
       // array转为number
@@ -500,14 +572,14 @@ export default {
       } else {
         this.form.relatedMachineryCode = ''
         this.form.relatedMachineryName = ''
-        this.form.relatedErpMachinery  = ''
+        this.form.relatedErpMachinery = ''
       }
     },
     handleRowClick(row) {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
     },
-    handleView(row){
+    handleView(row) {
       this.reset();
       const id = row.id || this.ids;
       getRegistration(Number(id)).then(response => {
@@ -535,6 +607,51 @@ export default {
       console.log("this.form: ", this.form);
       this.$forceUpdate();
     },
+    handleTaskCodeChange(taskCode) {
+      getTaskDetail(taskCode).then(response => {
+        const data = response.data;
+        this.form.relatedWorkorder = data.workorderCode;
+        this.form.relatedMaterialCode = data.itemCode;
+        this.form.relatedMaterialName = data.itemName;
+
+        this.form.relatedTaskId = data.taskId;
+        this.form.relatedTaskCode = data.taskCode;
+
+        this.form.workshopId = data.workshopId;
+        this.form.workshopCode = data.workshopCode;
+        this.form.workshopName = data.workshopName;
+
+        this.form.workstationId = data.workstationId;
+        this.form.workstationCode = data.workstationCode;
+        this.form.workstationName = data.workstationName;
+
+        this.form.processId = data.processId;
+        this.form.processCode = data.processCode;
+        this.form.processName = data.processName;
+
+        this.form.relatedMachineryCode = data.machineryCode;
+        this.form.relatedMachineryName = data.machineryName;
+        this.form.relatedErpMachinery = data.erpMachineryCode;
+      })
+    },
+    /** 修改按钮操作 */
+    handleRecordStart(row) {
+      const id = row.id || this.ids;
+      recordByRegistration(Number(id), "START").then(response => {
+        this.$modal.msgSuccess("启动成功");
+        this.getList();
+        this.getDetailList();
+      });
+    },
+    handleRecordStop(row) {
+      const id = row.id || this.ids;
+      recordByRegistration(Number(id), "STOP").then(response => {
+        this.$modal.msgSuccess("暂停成功");
+        this.getList();
+        this.getDetailList();
+      });
+    },
+
   }
 };
 </script>
