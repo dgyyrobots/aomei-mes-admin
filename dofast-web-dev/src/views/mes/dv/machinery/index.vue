@@ -86,7 +86,7 @@
     <el-dialog :title="title" :visible.sync="open" width="960px" :append-to-body="modalAppendToBody" :modal-append-to-body="modalAppendToBody" destroy-on-close :modal-class="modalClass" :class="mainClass">
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-row>
-          <el-col :span="8">
+          <el-col :span="8" v-if="!machineryCode">
             <el-form-item label="设备编码" prop="itemCode">
               <el-input v-model="form.machineryCode" readonly="readonly" maxlength="64" v-if="optType == 'view'"/>
               <el-input v-model="form.machineryCode" placeholder="请输入设备编码" maxlength="64" v-else/>
@@ -185,6 +185,10 @@ export default {
   dicts: ['sys_yes_no', 'mes_machinery_status'],
   components: {Treeselect},
   props: {
+    machineryCode: {
+      type: String,
+      default: '',
+    },
     modalAppendToBody: {
       type: Boolean,
       default: true,
@@ -293,6 +297,9 @@ export default {
     /** 查询物料编码列表 */
     getList() {
       this.loading = true;
+      if (this.machineryCode) {
+        this.queryParams.machineryCode = this.machineryCode;
+      }
       listMachinery(this.queryParams).then(response => {
         this.machineryList = response.data.list;
         this.total = response.data.total;

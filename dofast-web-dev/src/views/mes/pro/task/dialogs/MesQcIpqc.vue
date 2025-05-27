@@ -12,7 +12,7 @@
     width="1200px"
   >
     <div class="dialog-content">
-      <MesQcIpqcView modal-class="cyber-modal" main-class="time-registration-dialog"/>
+      <MesQcIpqcView ref="view" :item-code="itemCode" modal-class="cyber-modal" main-class="time-registration-dialog"/>
     </div>
 
   </el-dialog>
@@ -23,6 +23,12 @@ import MesQcIpqcView from '@/views/mes/qc/ipqc/index.vue'
 // 控制对话框显示状态
 export default {
   name: 'MesQcIpqcDialog',
+  props: {
+    itemCode: {
+      type: String,
+      default: '',
+    },
+  },
   data() {
     return {
       visible: false,
@@ -32,8 +38,10 @@ export default {
     MesQcIpqcView,
   },
   methods: {
-    openDialog() {
+    async openDialog() {
       this.visible = true
+      await this.$nextTick()
+      this.$refs.view.getList()
     },
   },
   mounted() {

@@ -19,13 +19,18 @@
 
         <!-- 按钮导航栏 -->
         <div class="button-nav">
-          <template>
-            <button class="nav-btn" v-if="detail.status === 'NORMAL' || detail.status === 'PAUSED' " @click="updateStatus('STARTED')">开工</button>
-            <button class="nav-btn" v-else-if="detail.status === 'STARTED'" @click="updateStatus('PAUSED')">暂停</button>
-            <button class="nav-btn" v-if="detail.status === 'STARTED'" @click="updateStatus('FINISHED')">完工</button>
-          </template>
-          <button class="nav-btn">上机登记</button>
-          <button class="nav-btn red">任务单操作</button>
+          <!-- <button class="nav-btn">上机登记</button> -->
+          <button class="nav-btn" @click="timeCount">计时登记</button>
+          <button class="nav-btn" @click="errorCount">异常登记</button>
+          <el-dropdown trigger="click" @command="onProCommand">
+            <button class="nav-btn red">任务单操作</button>
+            <el-dropdown-menu slot="dropdown" class="technological-theme">
+              <el-dropdown-item v-if="detail.status === 'NORMAL' || detail.status === 'PAUSED' " @click="updateStatus('STARTED')">开工</el-dropdown-item>
+              <el-dropdown-item v-else-if="detail.status === 'STARTED'" @click="updateStatus('PAUSED')">暂停</el-dropdown-item>
+              <el-dropdown-item v-if="detail.status === 'STARTED'" @click="updateStatus('FINISHED')">完工</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+
           <el-dropdown trigger="click" @command="onProCommand">
             <button class="nav-btn red">生产操作</button>
             <el-dropdown-menu slot="dropdown" class="technological-theme">
@@ -59,7 +64,7 @@
           <!-- 中间面板 -->
           <div class="panel center-panel">
             <div class="center-box box-1">
-              <DashboardGauge :data="syncData" :detail="detail"/>
+              <DashboardGauge :data="syncData" :detail="detail" :status-name="statusName"/>
             </div>
             <div class="center-box box-2">
               <MesIssueLine :data="issueList"/>
@@ -82,10 +87,12 @@
 
         <!-- 对话框组件 -->
         <TimeRegistration ref="timeRegistrationRef"  @success="getDetail"/>
-        <MesDvMachinery ref="mesDvMachineryRef"  @success="getDetail"/>
-        <MesQcIpqc ref="mesQcIpqcRef" />
+        <!--  -->
+        <MesDvMachinery ref="mesDvMachineryRef" :machinery-code="detail.machineryCode"  @success="getDetail"/>
+        <!--  -->
+        <MesQcIpqc ref="mesQcIpqcRef" :item-code="detail.itemCode"/>
         <!-- 生产上料 -->
-        <MesProLoader ref="mesProLoaderRef"  @success="getDetail"/>
+        <MesProLoader ref="mesProLoaderRef" :taskCode="detail.taskCode" @success="getDetail"/>
         <!-- 打印条码 -->
         <MesProPrint ref="mesProPrintRef"  @success="getDetail"/>
         <!-- 生产报工 -->
@@ -94,6 +101,10 @@
         <MesProReq v-bind="detail" :taskId="detail.id" ref="mesProReqRef"  @success="getDetail"/>
         <!-- 成品入库 -->
         <MesProStore ref="mesProStoreRef" :taskCode="detail.taskCode" @success="getDetail"/>
+        <!-- 异常登记 -->
+        <MesException ref="mesExceptionRef" :task-code="detail.taskCode" @success="getDetail"/>
+        <!-- 计时登记 -->
+        <MesRegistration ref="mesRegistrationRef" :task-code="detail.taskCode" @success="getDetail"/>
       </div>
     </ScaleBox>
   </div>
@@ -120,6 +131,8 @@ import MesProReport from './dialogs/MesProReport.vue'
 import MesProReq from './dialogs/MesProReq.vue'
 import MesProStore from './dialogs/MesProStore.vue'
 import MesIssueLine from './components/MesIssueLine.vue'
+import MesException from './dialogs/MesException.vue'
+import MesRegistration from './dialogs/MesRegistration.vue'
 import { getProtask, updateProtask } from '@/api/mes/pro/protask.js'
 import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
 import { listFeedback } from '@/api/mes/pro/feedback.js'
@@ -137,6 +150,8 @@ export default {
     StaffInfo,
     CenterBottom,
     MesIssueLine,
+    MesException,
+    MesRegistration,
     TimeRegistration,
     MesDvMachinery,
     MesQcIpqc,
@@ -174,16 +189,33 @@ export default {
         cl: 0,
         sd: 0,
       },
-      issueList: []
+      issueList: [],
+      statusName: '待机'
     }
   },
   computed: {
     // 计算属性可以在这里定义
     ...mapGetters({
       username: 'nickname'
-    })
+    }),
+    statusTopic() {
+      const productId = 144;
+      const deviceCode = 'FJ01';
+      return `/${productId}/${deviceCode}/event/post`;
+    },
+    propertyTopic() {
+      const productId = 144;
+      const deviceCode = 'FJ01';
+      return `/${productId}/${deviceCode}/ws/service`;
+    }
   },
   methods: {
+    timeCount() {
+      this.$refs.mesRegistrationRef.openDialog(this.detail)
+    },
+    errorCount() {
+      this.$refs.mesExceptionRef.openDialog(this.detail)
+    },
     async getDetail() {
       this.unsubscribe()
       const id = this.$route.params.id;
@@ -195,7 +227,6 @@ export default {
       this.getIssueList()
     },
     getIssueList() {
-
       listIssueline({ taskCode: this.detail.taskCode, pageSize: 100 }).then(res => {
         this.issueList = res.data ? res.data.list : [];
       }).catch(err => {
@@ -217,14 +248,12 @@ export default {
       this.feedbackInfo = res.data ? res.data.list: [];
     },
     subscribe() {
-      const productId = 144;
-      const deviceCode = 'FJ01';
-      mqttTool.subscribe(`/${productId}/${deviceCode}/ws/service`);
+      mqttTool.subscribe(this.propertyTopic)
+      mqttTool.subscribe(this.statusTopic)
     },
     unsubscribe() {
-      const productId = 144;
-      const deviceCode = 'FJ01';
-      mqttTool.unsubscribe(`/${productId}/${deviceCode}/ws/service`);
+      mqttTool.unsubscribe(this.propertyTopic)
+      mqttTool.unsubscribe(this.statusTopic)
     },
     toQcList() {
       this.$refs.mesQcIpqcRef.openDialog();
@@ -313,12 +342,27 @@ export default {
     mqttTool.connect()
     mqttTool.client.on('message', (topic, message) => {
       const data = JSON.parse(message.toString());
-      if (topic === '/144/FJ01/ws/service') {
+      if (topic === this.propertyTopic) {
         this.syncData = data.reduce((acc, item) => {
           acc[item.id] = item.value;
           return acc;
         }, {  });
         console.log(this.syncData)
+      }
+      if (topic === this.statusTopic) {
+        const status = data.reduce((acc, item) => {
+          acc[item.id] = item.value;
+          return acc;
+        }, {});
+        if (status.gz) {
+          this.statusName = '故障'
+        } else if (status.dj) {
+          this.statusName = '待机'
+        } else if (status.yx) {
+          this.statusName = '运行'
+        } else {
+          this.statusName = '关机'
+        }
       }
     });
   },

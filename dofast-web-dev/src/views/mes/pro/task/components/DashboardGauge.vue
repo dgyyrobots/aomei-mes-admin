@@ -49,9 +49,9 @@
         style="--el-switch-on-color: #22e222; --el-switch-off-color: #444" />
     </div>
     <!-- 顶部右侧：黄色圆点 + 空转 -->
-    <div class="top-abs top-right">
+    <div class="top-abs top-right" :class="statusColor">
       <span class="dot"></span>
-      <span class="dot-label">空转</span>
+      <span class="dot-label">{{ statusName }}</span>
     </div>
   </div>
 </template>
@@ -61,6 +61,10 @@ import * as echarts from 'echarts'
 
 export default {
   props: {
+    statusName: {
+      type: String,
+      default: '',
+    },
     data: {
       type: Object,
       default() {
@@ -96,6 +100,14 @@ export default {
       }
       return Math.min((quantityQuanlify / quantity) * 100, 100)
     },
+    statusColor() {
+      return {
+        '故障': 'red',
+        '待机': 'orange',
+        '运行': 'green',
+        '未知': 'blue'
+      }[this.statusName] || ''
+    }
   },
   watch: {
     data: {
@@ -540,5 +552,37 @@ export default {
   margin-left: 16px;
   letter-spacing: 1px;
   text-shadow: 0 0 4px #000;
+}
+.red{
+  .dot{
+    background: #ff5555;
+  }
+  .dot-lable{
+    color: #ff5555;
+  }
+}
+.orange{
+  .dot{
+    background: #ff8800;
+  }
+  .dot-lable{
+    color: #ff8800;
+  }
+}
+.green{
+  .dot{
+    background: #22e222;
+  }
+  .dot-lable{
+    color: #22e222;
+  }
+}
+.blue{
+  .dot{
+    background: #1ecfff;
+  }
+  .dot-lable{
+    color: #1ecfff;
+  }
 }
 </style>

@@ -38,8 +38,9 @@ export default {
     MesWmIssueView,
   },
   methods: {
-    openDialog() {
+    async openDialog() {
       this.visible = true
+      await this.$nextTick()
       this.$refs.view.getList()
     },
   },

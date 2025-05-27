@@ -107,7 +107,7 @@
                 @pagination="getList"/>
 
     <!-- 对话框(添加 / 修改) -->
-    <el-dialog :title="title" :visible.sync="open" width="65%" v-dialogDrag append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="65%" v-dialogDrag append-to-body :class="mainClass" :custom-class="modalClass">
       <el-form ref="form" :model="form" :rules="rules" label-width="130px">
 
         <el-row>
@@ -215,6 +215,20 @@ import {listAllWorkshop} from "@/api/mes/md/workshop";
 
 export default {
   name: "Registration",
+  props: {
+    taskCode: {
+      type: String,
+      default: ''
+    },
+    modalClass: {
+      type: String,
+      default: ''
+    },
+    mainClass: {
+      type: String,
+      default: ''
+    }
+  },
   components: {
     WorkorderSelect,
     MachinerySelectSingle
@@ -286,6 +300,9 @@ export default {
     /** 查询列表 */
     getList() {
       this.loading = true;
+      if (this.taskCode) {
+        this.queryParams.relatedTaskCode = this.taskCode
+      }
       // 执行查询
       getRegistrationPage(this.queryParams).then(response => {
         this.list = response.data.list;
@@ -322,6 +339,7 @@ export default {
         attr3: undefined,
         attr4: undefined,
       };
+      this.relatedTaskCode = this.taskCode || ''
       this.resetForm("form");
     },
     /** 搜索按钮操作 */
