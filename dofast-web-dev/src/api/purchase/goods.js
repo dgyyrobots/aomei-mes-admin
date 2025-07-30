@@ -43,6 +43,15 @@ export function getGoodsPage(query) {
   });
 }
 
+export function traceGoodsPage(query) {
+  return request({
+    url: '/purchase/goods/traceGoodsPage',
+    method: 'get',
+    params: query,
+  });
+}
+
+
 // 获得采购商品明细分页
 export function getAllGoods(query) {
   return request({
@@ -130,5 +139,22 @@ export function receiving(data) {
     url: '/purchase/goods/receiving',
     method: 'post',
     data: data,
+  });
+}
+
+// 获得采购商品明细分页
+export function getGoodsSumQuantity(query) {
+  return request({
+    url: '/purchase/goods/getGoodsSumQuantity',
+    method: 'get',
+    params: query,
+  });
+}
+
+export function initIqcQuantity(query) {
+  return request({
+    url: '/purchase/goods/initIqcQuantity',
+    method: 'get',
+    params: query,
   });
 }

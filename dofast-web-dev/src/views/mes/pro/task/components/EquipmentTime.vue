@@ -10,11 +10,14 @@
             <th v-for="(header, index) in tableHeaders" :key="index">{{ header }}</th>
           </tr>
         </thead>
+
         <tbody>
-          <tr v-for="(row, index) in tableData" :key="index" :class="{ warning: row[3] === '警告' }">
-            <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
+          <tr v-for="(row, index) in data" :key="index" :class="{ warning: tableFields[3](row) === '警告' }">
+            <td v-for="(getField, cellIndex) in tableFields" :key="cellIndex">{{ getField(row) }}</td>
           </tr>
         </tbody>
+
+
       </table>
     </div>
   </Card>
@@ -22,20 +25,39 @@
 
 <script>
 import Card from './Card.vue'
+import {getRegistrationLinePage} from "@/api/mes/registrationLine";
 
 export default {
+  props: {
+    data: {
+      type: Array,
+      default() {
+        return []
+      }
+    }
+  },
   data() {
     return {
-      tableHeaders: ['时间', '产线', '产量', '状态'],
-      tableData: [
-        ['10:22:33', 'MQ05', '2345', '正常'],
-        ['10:22:34', 'MQ06', '2346', '正常'],
+      tableHeaders: ['登记类型', '所属车间', '关联设备', '历经总时间'],
+      tableData: [],
+      tableFields: [
+        (row) => row.registrationType,
+        (row) => row.workshopName,
+        (row) => row.relatedMachineryName,
+        (row) => row.durationTime,
       ],
+
     }
   },
   components: {
     Card,
   },
+  created() {
+
+  },
+  methods: {
+
+  }
 }
 
 </script>

@@ -47,7 +47,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, index) in tableData" :key="index">
+                <tr v-for="(row, index) in tableFields" :key="index">
                   <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
                 </tr>
               </tbody>
@@ -75,15 +75,27 @@ export default {
   data() {
     return {
       searchKeyword: '',
-      tableHeaders: ['日期', '版号', '产量', '负责人'],
+      tableHeaders: ['日期', '版号', '领用量', '领料人'],
       tableFields: [
-        (row) => this.parseDate(row.feedbackTime),
+        (row) => this.parseDate(row.createTime),
         (row) => row.batchCode,
-        (row) => row.quantityFeedback + row.unitOfMeasure,
-        (row) => row.principalName,
+        (row) => row.quantityIssued + row.unitOfMeasure,
+        (row) => row.creator,
       ],
     }
-  }
+  },
+  watch: {
+    data: {
+      handler(newData) {
+        this.tableFields = newData.map((row) => {
+          return this.tableFields.map((field) => {
+            return typeof field === 'function' ? field(row) : field
+          })
+        })
+      },
+      deep: true,
+    },
+  },
 }
 </script>
 

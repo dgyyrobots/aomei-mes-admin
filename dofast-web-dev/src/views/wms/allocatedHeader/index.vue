@@ -266,7 +266,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="单据状态" prop="status">
-              <el-select disabled v-model="executeForm.status" disabled>
+              <el-select disabled v-model="executeForm.status">
                 <el-option v-for="dict in dict.type.wms_allocated_status" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
@@ -358,19 +358,32 @@
           <el-table-column width="150" label="物料名称" :show-overflow-tooltip="true" align="center" prop="itemName"/>
           <el-table-column width="100" label="调拨数量" align="center" prop="quantityAllocated"/>
           <el-table-column width="100" label="单位" align="center" prop="unitOfMeasure"/>
-          <el-table-column width="100" label="批次号" align="center" prop="batchCode"/>
-          <el-table-column width="100" label="调拨标识" align="center" prop="allocatedFlag"/>
+          <el-table-column width="150" label="批次号" align="center" prop="batchCode"/>
+          <el-table-column width="120" label="母批次号" align="center" prop="parentBatchCode"/>
+          <el-table-column fixed="right" label="调拨标识" align="center" prop="allocatedFlag" >
+            <template v-slot="scope">
+              <span v-if="scope.row.allocatedFlag === 'N' || !scope.row.allocatedFlag ">未调拨</span>
+              <span v-else>已调拨</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column fixed="right" width="120" label="ERP同步状态" align="center" prop="erpStatus" >
+            <template slot-scope="scope">
+              <dict-tag :options="dict.type.erp_status" :value="scope.row.erpStatus" />
+            </template>
+          </el-table-column>
+
 <!--          <el-table-column width="100" label="库存数量" align="center" prop="quantityOnhand"/>-->
           <el-table-column width="100" label="仓库名称" align="center" prop="warehouseName"/>
-          <el-table-column width="130" label="库区名称" align="center" prop="locationName"/>
-          <el-table-column width="100" label="库位名称" align="center" prop="areaName"/>
+          <el-table-column width="130" label="库区名称" :show-overflow-tooltip="true" align="center" prop="locationName"/>
+          <el-table-column width="130" label="库位名称" :show-overflow-tooltip="true" align="center" prop="areaName"/>
         </el-table>
 
 
       </el-form>
       <span slot="footer" class="dialog-footer">
     <el-button @click="cancel">取 消</el-button>
-    <el-button v-if="executeForm.status != 'FINISHED'" type="primary" @click="executeAllocated">确 定</el-button>
+    <el-button v-if="executeForm.status != 'FINISHED'" :disabled="disabledFlag" type="primary" @click="executeAllocated">确 定</el-button>
   </span>
     </el-dialog>
 
@@ -404,7 +417,7 @@ import StockSelect from '@/components/stockSelect/multi.vue';
 
 export default {
   name: "AllocatedHeader",
-  dicts: ['wms_allocated_status'],
+  dicts: ['wms_allocated_status', 'erp_status'],
   components: {
     ProtaskSelect,
     WorkorderSelect,
@@ -500,7 +513,7 @@ export default {
       videoHeight: 480,
       cameraPreviewVisible: false, // 控制摄像头弹出框
       scanResult: '', // 存储扫描结果
-
+      disabledFlag: false, // 用于卡控调拨按钮
     };
   },
   computed: {
@@ -652,8 +665,6 @@ export default {
       getAllocatedHeader(id).then(response => {
         this.form = response.data;
         this.form.bindWorkorder = this.form.bindWorkorder === "true";
-
-
         // 设置领料仓库信息
         this.warehouseInfo = [
           response.data.warehouseId,
@@ -951,6 +962,8 @@ export default {
         // 如果物料Id不存在，则添加到this.allocatedList
         if (!isItemCodeExists) {
           this.allocatedList.unshift(obj);// 改为插入到数组开头
+          console.log("获取的库存详情obj: " , obj);
+          console.log("当前调拨详情: " , this.allocatedList);
         } else {
           this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
         }
@@ -1084,10 +1097,11 @@ export default {
     },
     async executeAllocated() {
       this.loading = true;
+      this.disabledFlag = true;
       // 检查allocatedList和bomList是否有匹配的物料编码
       this.allocatedList.forEach(allocatedItem => {
         // 查找bomList中是否存在相同的物料编码
-        const bomItem = this.bomList.find(item => item.itemCode === allocatedItem.itemCode);
+        // const bomItem = this.bomList.find(item => item.itemCode === allocatedItem.itemCode);
         /*if (!bomItem) {
           this.$message.error(`物料编码 ${allocatedItem.itemCode} 在BOM信息中不存在`);
           return;
@@ -1115,19 +1129,18 @@ export default {
         }).catch(error => {
           this.$message.error('追加单身信息失败');
           this.loading = false;
+          this.disabledFlag = false;
           return;
         });
-
         execute(this.executeForm.id).then(() => {
           this.getList();
           this.$modal.msgSuccess('出库成功');
-          this.executeDialogVisible = false;
         }).catch(error => {
           this.$message.error('出库失败');
-          this.loading = false;
-          return;
         }).finally(()=>{
+          this.executeDialogVisible = false;
           this.loading = false;
+          this.disabledFlag = false;
         });
 
     },

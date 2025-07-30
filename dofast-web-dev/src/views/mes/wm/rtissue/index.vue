@@ -31,6 +31,10 @@
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleprint" v-hasPermi="['wms:rt-issue:update']">打印</el-button>
       </el-col>
 
+      <el-col :span="1.5"><!-- v-hasPermi="['wms:rt-issue:erpInterface']" -->
+        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleRtIssueErp" >ERP退料</el-button>
+      </el-col>
+
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -46,11 +50,12 @@
       <el-table-column label="仓库名称" align="center" prop="warehouseName"/>
       <el-table-column label="库区名称" width="100px" align="center" prop="locationName"/>
       <el-table-column label="库位名称" align="center" prop="areaName"/>
-      <el-table-column label="退料日期" align="center" prop="rtDate" width="120">
+      <el-table-column label="创建日期" align="center" prop="createTime" width="120">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.rtDate, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
+
       <el-table-column label="单据状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.mes_order_status" :value="scope.row.status"/>
@@ -68,7 +73,7 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList"/>
 
     <!-- 添加或修改生产退料单头对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="960px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open"  width="960px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="8">
@@ -116,7 +121,7 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="退料日期" prop="rtDate">
-              <el-date-picker disabled clearable v-model="form.rtDate" type="date" value-format="timestamp" placeholder="请选择退料日期"></el-date-picker>
+              <el-date-picker disabled clearable v-model="form.rtDate" type="datetime" value-format="timestamp" placeholder="请选择退料日期"></el-date-picker>
             </el-form-item>
           </el-col>
         </el-row>
@@ -149,7 +154,7 @@
         <el-table v-loading="loading" max-height="300" :data="form.rtissuelineList">
           <el-table-column label="物料编码" width="120px" align="center" prop="itemCode"/>
           <el-table-column label="物料名称" width="150px" align="center" prop="itemName" :show-overflow-tooltip="true"/>
-          <el-table-column label="退料数量" width="90px" align="center">
+          <el-table-column label="退料数量" width="110px" align="center">
             <template slot-scope="scope">
               <el-input v-model.number="scope.row.quantity" placeholder="请输入" type="number" step="0.01"/>
             </template>
@@ -159,6 +164,11 @@
           <el-table-column label="仓库名称" width="150px" align="center" prop="warehouseName"/>
           <el-table-column label="库区名称" width="150px" align="center" prop="locationName"/>
           <el-table-column label="库位名称" width="130px" align="center" prop="areaName"/>
+          <el-table-column fixed="right" label="ERP状态" align="center" prop="erpStatus" >
+            <template slot-scope="scope">
+              <dict-tag :options="dict.type.erp_status" :value="scope.row.erpStatus" />
+            </template>
+          </el-table-column>
         </el-table>
       </el-card>
       <div slot="footer" class="dialog-footer">
@@ -184,7 +194,7 @@
 </template>
 
 <script>
-import {listRtissue, getRtissue, delRtissue, addRtissue, updateRtissue, execute} from '@/api/mes/wm/rtissue';
+import {listRtissue, getRtissue, delRtissue, addRtissue, updateRtissue, execute , rtissueErp } from '@/api/mes/wm/rtissue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import Rtissueline from './line.vue';
 import {getTreeList} from '@/api/mes/wm/warehouse';
@@ -200,7 +210,7 @@ import {getAccessToken} from '@/utils/auth';
 
 export default {
   name: 'Rtissue',
-  dicts: ['mes_order_status'],
+  dicts: ['mes_order_status', 'erp_status'],
   components: {
     ProtaskSelect,
     Rtissueline,
@@ -271,6 +281,8 @@ export default {
       idList: [],
       templateId: null,
       showPrintComponent: false, // 控制打印组件显示
+      // 选中行
+      selectedRows: [],
     };
   },
   created() {
@@ -295,8 +307,6 @@ export default {
     // 取消按钮
     cancel() {
       this.open = false;
-      // 重置仓库信息
-      this.warehouseInfo = [];
       this.reset();
     },
     // 表单重置
@@ -332,6 +342,7 @@ export default {
       };
       this.autoGenFlag = false;
       this.resetForm('form');
+      this.warehouseInfo = [];
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -348,6 +359,7 @@ export default {
       this.ids = selection.map(item => item.id);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
+      this.selectedRows = selection;
     },
     // 上料详情多选框选中
     handleIssuseSelectionChange(selection) {
@@ -395,9 +407,11 @@ export default {
       const rtId = row.id || this.ids;
       getRtissue(rtId).then(response => {
         this.form = response.data;
-        this.warehouseInfo[0] = response.data.warehouseId;
-        this.warehouseInfo[1] = response.data.locationId;
-        this.warehouseInfo[2] = response.data.areaId;
+        this.warehouseInfo = [
+          response.data.warehouseId,
+          response.data.locationId,
+          response.data.areaId
+        ];
         console.log(response.data);
         this.open = true;
         this.title = '修改生产退料单头';
@@ -410,9 +424,11 @@ export default {
       const rtId = row.id;
       getRtissue(rtId).then(response => {
         this.form = response.data;
-        this.warehouseInfo[0] = response.data.warehouseId;
-        this.warehouseInfo[1] = response.data.locationId;
-        this.warehouseInfo[2] = response.data.areaId;
+        this.warehouseInfo = [
+          response.data.warehouseId,
+          response.data.locationId,
+          response.data.areaId
+        ];
         this.open = true;
         this.title = '查看退料单信息';
         this.optType = 'view';
@@ -424,7 +440,7 @@ export default {
         if (valid) {
           // 校验退料数量是否超过领料数
           for (const rtItem of this.form.rtissuelineList) {
-            const correspondingItem = this.form.issuelineList.find(item => item.itemCode === rtItem.itemCode);
+            const correspondingItem = this.form.issuelineList.find(item => item.itemCode === rtItem.itemCode && item.batchCode === rtItem.batchCode);
             if (correspondingItem) {
               if (rtItem.quantity > correspondingItem.quantity) {
                 this.$modal.msgError(`物料 ${rtItem.itemCode} 的退料数量不能超过领料数量 ${correspondingItem.quantity}`);
@@ -454,20 +470,19 @@ export default {
       });
     },
     //执行退料
-    handleExecute(row) {
+    async handleExecute(row) {
       const rtIds = row.id || this.ids;
-      this.$modal
-        .confirm('确认执行退料？')
-        .then(function () {
-          return execute(rtIds); //执行退料
-        })
-        .then(() => {
-          this.getList();
-          this.$modal.msgSuccess('退料成功');
-        })
-        .catch(() => {
-        });
+      await this.$modal.confirm('确认执行退料？');
+      this.loading = true;
+      await execute(rtIds).then(() => {
+        this.$modal.msgSuccess('退料成功');
+      }).finally(() => {
+        this.getList();
+        this.warehouseInfo = [];
+        this.loading = false;
+      });
     },
+
     /** 删除按钮操作 */
     handleDelete(row) {
       const rtIds = row.id || this.ids;
@@ -593,6 +608,7 @@ export default {
         let itemName = rtissueLine[i].itemName;
         let itemCode = rtissueLine[i].itemCode;
         let batchCode = rtissueLine[i].batchCode;
+        let workorderCode = rtissueLine[i].workorderCode;
         let unitOfMeasure = rtissueLine[i].unitOfMeasure;
         let quantity = rtissueLine[i].quantity;
         let warehouseName = rtissueLine[i].warehouseName; // 仓库名称
@@ -623,14 +639,14 @@ export default {
         LODOP.ADD_PRINT_TEXT(120, 15, 120, 35, "物料名称:");
         LODOP.ADD_PRINT_TEXT(120, 120, 280, 35, itemName);
 
-        LODOP.ADD_PRINT_TEXT(170, 15, 120, 35, "工单号:");
-        LODOP.ADD_PRINT_TEXT(170, 120, 280, 35, "AMCS21-240824001");
+        LODOP.ADD_PRINT_TEXT(170, 15, 120, 35, "数量:");
+        LODOP.ADD_PRINT_TEXT(170, 120, 280, 35, quantity);
 
-        LODOP.ADD_PRINT_TEXT(220, 15, 120, 35, "数量:");
-        LODOP.ADD_PRINT_TEXT(220, 120, 280, 35, quantity);
+        LODOP.ADD_PRINT_TEXT(220, 15, 120, 35, "退料单位:");
+        LODOP.ADD_PRINT_TEXT(220, 120, 280, 35, unitOfMeasure);
 
-        LODOP.ADD_PRINT_TEXT(270, 15, 120, 35, "退料单位:");
-        LODOP.ADD_PRINT_TEXT(270, 120, 280, 35, unitOfMeasure);
+        LODOP.ADD_PRINT_TEXT(270, 15, 120, 35, "批次号:");
+        LODOP.ADD_PRINT_TEXT(270, 120, 280, 35, batchCode);
 
         LODOP.ADD_PRINT_TEXT(320, 15, 120, 35, "退料日期:");
         LODOP.ADD_PRINT_TEXT(320, 120, 280, 35, createTime);
@@ -650,6 +666,22 @@ export default {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
     },
+    handleRtIssueErp(row){
+      this.reset();
+      const ids = this.ids;
+      const selectedRows = this.selectedRows;
+
+      if(!selectedRows){
+        this.$message.error('请勾选一行数据!');
+        return;
+      }
+
+      rtissueErp(ids[0]).then(response => {
+        this.$message.success('ERP退料完成!');
+        return;
+      });
+    },
+
   },
 };
 </script>

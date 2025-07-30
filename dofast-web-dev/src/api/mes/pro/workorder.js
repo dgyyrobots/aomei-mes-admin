@@ -9,6 +9,18 @@ export function listWorkorder(query) {
   });
 }
 
+// 查询生产工单列表
+export function traceWorkorderPage
+(query) {
+  return request({
+    url: '/mes/pro/workorder/traceWorkorderPage',
+    method: 'get',
+    params: query,
+  });
+}
+
+
+
 export function getWorkorderList(query) {
   return request({
     url: '/mes/pro/workorder/list-all',
@@ -95,3 +107,20 @@ export function getWorkorderMonthCount(year) {
     method: 'get',
   });
 }
+
+
+export function calculateQuality(workorderId) {
+  return request({
+    url: '/mes/pro/workorder/calculateQuality?id=' + workorderId,
+    method: 'get',
+  });
+}
+
+export function reportCalculateQuality(data) {
+  return request({
+    url: '/mes/pro/workorder/calculateQualityBatch',
+    method: 'post',
+    data: data,
+  });
+}
+

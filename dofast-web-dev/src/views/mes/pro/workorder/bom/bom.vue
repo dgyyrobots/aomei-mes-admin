@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-row :gutter="10" class="mb8">
+    <el-row  :gutter="10" class="mb8">
       <el-col :span="1.5">
         <!-- v-hasPermi="['pro:workorder-bom:created']" -->
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="create">新增 </el-button>

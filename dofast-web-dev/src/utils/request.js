@@ -54,9 +54,8 @@ axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8';
 const service = axios.create({
   // axios中请求配置有baseURL选项，表示请求URL公共部分
   baseURL: process.env.VUE_APP_BASE_API, // 此处的 /admin-api/ 地址，原因是后端的基础路径为 /admin-api/
-  //baseURL: isExternal ? 'http://58.220.114.70:48080' : process.env.VUE_APP_BASE_API,
   // 超时
-  timeout: 30000,
+  timeout: 60000,
   // 禁用 Cookie 等信息
   withCredentials: false,
 });

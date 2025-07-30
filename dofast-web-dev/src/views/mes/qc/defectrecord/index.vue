@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="缺陷记录" v-if="showFlag" :visible.sync="showFlag" :modal="false" width="80%" center>
+  <el-dialog title="缺陷记录" v-if="showFlag" :visible.sync="showFlag" :modal="false" width="120%" center>
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
@@ -141,12 +141,15 @@ export default {
     confirm() {
       if (this.defectrecordList.length != 0) {
         updateDefectrecord(this.defectrecordList).then(res => {
-          this.$modal.msgSuccess(res.msg);
-          if (res.code === 200) {
+          this.$modal.msgSuccess("修改缺陷项成功!");
+          //if (res.code === 200) {
             this.showFlag = false;
             this.getList();
             this.$parent.getList();
-          }
+          //}
+        }).catch(error => {
+          console.error('修改缺陷项失败:', error);
+          this.$message.error('修改缺陷项失败');
         });
       }
     },

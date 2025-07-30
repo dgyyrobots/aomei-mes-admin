@@ -9,6 +9,17 @@ export function listIssueheader(query) {
   });
 }
 
+
+// 查询生产领料单头列表
+export function traceIssueHeaderPage(query) {
+  return request({
+    url: '/wms/issue-header/traceIssueHeaderPage',
+    method: 'get',
+    params: query,
+  });
+}
+
+
 // 查询生产领料单头详细
 export function getIssueheader(issueId) {
   return request({

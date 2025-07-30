@@ -87,7 +87,7 @@
           <dict-tag :options="dict.type.mes_order_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
-      <el-table-column width="220" fixed="right"  label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column width="220" fixed="right" label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status == 'PREPARE' || scope.row.status == 'CONFIRMED'" @click="handleExecute(scope.row)" v-hasPermi="['wms:issue-header:update']">执行上料</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" v-if="scope.row.status == 'PREPARE' || scope.row.status == 'CONFIRMED' " @click="handleUpdate(scope.row)" v-hasPermi="['wms:issue-header:update']">修改</el-button>
@@ -131,7 +131,7 @@
                 v-model="warehouseInfo"
                 :options="warehouseOptions"
                 :props="warehouseProps"
-                placeholder="请选择"s
+                placeholder="请选择" s
                 @change="handleWarehouseChanged"
               ></el-cascader>
             </el-form-item>
@@ -172,7 +172,8 @@
                 <el-button slot="append" icon="el-icon-search" @click="handleTaskSelect"></el-button>
               </el-input>
             </el-form-item>
-            <TaskSelectSingle  :processCode="cachedProcessCode" :workorderId="form.workorderId" ref="taskSelect" @onSelected="onTaskSelected"></TaskSelectSingle>
+            <!--  :processCode="cachedProcessCode"   -->
+            <TaskSelectSingle :workorderId="form.workorderId" ref="taskSelect" @onSelected="onTaskSelected"></TaskSelectSingle>
           </el-col>
 
           <el-col :span="12">
@@ -184,16 +185,16 @@
           </el-col>
         </el-row>
 
-<!--        <el-row>
-          <el-col :span="12">
-            <el-form-item label="设备信息" prop="machineryName">
-              <el-input v-model="form.machineryName" placeholder="请选择设备信息" disabled>
-                <el-button slot="append" icon="el-icon-search" @click="handleMachineryAdd"></el-button>
-              </el-input>
-            </el-form-item>
-            <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
-          </el-col>
-        </el-row>-->
+        <!--        <el-row>
+                  <el-col :span="12">
+                    <el-form-item label="设备信息" prop="machineryName">
+                      <el-input v-model="form.machineryName" placeholder="请选择设备信息" disabled>
+                        <el-button slot="append" icon="el-icon-search" @click="handleMachineryAdd"></el-button>
+                      </el-input>
+                    </el-form-item>
+                    <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
+                  </el-col>
+                </el-row>-->
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
@@ -218,19 +219,19 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="领料单编号" prop="issueCode">
-              <el-input disabled v-model="taskForm.issueCode" placeholder="请输入领料单编号" />
+              <el-input disabled v-model="taskForm.issueCode" placeholder="请输入领料单编号"/>
             </el-form-item>
           </el-col>
 
           <el-col :span="8">
             <el-form-item label="领料单名称" prop="issueName">
-              <el-input disabled v-model="taskForm.issueName" placeholder="请输入领料单名称" />
+              <el-input disabled v-model="taskForm.issueName" placeholder="请输入领料单名称"/>
             </el-form-item>
           </el-col>
 
           <el-col :span="8">
             <el-form-item label="任务编号" prop="taskCode">
-              <el-input disabled v-model="taskForm.taskCode" placeholder="请输入任务编号" />
+              <el-input disabled v-model="taskForm.taskCode" placeholder="请输入任务编号"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -238,19 +239,19 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="任务信息" prop="taskName">
-              <el-input disabled v-model="taskForm.taskName" placeholder="请输入任务名称" />
+              <el-input disabled v-model="taskForm.taskName" placeholder="请输入任务名称"/>
             </el-form-item>
           </el-col>
 
           <el-col :span="8">
             <el-form-item label="排产数量" prop="quantity">
-              <el-input disabled v-model="taskForm.quantity" placeholder="请输入" />
+              <el-input disabled v-model="taskForm.quantity" placeholder="请输入"/>
             </el-form-item>
           </el-col>
 
           <el-col :span="8">
             <el-form-item label="已生产数量" prop="produced">
-              <el-input disabled v-model="taskForm.produced" placeholder="请输入" />
+              <el-input disabled v-model="taskForm.produced" placeholder="请输入"/>
             </el-form-item>
           </el-col>
 
@@ -269,7 +270,7 @@
 
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitChance" >变 更</el-button>
+        <el-button type="primary" @click="submitChance">变 更</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
@@ -289,7 +290,7 @@
 </template>
 
 <script>
-import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, updateIssueMachinery, execute, finshIssueHeader , initTaskInfoByIssueId} from '@/api/mes/wm/issueheader';
+import {listIssueheader, getIssueheader, delIssueheader, addIssueheader, updateIssueheader, updateIssueMachinery, execute, finshIssueHeader, initTaskInfoByIssueId} from '@/api/mes/wm/issueheader';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import TaskSelectSingle from '@/components/TaskSelect/taskSelectSingle.vue';
@@ -308,7 +309,7 @@ import {updateTasks} from "@/api/mes/pro/protask";
 
 export default {
   name: 'Issue',
-  dicts: ['mes_order_status' , 'mes_pro_task_status'],
+  dicts: ['mes_order_status', 'mes_pro_task_status'],
   components: {ProtaskSelect, MachinerySelectSingle, Issueline, WorkstationSelect, WorkorderSelect, TaskSelectSingle},
   props: {
     taskCode: {
@@ -410,8 +411,13 @@ export default {
   },
   created() {
     // 从 localStorage 恢复
-    this.queryParams.processCode = this.cachedProcessCode = localStorage.getItem('cachedProcessCode');
-    console.log("读取缓存: ", this.queryParams.processCode  , this.cachedProcessCode);
+    // this.queryParams.processCode = this.cachedProcessCode = localStorage.getItem('cachedProcessCode');
+    // console.log("读取缓存: ", this.queryParams.processCode  , this.cachedProcessCode);
+
+    const cachedValue = localStorage.getItem('cachedProcessCode');
+    this.cachedProcessCode = cachedValue;
+    this.queryParams.processCode = cachedValue;
+
     this.getList();
     this.getWarehouseList();
     // 初始化工序选项
@@ -428,26 +434,10 @@ export default {
         this.stopScanning();
       }
     },
-    // 监听设备变更
-    /*'form.machineryCode': {
-      handler(newVal) {
-        if(!newVal){
-          return;
-        }
-        if (this.preventingWatch) {
-          return;
-        }
-        if (this.optType === 'edit') {
-          this.form.machineryCode = newVal;
-          updateIssueMachinery(this.form).then(response => {
-            this.$message.success('设备信息修改成功');
-          }).catch(error => {
-            console.error('设备信息修改失败:', error);
-            this.$message.error('设备信息修改失败');
-          });
-        }
-      }
-    }*/
+    cachedProcessCode(newVal) {
+      this.queryParams.processCode = newVal;
+      this.getList();
+    }
   },
   methods: {
     /** 查询生产领料单头列表 */
@@ -599,12 +589,18 @@ export default {
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
+          if (this.form.warehouseId == null || this.form.locationId == null || this.form.areaId == null) {
+            this.$modal.msgError("请选择领料仓库、库区、库位信息！");
+            return;
+          }
+
+          if (this.form.taskCode == null || this.form.taskCode == undefined || this.form.taskCode == '') {
+            this.$modal.msgError('请选择生产任务');
+            return;
+          }
+
           if (this.form.id != null) {
             console.log(this.form)
-            if (this.form.taskCode == null || this.form.taskCode == undefined || this.form.taskCode == '') {
-              this.$modal.msgError('请选择生产任务');
-              return;
-            }
             /*if (this.form.machineryName == null || this.form.machineryName == undefined || this.form.machineryName == '') {
               this.$modal.msgError('请选择生产设备');
               return;
@@ -625,23 +621,20 @@ export default {
       });
     },
     //执行出库
-    handleExecute(row) {
+    async handleExecute(row) {
       const issueIds = row.id || this.ids;
-      this.$modal
-        .confirm('确认执行出库？')
-        .then(function () {
-          return execute(issueIds); //执行入库
-        })
-        .then(() => {
-          /*// 追加上料记录
-          createFeedLineListByIssueId(issueIds).then(response => {
-            console.log(response.data);
-          });*/
-          this.getList();
-          this.$modal.msgSuccess('出库成功');
-        })
-        .catch(() => {
-        });
+      await this.$modal.confirm('确认执行出库？');
+      this.loading = true;
+      await execute(issueIds).then(() => {
+        /*// 追加上料记录
+        createFeedLineListByIssueId(issueIds).then(response => {
+          console.log(response.data);
+        });*/
+        this.$modal.msgSuccess('出库成功');
+      }).finally(() => {
+        this.getList();
+        this.loading = false;
+      });
     },
     /** 删除按钮操作 */
     handleDelete(row) {
@@ -813,7 +806,7 @@ export default {
         obj.barcodeNumber = this.feedLineList[i].barcodeNumber;
         finList.push(obj);
       }
-      console.log("上料详情数据: " , finList);
+      console.log("上料详情数据: ", finList);
       createFeedLineList(finList).then(response => {
         this.$modal.msgSuccess("上料成功");
         this.feedingOpen = false;
@@ -837,7 +830,7 @@ export default {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
     },
-    handleFinsh(row){
+    handleFinsh(row) {
       this.reset();
       const ids = row.id || this.ids;
       this.loading = true;
@@ -851,17 +844,22 @@ export default {
     },
     handleProcessChange(val) {
       console.log("触发缓存: ", val);
+      // 更新响应式数据
+      this.cachedProcessCode = val;
+
       if (val) {
         localStorage.setItem('cachedProcessCode', val);
-        this.cachedProcessCode = val;
+        //this.cachedProcessCode = val;
       } else {
         localStorage.removeItem('cachedProcessCode');
-        this.cachedProcessCode = null;
+        //this.cachedProcessCode = null;
       }
+      // 强制重新渲染
+      this.$forceUpdate();
     },
-    handleChanceTask(row){
+    handleChanceTask(row) {
       this.taskForm = {};
-      let id =  row.id || this.ids;
+      let id = row.id || this.ids;
       this.loading = true;
       // 获取数据
       initTaskInfoByIssueId(id).then(response => {
@@ -879,7 +877,7 @@ export default {
         this.loading = false;
       });
     },
-    submitChance(){
+    submitChance() {
       console.log("变更任务状态: ", this.taskForm.taskStatus);
       updateTasks(this.taskForm).then(response => {
         this.$modal.msgSuccess('任务状态变更成功!');
@@ -895,6 +893,7 @@ export default {
   activated() {
     // 当从缓存中重新激活组件时，可以在此更新数据
     this.getList();
-  }
+  },
+
 };
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-row :gutter="10" class="mb8">
+    <el-row  :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
           v-hasPermi="['pro:route-process:create']">新增 </el-button>
@@ -198,6 +198,7 @@ export default {
       default: 0
     }
   },
+
   created() {
     this.getList();
   },
@@ -209,19 +210,57 @@ export default {
           this.form.quantity = newVal;
         }
       }
-    }
+    },
+    /*workorderId:{
+      immediate: true,
+      handler(newVal) {
+        console.log("获取到工单Id: ", this.workorderId)
+        this.getList();
+      }
+    },*/
+    /*processId:{
+      immediate: true,
+      handler(newVal) {
+        console.log("获取到工序Id: ", this.processId)
+        this.getList();
+      }
+    },*/
+    workorderId: {
+      immediate: true,
+      deep: true,
+      handler(newVal) {
+        if (newVal) {
+          this.queryParams.workorderId = newVal;
+          this.getList();
+        }
+      }
+    },
+    processId: {
+      immediate: true,
+      deep: true,
+      handler(newVal) {
+        if (newVal) {
+          this.queryParams.processId = newVal;
+          this.getList();
+        }
+      }
+    },
+
   },
   methods: {
     /** 查询生产任务列表 */
     getList() {
       this.loading = true;
       this.queryParams.quantity = null;
+      this.queryParams.workorderId = this.workorderId;
+      this.queryParams.processId = this.processId;
       listProtask(this.queryParams).then(response => {
         this.protaskList = response.data.list;
         this.total = response.data.total;
         this.loading = false;
       });
     },
+
     //计算结束时间
     calculateEndTime(i) {
       if (this.form.startTime) { this.form.endTime = this.form.startTime + 3600000 * this.form.duration; }

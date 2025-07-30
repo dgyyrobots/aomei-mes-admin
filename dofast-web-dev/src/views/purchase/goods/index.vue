@@ -60,7 +60,7 @@
             </el-col>-->
 
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-edit" size="mini" @click="receive" v-hasPermi="['purchase:goods:split']">收货</el-button>
+        <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="disabledFlag" @click="receive" v-hasPermi="['purchase:goods:split']">收货</el-button>
       </el-col>
 
       <el-col :span="1.5">
@@ -75,11 +75,12 @@
     </el-row>
 
     <!-- 列表 -->
-    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick" >
+    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="单据编码" align="center" prop="id"/>
-      <el-table-column label="采购单号" align="center" prop="poNo"/>
-      <el-table-column label="商品编号" align="center" prop="goodsNumber"/>
+      <el-table-column type="index" label="序号" width="60" align="center"/>
+      <el-table-column label="单据编码" width=120 align="center" prop="id"/>
+      <el-table-column label="采购单号" width=160 align="center" prop="poNo"/>
+      <el-table-column label="商品编号" width=120 align="center" prop="goodsNumber"/>
       <el-table-column :show-overflow-tooltip="true" label="商品名称" align="center" prop="goodsName"/>
       <el-table-column :show-overflow-tooltip="true" label="商品规格" align="center" prop="goodsSpecs"/>
       <el-table-column label="供应商编号" width=120 align="center" prop="vendorCode"/>
@@ -223,7 +224,7 @@
         <video ref="videoCamera" style="display: none;"></video>
       </div>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitWareForm">确 定</el-button>
+        <el-button type="primary" :disabled="disabledFlag" @click="submitWareForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
@@ -425,7 +426,8 @@ export default {
       splitConditionForm: {
         splitQuantity: '', // 拆分数量
         splitCount: '' // 拆分数
-      }
+      },
+      disabledFlag: false,
     };
   },
   computed: {
@@ -656,7 +658,6 @@ export default {
       }
 
       await this.$modal.confirm('确认打印？');
-      console.log("开始循环: " + result);
 
       LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
       LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
@@ -697,10 +698,18 @@ export default {
         LODOP.ADD_PRINT_TEXT(290, 15, 120, 35, "批次号:");
         LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.batchCode);
 
-
+        const receiveDate = new Date(obj.receiveTime);
+        const localTime = receiveDate.toLocaleString('zh-CN', {
+          hour12: false,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
         LODOP.ADD_PRINT_TEXT(335, 15, 120, 35, "收货日期:");
-        let receiveTime = new Date(obj.receiveTime).toISOString().slice(0, 19).replace('T', ' '); // 退料日期
-        LODOP.ADD_PRINT_TEXT(335, 120, 280, 35, receiveTime);
+        LODOP.ADD_PRINT_TEXT(335, 120, 280, 35, localTime);
         let jsonQc = {
           "id": obj.id,
           "type": "purchase",
@@ -778,8 +787,20 @@ export default {
         LODOP.ADD_PRINT_TEXT(290, 120, 280, 35, obj.batchCode);
 
         LODOP.ADD_PRINT_TEXT(335, 15, 120, 35, "收货日期:");
-        let receiveTime = new Date(obj.receiveTime).toISOString().slice(0, 19).replace('T', ' '); // 退料日期
-        LODOP.ADD_PRINT_TEXT(335, 120, 280, 35, receiveTime);
+        // let receiveTime = new Date(obj.receiveTime).toISOString().slice(0, 19).replace('T', ' '); // 收货日期
+
+        const receiveDate = new Date(obj.receiveTime);
+        const localTime = receiveDate.toLocaleString('zh-CN', {
+          hour12: false,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+
+        LODOP.ADD_PRINT_TEXT(335, 120, 280, 35, localTime);
         let jsonQc = {
           "id": obj.id,
           "type": "purchase",
@@ -791,9 +812,8 @@ export default {
       LODOP.PREVIEW();
 
       this.updateStatus();
-    }
-    ,
-// 打印完成后， 修改当前行的状态
+    },
+    // 打印完成后， 修改当前行的状态
     updateStatus() {
       updateReceiveStatus(this.selectedRows).then(response => {
         this.$message.success('打印成功');
@@ -831,10 +851,9 @@ export default {
       // 弹出框
       this.wareOpen = true;
       this.title = '一键入库';
-    }
-    ,
-// 确定入库
-    submitWareForm() {
+    },
+    // 确定入库
+    async submitWareForm() {
       // 校验当前的采购单号的内容是否都已打印的条码
       for (let i = 0; i < this.wareList.length; i++) {
         // 校验当前是否存在未入库的单据
@@ -854,24 +873,24 @@ export default {
         'areaId': this.wareForm.areaId,
       }
       this.loading = true;
+      this.disabledFlag = true;
+
       // TODO 校验表单数据
-      startWareHousing(obj).then(response => {
+      await startWareHousing(obj).then(response => {
         if (response != "success") {
-          this.$message.error("入库失败, 请联系系统管理员, 问题如下: " + response);
+          this.$message.error("入库失败, 请联系系统管理员, 问题如下: ", response);
           return;
         }
-        this.wareOpen = false;
+        this.$message.success('入库成功');
+      }).finally(() => {
         this.getList();
         this.wareForm.poNo = '';
         this.wareList = [];
+        this.wareOpen = false;
         this.loading = false;
-        this.$message.success('入库成功');
-      })
-      // TODO 调用入库接口
-      // TODO 关闭弹出框
-      // TODO 刷新列表
-    }
-    ,
+        this.disabledFlag = false;
+      });
+    },
     handleBlur() {
       // 获取当前的采购单数据
       // 基于当前的采购单获取所有的物料数据
@@ -1269,7 +1288,7 @@ export default {
       this.$refs.multipleTable.toggleRowSelection(row);
     },
     // 收货
-    receive() {
+    async receive() {
       if (this.selectedRows.length === 0) {
         this.$message.warning('请选择至少一项进行拆分');
         return;
@@ -1297,24 +1316,35 @@ export default {
         'list': this.selectedRows,
       }
 
-      this.$confirm('确定收货吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
+      try{
+        await this.$confirm('确定收货吗?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        });
+
         this.loading = true;
-        receiving(obj).then(response => {
-          if (response != "success") {
-            this.$message.error("收货失败, 请联系系统管理员, 问题如下: " + response);
+        this.disabledFlag = true;
+        await receiving(obj).then(response => {
+          if (response.data != "success") {
+            this.$message.error("收货失败, 请联系系统管理员, 问题如下: ", response.data);
             return;
           }
-          this.loading = false;
-          this.getList();
           this.index = 1;
           this.$message.success('收货成功');
+        }).catch(error => {
+          this.$message.error("收货失败, 请联系系统管理员, 问题如下: ", error);
+        }).finally(() => {
+          this.getList();
+          this.loading = false;
+          this.disabledFlag = false;
         });
-      });
-
+      }catch(error){
+        this.$message.error(error);
+        this.getList();
+        this.loading = false;
+        this.disabledFlag = false;
+      }
 
     },
     // 省略其他计算属性

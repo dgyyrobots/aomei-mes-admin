@@ -35,6 +35,18 @@
         <el-input v-model="queryParams.taskCode" placeholder="请输入任务编号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
 
+      <el-form-item label="上料时间" prop="createTime">
+        <el-date-picker
+          v-model="queryParams.createTime"
+          type="datetimerange"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          value-format="yyyy-MM-dd HH:mm:ss"
+          :default-time="['00:00:00', '23:59:59']"
+        ></el-date-picker>
+      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
@@ -43,138 +55,181 @@
 
     <!-- 操作工具栏 -->
     <el-row :gutter="10" class="mb8">
-<!--      <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-                   v-hasPermi="['wms:feed-line:create']">新增</el-button>
-      </el-col>-->
+      <!--      <el-col :span="1.5">
+              <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
+                         v-hasPermi="['wms:feed-line:create']">新增</el-button>
+            </el-col>-->
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" :loading="exportLoading"
-                   v-hasPermi="['wms:feed-line:export']">导出</el-button>
+                   v-hasPermi="['wms:feed-line:export']">导出
+        </el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <!-- 列表 -->
-    <el-table v-loading="loading" :data="list">
-      <el-table-column width="150" label="领料单ID" align="center" prop="issueId" />
-      <el-table-column width="150" :show-overflow-tooltip="true"  label="产品物料编码" align="center" prop="itemCode" />
-      <el-table-column width="180" :show-overflow-tooltip="true"  label="产品物料名称" align="center" prop="itemName" />
-      <el-table-column label="单位" align="center" prop="unitOfMeasure" />
-      <el-table-column label="上料数量" align="center" prop="quantity" />
-      <el-table-column width="150" :show-overflow-tooltip="true"  label="上料批次号" align="center" prop="batchCode" />
-      <el-table-column width="150" :show-overflow-tooltip="true"  label="仓库名称" align="center" prop="warehouseName" />
-      <el-table-column width="150" label="库区名称" align="center" prop="locationName" />
-      <el-table-column width="150" label="库位名称" align="center" prop="areaName" />
-      <el-table-column width="180" label="工单号" align="center" prop="workorderCode" />
-      <el-table-column width="180" label="任务编号" align="center" prop="taskCode" />
-      <el-table-column width="200" :show-overflow-tooltip="true"  label="任务名称" align="center" prop="taskName" />
-      <el-table-column width="150" label="工作站编码" align="center" prop="workstationCode" />
-      <el-table-column width="180" :show-overflow-tooltip="true"  label="工作站名称" align="center" prop="workstationName" />
-      <el-table-column width="150" label="备注" align="center" prop="remark" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-        <template v-slot="scope">
-          <span>{{ parseTime(scope.row.createTime) }}</span>
-        </template>
-      </el-table-column>
-<!--      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template v-slot="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-                     v-hasPermi="['wms:feed-line:update']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-                     v-hasPermi="['wms:feed-line:delete']">删除</el-button>
-        </template>
-      </el-table-column>-->
-    </el-table>
-    <!-- 分页组件 -->
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
-                @pagination="getList"/>
+
+    <el-tabs v-model="activeTab" @tab-click="handleTabChange">
+      <el-tab-pane label="上料明细" name="detail">
+
+        <!-- 列表 -->
+        <el-table v-loading="loading" :data="list">
+          <el-table-column type="index" label="序号" width="60" align="center"/>
+          <!--      <el-table-column width="150" label="领料单ID" align="center" prop="issueId" />-->
+          <el-table-column width="180" label="工单号" align="center" prop="workorderCode" fixed="left"/>
+          <el-table-column width="180" label="任务编号" align="center" prop="taskCode" fixed="left"/>
+          <el-table-column width="150" :show-overflow-tooltip="true" label="产品物料编码" align="center" prop="itemCode"/>
+          <el-table-column width="180" :show-overflow-tooltip="true" label="产品物料名称" align="center" prop="itemName"/>
+          <el-table-column label="单位" align="center" prop="unitOfMeasure"/>
+          <el-table-column label="上料数量" align="center" prop="quantity"/>
+          <el-table-column width="150" :show-overflow-tooltip="true" label="上料批次号" align="center" prop="batchCode"/>
+          <el-table-column width="150" :show-overflow-tooltip="true" label="仓库名称" align="center" prop="warehouseName"/>
+          <el-table-column width="150" label="库区名称" align="center" prop="locationName"/>
+          <el-table-column width="150" label="库位名称" align="center" prop="areaName"/>
+
+          <el-table-column width="200" :show-overflow-tooltip="true" label="任务名称" align="center" prop="taskName"/>
+          <el-table-column width="150" label="工作站编码" align="center" prop="workstationCode"/>
+          <el-table-column width="180" :show-overflow-tooltip="true" label="工作站名称" align="center" prop="workstationName"/>
+
+          <el-table-column fixed="right" label="上料时间" align="center" prop="createTime" width="180">
+            <template v-slot="scope">
+              <span>{{ parseTime(scope.row.createTime) }}</span>
+            </template>
+          </el-table-column>
+          <!--      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+                  <template v-slot="scope">
+                    <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+                               v-hasPermi="['wms:feed-line:update']">修改</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
+                               v-hasPermi="['wms:feed-line:delete']">删除</el-button>
+                  </template>
+                </el-table-column>-->
+        </el-table>
+        <!-- 分页组件 -->
+        <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
+                    @pagination="getList"/>
+
+      </el-tab-pane>
+
+      <el-tab-pane label="上料汇总" name="summary">
+        <el-table v-loading="summaryLoading" :data="summaryList" highlight-current-row>
+          <el-table-column fixed="left" type="index" label="序号" width="60" align="center"/>
+          <el-table-column fixed="left" label="工单号" align="center" prop="workorderCode" width="150"/>
+          <el-table-column fixed="left" label="任务编码" align="center" prop="taskCode" width="150"/>
+          <el-table-column label="物料编码" align="center" prop="itemCode" width="150" :show-overflow-tooltip="true"/>
+          <el-table-column label="物料名称" align="center" prop="itemName" width="180" :show-overflow-tooltip="true"/>
+          <el-table-column label="规格型号" align="center" prop="specification" width="120" :show-overflow-tooltip="true"/>
+          <el-table-column label="单位" align="center" prop="unitOfMeasure" width="80"/>
+          <el-table-column label="工作站名称" align="center" prop="workstationName" width="150" :show-overflow-tooltip="true"/>
+
+          <el-table-column width="150" :show-overflow-tooltip="true" label="仓库名称" align="center" prop="warehouseName"/>
+          <el-table-column width="150" label="库区名称" align="center" prop="locationName"/>
+          <el-table-column width="150" label="库位名称" align="center" prop="areaName"/>
+
+          <el-table-column fixed="right" label="计划领用总量" align="center" prop="planQuantity" width="120"/>
+          <el-table-column fixed="right" label="实际领用总量" align="center" prop="actualQuantity" width="120"/>
+          <el-table-column fixed="right" label="领用进度" align="center" prop="usagePercentage" width="120">
+            <template slot-scope="scope">
+              {{ scope.row.usagePercentage }}%
+            </template>
+          </el-table-column>
+
+<!--          <el-table-column label="最近上料时间" align="center" prop="lastFeedTime" width="180">
+            <template v-slot="scope">
+              <span>{{ parseTime(scope.row.lastFeedTime) }}</span>
+            </template>
+          </el-table-column>-->
+        </el-table>
+        <pagination v-show="summaryTotal > 0" :total="summaryTotal" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
+                    @pagination="getSummaryList"/>
+      </el-tab-pane>
+    </el-tabs>
 
     <!-- 对话框(添加 / 修改) -->
     <el-dialog :title="title" :visible.sync="open" width="500px" v-dialogDrag append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="领料单ID" prop="issueId">
-          <el-input v-model="form.issueId" placeholder="请输入领料单ID" />
+          <el-input v-model="form.issueId" placeholder="请输入领料单ID"/>
         </el-form-item>
         <el-form-item label="库存ID" prop="materialStockId">
-          <el-input v-model="form.materialStockId" placeholder="请输入库存ID" />
+          <el-input v-model="form.materialStockId" placeholder="请输入库存ID"/>
         </el-form-item>
         <el-form-item label="产品物料ID" prop="itemId">
-          <el-input v-model="form.itemId" placeholder="请输入产品物料ID" />
+          <el-input v-model="form.itemId" placeholder="请输入产品物料ID"/>
         </el-form-item>
         <el-form-item label="产品物料编码" prop="itemCode">
-          <el-input v-model="form.itemCode" placeholder="请输入产品物料编码" />
+          <el-input v-model="form.itemCode" placeholder="请输入产品物料编码"/>
         </el-form-item>
         <el-form-item label="产品物料名称" prop="itemName">
-          <el-input v-model="form.itemName" placeholder="请输入产品物料名称" />
+          <el-input v-model="form.itemName" placeholder="请输入产品物料名称"/>
         </el-form-item>
         <el-form-item label="规格型号" prop="specification">
-          <el-input v-model="form.specification" placeholder="请输入规格型号" />
+          <el-input v-model="form.specification" placeholder="请输入规格型号"/>
         </el-form-item>
         <el-form-item label="单位" prop="unitOfMeasure">
-          <el-input v-model="form.unitOfMeasure" placeholder="请输入单位" />
+          <el-input v-model="form.unitOfMeasure" placeholder="请输入单位"/>
         </el-form-item>
         <el-form-item label="上料数量" prop="quantity">
-          <el-input v-model="form.quantity" placeholder="请输入上料数量" />
+          <el-input v-model="form.quantity" placeholder="请输入上料数量"/>
         </el-form-item>
         <el-form-item label="上料批次号" prop="batchCode">
-          <el-input v-model="form.batchCode" placeholder="请输入上料批次号" />
+          <el-input v-model="form.batchCode" placeholder="请输入上料批次号"/>
         </el-form-item>
         <el-form-item label="仓库ID" prop="warehouseId">
-          <el-input v-model="form.warehouseId" placeholder="请输入仓库ID" />
+          <el-input v-model="form.warehouseId" placeholder="请输入仓库ID"/>
         </el-form-item>
         <el-form-item label="仓库编码" prop="warehouseCode">
-          <el-input v-model="form.warehouseCode" placeholder="请输入仓库编码" />
+          <el-input v-model="form.warehouseCode" placeholder="请输入仓库编码"/>
         </el-form-item>
         <el-form-item label="仓库名称" prop="warehouseName">
-          <el-input v-model="form.warehouseName" placeholder="请输入仓库名称" />
+          <el-input v-model="form.warehouseName" placeholder="请输入仓库名称"/>
         </el-form-item>
         <el-form-item label="库区ID" prop="locationId">
-          <el-input v-model="form.locationId" placeholder="请输入库区ID" />
+          <el-input v-model="form.locationId" placeholder="请输入库区ID"/>
         </el-form-item>
         <el-form-item label="库区编码" prop="locationCode">
-          <el-input v-model="form.locationCode" placeholder="请输入库区编码" />
+          <el-input v-model="form.locationCode" placeholder="请输入库区编码"/>
         </el-form-item>
         <el-form-item label="库区名称" prop="locationName">
-          <el-input v-model="form.locationName" placeholder="请输入库区名称" />
+          <el-input v-model="form.locationName" placeholder="请输入库区名称"/>
         </el-form-item>
         <el-form-item label="库位ID" prop="areaId">
-          <el-input v-model="form.areaId" placeholder="请输入库位ID" />
+          <el-input v-model="form.areaId" placeholder="请输入库位ID"/>
         </el-form-item>
         <el-form-item label="库位编码" prop="areaCode">
-          <el-input v-model="form.areaCode" placeholder="请输入库位编码" />
+          <el-input v-model="form.areaCode" placeholder="请输入库位编码"/>
         </el-form-item>
         <el-form-item label="库位名称" prop="areaName">
-          <el-input v-model="form.areaName" placeholder="请输入库位名称" />
+          <el-input v-model="form.areaName" placeholder="请输入库位名称"/>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" placeholder="请输入备注" />
+          <el-input v-model="form.remark" placeholder="请输入备注"/>
         </el-form-item>
         <el-form-item label="预留字段1" prop="attr1">
-          <el-input v-model="form.attr1" placeholder="请输入预留字段1" />
+          <el-input v-model="form.attr1" placeholder="请输入预留字段1"/>
         </el-form-item>
         <el-form-item label="预留字段2" prop="attr2">
-          <el-input v-model="form.attr2" placeholder="请输入预留字段2" />
+          <el-input v-model="form.attr2" placeholder="请输入预留字段2"/>
         </el-form-item>
         <el-form-item label="预留字段3" prop="attr3">
-          <el-input v-model="form.attr3" placeholder="请输入预留字段3" />
+          <el-input v-model="form.attr3" placeholder="请输入预留字段3"/>
         </el-form-item>
         <el-form-item label="预留字段4" prop="attr4">
-          <el-input v-model="form.attr4" placeholder="请输入预留字段4" />
+          <el-input v-model="form.attr4" placeholder="请输入预留字段4"/>
         </el-form-item>
         <el-form-item label="工单号" prop="workorderCode">
-          <el-input v-model="form.workorderCode" placeholder="请输入工单号" />
+          <el-input v-model="form.workorderCode" placeholder="请输入工单号"/>
         </el-form-item>
         <el-form-item label="任务编号" prop="taskCode">
-          <el-input v-model="form.taskCode" placeholder="请输入任务编号" />
+          <el-input v-model="form.taskCode" placeholder="请输入任务编号"/>
         </el-form-item>
         <el-form-item label="任务名称" prop="taskName">
-          <el-input v-model="form.taskName" placeholder="请输入任务名称" />
+          <el-input v-model="form.taskName" placeholder="请输入任务名称"/>
         </el-form-item>
         <el-form-item label="工作站编码" prop="workstationCode">
-          <el-input v-model="form.workstationCode" placeholder="请输入工作站编码" />
+          <el-input v-model="form.workstationCode" placeholder="请输入工作站编码"/>
         </el-form-item>
         <el-form-item label="工作站名称" prop="workstationName">
-          <el-input v-model="form.workstationName" placeholder="请输入工作站名称" />
+          <el-input v-model="form.workstationName" placeholder="请输入工作站名称"/>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -186,12 +241,11 @@
 </template>
 
 <script>
-import { createFeedLine, updateFeedLine, deleteFeedLine, getFeedLine, getFeedLinePage, exportFeedLineExcel } from "@/api/wms/feedLine";
+import {createFeedLine, updateFeedLine, deleteFeedLine, getFeedLine, getFeedLinePage, exportFeedLineExcel , summeryPage } from "@/api/wms/feedLine";
 
 export default {
   name: "FeedLine",
-  components: {
-  },
+  components: {},
   data() {
     return {
       // 遮罩层
@@ -202,6 +256,7 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
+      summaryTotal: 0 ,
       // 上料详情列表
       list: [],
       // 弹出层标题
@@ -246,10 +301,15 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        itemId: [{ required: true, message: "产品物料ID不能为空", trigger: "blur" }],
-        quantity: [{ required: true, message: "上料数量不能为空", trigger: "blur" }],
-        workstationCode: [{ required: true, message: "工作站编码不能为空", trigger: "blur" }],
-      }
+        itemId: [{required: true, message: "产品物料ID不能为空", trigger: "blur"}],
+        quantity: [{required: true, message: "上料数量不能为空", trigger: "blur"}],
+        workstationCode: [{required: true, message: "工作站编码不能为空", trigger: "blur"}],
+      },
+      activeTab: 'detail',
+      // 新增：汇总相关数据
+      summaryLoading: false,
+      summaryList: [],
+
     };
   },
   created() {
@@ -358,12 +418,13 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const id = row.id;
-      this.$modal.confirm('是否确认删除上料详情编号为"' + id + '"的数据项?').then(function() {
-          return deleteFeedLine(id);
-        }).then(() => {
-          this.getList();
-          this.$modal.msgSuccess("删除成功");
-        }).catch(() => {});
+      this.$modal.confirm('是否确认删除上料详情编号为"' + id + '"的数据项?').then(function () {
+        return deleteFeedLine(id);
+      }).then(() => {
+        this.getList();
+        this.$modal.msgSuccess("删除成功");
+      }).catch(() => {
+      });
     },
     /** 导出按钮操作 */
     handleExport() {
@@ -372,13 +433,34 @@ export default {
       params.pageNo = undefined;
       params.pageSize = undefined;
       this.$modal.confirm('是否确认导出所有上料详情数据项?').then(() => {
-          this.exportLoading = true;
-          return exportFeedLineExcel(params);
-        }).then(response => {
-          this.$download.excel(response, '上料详情.xls');
-          this.exportLoading = false;
-        }).catch(() => {});
-    }
+        this.exportLoading = true;
+        return exportFeedLineExcel(params);
+      }).then(response => {
+        this.$download.excel(response, '上料详情.xls');
+        this.exportLoading = false;
+      }).catch(() => {
+      });
+    },
+    handleTabChange(tab) {
+      if (tab.name === 'summary') {
+        this.getSummaryList();
+      }
+    },
+    /** 获取汇总数据 */
+    getSummaryList() {
+      this.summaryLoading = true;
+      // 调用汇总API
+      summeryPage(this.queryParams).then(response => {
+        console.log("response: " , response);
+        this.summaryList = response.data.records;
+        this.summaryTotal = response.data.total;
+        this.summaryLoading = false;
+      }).catch(() => {
+        this.summaryLoading = false;
+      });
+    },
+
+
   }
 };
 </script>

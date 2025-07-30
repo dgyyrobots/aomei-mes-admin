@@ -68,12 +68,12 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="班组编号" prop="teamCode">
-              <el-input v-model="form.teamCode" placeholder="请输入班组编号" />
+              <el-input :disabled="optType != 'add'" v-model="form.teamCode" placeholder="请输入班组编号" />
             </el-form-item>
           </el-col>
           <el-col :span="3">
             <el-form-item label-width="80">
-              <el-switch v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成" @change="handleAutoGenChange(autoGenFlag)" v-if="optType != 'view'"> </el-switch>
+              <el-switch v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成" @change="handleAutoGenChange(autoGenFlag)" v-if="optType === 'add'"> </el-switch>
             </el-form-item>
           </el-col>
           <el-col :span="8">

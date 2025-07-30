@@ -72,6 +72,12 @@
                    v-hasPermi="['pro:feedback:update']">流转卡 </el-button>
       </el-col>-->
 
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-edit" size="mini" @click="handleQuality"
+                   v-hasPermi="['pro:feedback:update']">合格率 </el-button>
+      </el-col>
+
+
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -302,14 +308,14 @@
 <!--        <el-tab-pane label="物料需求" v-if="form.parentId == 0">
           <WorkorderItemList :workorder="form"></WorkorderItemList>
         </el-tab-pane>-->
-        <el-tab-pane label="快捷排产" v-if="form.status == 'CONFIRMED'">
+        <el-tab-pane label="快捷排产" v-if="form.status == 'CONFIRMED' && getData ">
           <el-steps :active="activeProcess" v-if="form.id != null" align-center simple>
             <el-step v-for="(item, index) in processOptions" :key="index" :title="item.processName"
               @click.native="handleStepClick(index)"></el-step>
           </el-steps>
           <template v-for="(item, index) in processOptions">
             <el-card :key="index" v-if="activeProcess == index">
-              <ProTask :workorderId="form.id" :workorderName = "form.workorderName" :workorderCode="form.workorderCode" :processId="item.processId" :colorCode="item.colorCode" :optType="optType" :initQuantity="form.quantity" >
+              <ProTask :workorderId="form.id" :workorderName = "form.workorderName" :workorderCode="form.workorderCode" :processId="item.processId" :colorCode="item.colorCode" :optType="optType" :initQuantity="form.quantity">
               </ProTask>
             </el-card>
           </template>
@@ -332,7 +338,7 @@ import { createPrintLog } from "@/api/report/printLog";
 import { listProductprocess } from '@/api/mes/pro/routeprocess';
 import { getRouteCodeByItemCode } from '@/api/mes/pro/proroute';
 import ProTask from '../schedule/proTask.vue';
-import { listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder , updateWorkorderAdjuncts , finshWorkorder } from '@/api/mes/pro/workorder';
+import { listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder , updateWorkorderAdjuncts , finshWorkorder , calculateQuality , reportCalculateQuality } from '@/api/mes/pro/workorder';
 import Workorderbom from './bom/bom.vue';
 import WorkorderItemList from './items/item.vue';
 import ItemSelect from '@/components/itemSelect/single.vue';
@@ -440,6 +446,7 @@ export default {
       ids: [],
       // 行选中项
       selectionObj: {},
+      getData: false
     };
   },
   created() {
@@ -452,9 +459,8 @@ export default {
     });
   },
   methods: {
-    getProcess() {
-      console.log(this.form);
-      listProductprocess(this.form.id).then(response => {
+    async getProcess() {
+      await listProductprocess(this.form.id).then(response => {
         this.processOptions = response.data;
       });
     },
@@ -497,6 +503,7 @@ export default {
     },
     // 取消按钮
     cancel() {
+      this.getData = false;
       this.open = false;
       this.reset();
     },
@@ -532,7 +539,9 @@ export default {
         isOut: false,
       };
       this.autoGenFlag = false;
+      this.getData = false;
       this.resetForm('form');
+      this.processOptions = [];
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -620,10 +629,9 @@ export default {
       this.reset();
       this.getTreeselect();
       const workorderId = row.id || this.id;
-      await getWorkorder(workorderId).then(response => {
+      await getWorkorder(workorderId).then(async response => {
         this.form = response.data;
-        console.log(this.form)
-        this.getProcess();
+        await this.getProcess();
         // 根据当前选中的物料, 获取工艺路线编号
         /*this.initRouteList(this.form.productCode);
         console.log("AAA: " + this.form.routeList);*/
@@ -632,13 +640,15 @@ export default {
         this.optType = 'view';*/
       });
       await getRouteCodeByItemCode(this.form.productCode).then(response => {
-        console.log(response.data);
         this.form.routeList = response.data;
         this.open = true;
         this.isShowDelete = true;
         this.title = '查看工单信息';
         this.optType = 'view';
       });
+      console.log("工单Id: ", this.form.id);
+      console.log("工序信息: ", this.processOptions);
+      this.getData = true;
     },
     /** 修改按钮操作 */
     async handleUpdate(row) {
@@ -662,13 +672,13 @@ export default {
         this.getProcess();
       });
       await getRouteCodeByItemCode(this.form.productCode).then(response => {
-        console.log(response.data);
         this.form.routeList = response.data;
         this.open = true;
         this.title = '修改生产工单';
         this.optType = 'edit';
       });
       this.isShowDelete = true;
+      this.getData = true;
     },
 
     /** 提交按钮 */
@@ -740,7 +750,6 @@ export default {
         this.form.unitOfMeasure = obj.unitOfMeasure;
         // 根据当前选中的物料, 获取工艺路线编号
         this.initRouteList(obj.itemCode);
-        console.log("CCC: " + this.form.routeList);
       }
     },
     //客户选择弹出框
@@ -793,14 +802,16 @@ export default {
       LODOP.ADD_PRINT_TEXT(130, 60, 200, 20, "产品类型");
       LODOP.ADD_PRINT_TEXT(130, 260, 200, 20, "料号对应的产品分类说明");
 
-// 添加更多工序信息
-// 重复上述步骤，为其他工序添加信息
+      // 添加更多工序信息
+      // 重复上述步骤，为其他工序添加信息
 
-// 预览
+      // 预览
       LODOP.PREVIEW();
 
 
     },
+
+
     handleRowClick(row) {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
@@ -827,13 +838,30 @@ export default {
       this.$modal.confirm('是否确认完成选中的工单？').then(function () {
          finshWorkorder(obj[0]).then(response => {
            //this.$modal.msgSuccess('附件修改成功');
+           this.getList();
            return;
          });
-
-
       });
 
-    }
+    },
+
+    handleQuality(){
+      let obj = this.selectionObj;
+      if(!obj){
+        this.$modal.msgError('请选择一条数据!');
+        return;
+      }
+
+     /* calculateQuality(obj[0].id).then(response => {
+        //this.$modal.msgSuccess('附件修改成功');
+        this.getList();
+        return;
+      });*/
+
+     /* const  response = reportCalculateQuality({"workorderCode": null});
+      console.log(response);*/
+    },
+
   },
   watch: {
     'form.adjuncts': {

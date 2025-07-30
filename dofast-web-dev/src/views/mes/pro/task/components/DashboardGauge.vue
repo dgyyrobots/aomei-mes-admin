@@ -120,6 +120,15 @@ export default {
       },
       deep: true,
     },
+    'detail.machineryName': {
+      handler(newName) {
+        console.log("触发设备变更: ", newName);
+        this.detail.machineryName = newName;
+        console.log("this.detail.machineryName", this.detail.machineryName);
+        this.initChart();
+      },
+      deep: true,
+    },
   },
   mounted() {
     this.chart = echarts.init(this.$refs.gaugeRef)

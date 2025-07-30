@@ -43,6 +43,16 @@ export function getAllocatedHeaderPage(query) {
   })
 }
 
+// 获得调拨单头分页
+export function traceAllocatedPage(query) {
+  return request({
+    url: '/wms/allocated-header/traceAllocatedPage',
+    method: 'get',
+    params: query
+  })
+}
+
+
 // 导出调拨单头 Excel
 export function exportAllocatedHeaderExcel(query) {
   return request({

@@ -87,3 +87,13 @@ export function exportFeedLineExcel(query) {
     responseType: 'blob'
   })
 }
+
+// 获取汇总信息
+export function summeryPage(query) {
+  return request({
+    url: '/wms/feed-line/summeryPage',
+    method: 'get',
+    params: query
+  })
+}
+

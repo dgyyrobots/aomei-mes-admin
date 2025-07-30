@@ -71,7 +71,7 @@
           </el-col>
           <el-col :span="4">
             <el-form-item label-width="80">
-              <el-switch v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成" @change="handleAutoGenChange(autoGenFlag)" v-if="optType != 'view'"> </el-switch>
+              <el-switch v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成" @change="handleAutoGenChange(autoGenFlag)" v-if="optType === 'add'"> </el-switch>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -119,6 +119,7 @@ export default {
   dicts: ['sys_yes_no', 'mes_dvsubject_type'],
   data() {
     return {
+      optType: undefined,
       autoGenFlag: false,
       // 遮罩层
       loading: true,
@@ -221,6 +222,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
+      this.optType = 'add';
       this.title = '添加设备点检保养项目';
     },
     /** 修改按钮操作 */
@@ -230,6 +232,7 @@ export default {
       getDvsubject(subjectId).then(response => {
         this.form = response.data;
         this.open = true;
+        this.optType = 'edit';
         this.title = '修改设备点检保养项目';
       });
     },
@@ -237,7 +240,7 @@ export default {
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
-          if (this.form.subjectId != null) {
+          if (this.form.id != null) {
             updateDvsubject(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
               this.open = false;

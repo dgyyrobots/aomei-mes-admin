@@ -145,7 +145,7 @@ export default {
 
     .el-dialog__body {
       flex: 1;
-      overflow: hidden;
+      overflow: auto;
     }
 
     .el-dialog__footer {

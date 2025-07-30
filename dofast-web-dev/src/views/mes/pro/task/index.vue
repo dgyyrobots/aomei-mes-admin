@@ -306,7 +306,7 @@
 
           <el-col :span="8">
             <el-form-item label="设备列表">
-              <el-select v-model="sendForm.machineryCodes" multiple placeholder="请选择">
+              <el-select v-model="sendForm.machineryCodes" multiple placeholder="请选择" @change="handleMachineryChange">
                 <el-option v-for="item in machineryCodesOptions" :key="item.machineryCode" :label="item.machineryName" :value="item.machineryCode"></el-option>
               </el-select>
             </el-form-item>
@@ -842,6 +842,9 @@ export default {
         this.machineryCodesOptions.push(...response.data);
       });
     },
+    handleMachineryChange(){
+      this.$forceUpdate();
+    }
 
   },
 };

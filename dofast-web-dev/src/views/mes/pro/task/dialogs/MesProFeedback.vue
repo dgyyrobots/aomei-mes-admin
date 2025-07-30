@@ -7,22 +7,23 @@
     :append-to-body="true"
     :modal-append-to-body="true"
     custom-class="cyber-modal"
-    title="质量管理"
+    title="生产报工"
     :top="'8vh'"
     width="1200px"
   >
     <div class="dialog-content">
-      <MesQcIpqcView ref="view" :task-code="taskCode" :item-code="itemCode" modal-class="cyber-modal" main-class="time-registration-dialog"/>
+      <MesProFeedbackView ref="view" :task-code="taskCode" :item-code="itemCode" modal-class="cyber-modal" main-class="time-registration-dialog"/>
     </div>
 
   </el-dialog>
 </template>
 
 <script>
-import MesQcIpqcView from '@/views/mes/qc/ipqc/index.vue'
+import MesProFeedbackView from  '@/views/mes/pro/feedback/index.vue'
+
 // 控制对话框显示状态
 export default {
-  name: 'MesQcIpqcDialog',
+  name: 'MesProFeedback',
   props: {
     itemCode: {
       type: String,
@@ -39,7 +40,7 @@ export default {
     }
   },
   components: {
-    MesQcIpqcView,
+    MesProFeedbackView
   },
   methods: {
     async openDialog() {
@@ -149,7 +150,7 @@ export default {
 
     .el-dialog__body {
       flex: 1;
-      overflow: hidden;
+      overflow: auto;
     }
 
     .el-dialog__footer {

@@ -70,3 +70,22 @@ export function checkMaxIssue(data) {
     data: data,
   });
 }
+
+
+// 查询生产领料单行详细
+export function getMachineryInfo(taskCode) {
+  return request({
+    url: '/mes/wms/issue-line/getMachineryInfo?taskCode=' + taskCode,
+    method: 'get',
+  });
+}
+
+
+// 撤销上料
+export function issueErp(data) {
+  return request({
+    url: '/mes/wms/issue-line/issueErp',
+    method: 'put',
+    data: data,
+  });
+}

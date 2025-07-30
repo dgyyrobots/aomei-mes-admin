@@ -91,7 +91,15 @@
             <el-table-column prop="id" label="成员ID" width="180"/>
             <el-table-column prop="nickname" label="成员昵称" width="180"/>
             <el-table-column prop="username" label="成员名称" width="180"/>
-            <el-table-column prop="position" label="职位"/>
+<!--    <el-table-column prop="position" label="职位"/>-->
+            <el-table-column label="岗位">
+              <template slot-scope="scope">
+                <el-select v-model="scope.row.postIds" multiple placeholder="请选择岗位">
+                  <el-option v-for="item in postOptions" :key="item.id" :label="item.name" :value="item.id"/>
+                </el-select>
+              </template>
+            </el-table-column>
+
             <el-table-column label="操作">
               <template slot-scope="scope">
                 <el-button size="mini" type="text" icon="el-icon-delete" @click="deleteTeamMember(scope.row.id)">删除</el-button>
@@ -110,7 +118,8 @@
 <script>
 import UserSingleSelect from '@/components/userSelect/single.vue'
 import { addFeedback } from '@/api/mes/pro/feedback'
-import { getTeammemberByTeamCode } from '@/api/mes/cal/teammember'
+import {getByTeamCodeAndShiftInfo} from '@/api/mes/cal/teammember'
+import {listSimplePosts} from "@/api/system/post";
 export default {
   dicts: ['mes_order_status', 'mes_workorder_sourcetype', 'mes_pro_task_status', 'mes_feedback_type'],
   components: {
@@ -183,7 +192,10 @@ export default {
         unitOfMeasure: [{required: true, message: '单位不能为空', trigger: 'blur'}],
         quantity: [{required: true, message: '排产数量不能为空', trigger: 'blur'}],
       },
-      teamMembers: []
+      // 班组成员
+      teamMembers: [],
+      // 岗位选项
+      postOptions: [],
     }
   },
   methods: {
@@ -302,8 +314,15 @@ export default {
       this.form.processCode = row.processCode
       this.form.processName = row.processName
       this.form.processId = row.processId
+
+      const now = new Date();
+      const hour = now.getHours();
+      const time = hour >= 7 && hour < 19 ? '0' : '1';
+      if(!this.form.shiftInfo) this.form.shiftInfo = time;
+      const shiftInfo = this.form.shiftInfo;
+
       // 基于班组编码获取绑定的人员信息
-      getTeammemberByTeamCode(this.form.teamCode).then(response => {
+      getByTeamCodeAndShiftInfo(this.form.teamCode, shiftInfo).then(response => {
         console.log(response)
         for (let i = 0; i < response.data.length; i++) {
           const obj = response.data[i]
@@ -313,7 +332,14 @@ export default {
         }
       })
       this.open = true
-    }
+    },
+    getTreeselect() {
+      listSimplePosts().then(response => {
+        // 处理 postOptions 参数
+        this.postOptions = [];
+        this.postOptions.push(...response.data);
+      });
+    },
   }
 }
 </script>

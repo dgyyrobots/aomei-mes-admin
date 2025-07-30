@@ -2,8 +2,17 @@
   <div class="app-container">
     <el-row v-if="optType != 'view'" :gutter="10" class="mb8">
       <el-col :span="4">
-          <el-input v-model="purchaseId" placeholder="请输入"/>
+        <el-input
+          v-model="purchaseId"
+          placeholder="请输入"
+          @focus="handleInputFocus"
+          @compositionstart="handleCompositionStart"
+          @compositionend="handleCompositionEnd"
+          style="ime-mode: disabled"
+        />
+
       </el-col>
+
       <el-col :span="3">
         <el-button type="primary" round @click="getCameraInfo()">摄像头</el-button>
       </el-col>
@@ -31,9 +40,12 @@
       </el-col>
 
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleCancleIssue" >撤销领料 </el-button>
+        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleCancleIssue" :disabled="disabledFlag" >撤销领料 </el-button>
       </el-col>
 
+      <el-col :span="1.5"><!-- v-hasPermi="['wms:issue-header:erpInterface']" -->
+        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleIssueErp" :disabled="disabledFlag" >ERP领料</el-button>
+      </el-col>
 
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -44,6 +56,7 @@
       <el-table-column label="条码编号" align="center" prop="barcodeNumber" />
       <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode" />
       <el-table-column label="产品物料名称" width="120px" align="center" prop="itemName" :show-overflow-tooltip="true" />
+      <el-table-column label="产品物料规格" width="120px" align="center" prop="specification" :show-overflow-tooltip="true" />
       <el-table-column label="设备名称" align="center" prop="machineryName" />
       <el-table-column label="领料数量" align="center" prop="quantityIssued" />
       <el-table-column label="领料状态" align="center" prop="status" >
@@ -70,9 +83,10 @@
           <span v-else>已报工</span>
         </template>
       </el-table-column>
+      <el-table-column  width="180" label="批次号" align="center" prop="batchCode" />
       <el-table-column  width="180"  label="报工单" align="center" prop="feedbackCode" :show-overflow-tooltip="true" />
       <el-table-column label="单位" align="center" prop="unitOfMeasure" />
-      <el-table-column width="180" label="批次号" align="center" prop="batchCode" />
+
       <el-table-column width="180" label="仓库名称" align="center" prop="warehouseName" />
       <el-table-column width="180" label="库区名称" align="center" prop="locationName" />
       <el-table-column width="180" label="库位名称" align="center" prop="areaName" />
@@ -84,10 +98,9 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="ERP状态" align="center" prop="erpEnable" >
-        <template v-slot="scope">
-          <span v-if="scope.row.erpEnable === 'N'">未同步</span>
-          <span v-else>已同步</span>
+      <el-table-column fixed="right" label="ERP状态" align="center" prop="erpEnable" >
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.erp_status" :value="scope.row.erpEnable" />
         </template>
       </el-table-column>
 
@@ -191,7 +204,7 @@
 </template>
 
 <script>
-import { listIssueline, getIssueline, delIssueline, addIssueline, updateIssueline , updateEnable, cancleIssue , checkMaxIssue} from '@/api/mes/wm/issueline';
+import { listIssueline, getIssueline, delIssueline, addIssueline, updateIssueline , updateEnable, cancleIssue , checkMaxIssue , issueErp } from '@/api/mes/wm/issueline';
 import StockSelect from '@/components/stockSelect/single.vue';
 import jsQR from "jsqr";
 import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
@@ -200,6 +213,7 @@ import MachinerySelectSingle from "@/components/machinerySelect/single.vue";
 export default {
   name: 'Issueline',
   components: {MachinerySelectSingle, StockSelect },
+  dicts: ['erp_status'],
   props: {
     optType: null,
     issueId: null,
@@ -272,7 +286,11 @@ export default {
       cameraPreviewVisible: false, // 控制摄像头弹出框
       scanResult: '', // 存储扫描结果
       purchaseId: '', // 采购单ID
+      disabledFlag: false,
+      originalInputValue: '', // 保存原始输入值
 
+      hasShownInputTip: false, // 标记是否已显示过提示
+      compositionLock: false,  // 标记是否处于中文输入法组合状态
     };
   },
   created() {
@@ -419,7 +437,6 @@ export default {
     handleDelete(row) {
       const lineIds = row.id || this.ids;
       const status = row.status
-      console.log(status);
       if (status === 'Y') {
         this.$modal.msgError('已领料 ，不能删除');
         return;
@@ -663,6 +680,12 @@ export default {
 
         }
       }
+      if(!finType && !batchCode){
+        this.$message.error('未获取到条码类型, 请切换为英文输入法!');
+        this.purchaseId = null;
+        return;
+      }
+
       let obj = {
         'id': Number.parseInt(this.purchaseId),
         'type': finType,
@@ -688,7 +711,6 @@ export default {
           obj.machineryId = this.form.machineryId;
           obj.machineryCode = this.form.machineryCode;
           obj.machineryName = this.form.machineryName;
-          console.log("obj信息 :", obj);
           let count = -1;
           // 校验当前物料是否以61开头
           if (obj.itemCode.startsWith('61')) {
@@ -739,12 +761,24 @@ export default {
       this.$refs.multipleTable.toggleRowSelection(row);
     },
     handleSwitchChange(row) {
+      const selectedRows = row ? [row] : this.selectedRows;
       const ids = row.id || this.ids;
       if (!ids || ids.length === 0) {
         this.$message.error(`请至少选中一行数据!`);
         return;
       }
 
+      // 检查所有选中行状态
+      const hasInvalidRow = selectedRows.some(item => {
+        console.log("item: " , item);
+        if(item.status === 'N') {
+          this.$message.error(`存在未上料的物料，无法启用!`);
+          return true;
+        }
+        return false;
+      });
+
+      if(hasInvalidRow) return;
 
       this.$confirm('是否确认变更物料状态?', '警告', {
         confirmButtonText: '确定',
@@ -816,7 +850,6 @@ export default {
 
       // 获取当前选中行信息
       const selectedRows = this.selectedRows;
-      console.log("selectedRows:", selectedRows);
       // 仅允许选取已上料未报工的单据行信息
       for (const row of selectedRows) {
         console.log("row:", row);
@@ -824,25 +857,130 @@ export default {
           this.$message.error('请勾选已上料未报工的单据进行撤销!');
           return;
         }
-      }
 
+        /*if (row.erp_status != 'Y') {
+          this.$message.error('请勾选同步ERP的单据进行撤销!');
+          return;
+        }*/
+      }
       this.$confirm('是否确认撤销?', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async () => {
-        cancleIssue(ids).then(response => {
+        this.loading = true;
+        this.disabledFlag = true;
+        await cancleIssue(ids).then(response => {
           this.$message.success(`撤销成功!`);
-          this.getList();
         }).catch(error => {
-          console.log(error);
           this.$message.error(`撤销失败!`);
+        }).finally(()=>{
+          this.loading = true;
+          this.getList();
+          this.disabledFlag = true;
+        })
+      });
+
+    },
+    handleIssueErp(row){
+      const ids = this.ids;
+      if(!ids || ids.length === 0){
+        this.$message.error(`请至少选中一行数据!`);
+        return;
+      }
+
+      // 获取当前选中行信息
+      const selectedRows = this.selectedRows;
+
+      // 仅允许选取已上料未同步ERP的单据行信息
+      for (const row of selectedRows) {
+        if (row.status !== 'Y' || row.erpEnable !== 'N') {
+          this.$message.error('请勾选已上料未同步ERP的单据进行领料!');
+          return;
+        }
+      }
+
+      this.$confirm('是否确认ERP领料?', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        this.loading = true;
+        this.disabledFlag = true;
+        await issueErp(ids).then(response => {
+          this.$message.success(`接口调用成功!`);
+        }).catch(error => {
+          this.$message.error(`接口调用失败! : ` + error);
+        }).finally(()=>{
+          this.loading = false;
+          this.disabledFlag = false;
           this.getList();
         });
       });
+    },
 
-    }
+    handleInputFocus() {
+      this.$message.info('请切换为英文输入法（半角状态）');
+    },
+
+    // 处理输入法开始事件
+    handleCompositionStart() {
+      this.compositionLock = true;
+    },
+
+    // 处理输入法结束事件
+    handleCompositionEnd(event) {
+      this.compositionLock = false;
+      this.$nextTick(() => {
+        this.handleInputChange(this.purchaseId);
+      });
+    },
+
+    // 处理输入变化
+    handleInputChange(value) {
+      if (this.compositionLock) return;
+
+      // 检查是否包含中文字符
+      if (/[\u4e00-\u9fa5]/.test(value)) {
+        this.$message.warning('请使用英文输入法输入');
+        this.purchaseId = this.originalInputValue;
+        return;
+      }
+
+      this.originalInputValue = value;
+
+      // 当输入框内容变化时，尝试自动处理
+      if (value && value.includes('{') && value.includes('}')) {
+        this.tryParseInput(value);
+      }
+    },
+
+    // 尝试解析输入内容
+    tryParseInput(input) {
+      try {
+        // 替换中文标点并移除特殊字符
+        const cleanedInput = input
+          .replace(/“/g, '"')
+          .replace(/”/g, '"')
+          .replace(/：/g, ':')
+          .replace(/，/g, ',')
+          .replace(/\uFEFF/g, '')
+          .trim();
+
+        // 解析JSON
+        const data = JSON.parse(cleanedInput);
+
+        if (data && data.id) {
+          this.purchaseId = data.id;
+          this.handleBlur(data.type);
+        }
+      } catch (error) {
+        // 解析失败时不处理，等待用户继续输入
+      }
+    },
+
 
   },
 };
 </script>
+

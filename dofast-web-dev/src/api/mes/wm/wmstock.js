@@ -42,3 +42,14 @@ export function delWmstock(materialStockId) {
     method: 'delete',
   });
 }
+
+
+// 导出库存 Excel
+export function exportExcel(query) {
+  return request({
+    url: '/mes/wms/material-stock/export-excel',
+    method: 'get',
+    params: query,
+    responseType: 'blob',
+  });
+}

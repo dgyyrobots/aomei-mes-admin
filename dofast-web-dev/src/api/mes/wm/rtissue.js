@@ -49,3 +49,11 @@ export function delRtissue(rtId) {
     method: 'delete',
   });
 }
+
+// 查询生产退料单头详细
+export function rtissueErp(rtId) {
+  return request({
+    url: '/mes/wms/rt-issue/rtissueErp?id=' + rtId,
+    method: 'get',
+  });
+}

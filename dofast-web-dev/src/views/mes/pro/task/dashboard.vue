@@ -34,11 +34,11 @@
           <el-dropdown trigger="click" @command="onProCommand">
             <button class="nav-btn red">生产操作</button>
             <el-dropdown-menu slot="dropdown" class="technological-theme">
-              <el-dropdown-item command="request">生产领料</el-dropdown-item>
+<!--              <el-dropdown-item command="request">生产领料</el-dropdown-item>-->
               <el-dropdown-item command="loader">生产上料</el-dropdown-item>
               <el-dropdown-item command="report">生产报工</el-dropdown-item>
-              <el-dropdown-item command="print">打印条码</el-dropdown-item>
-              <el-dropdown-item command="store">成品入库</el-dropdown-item>
+              <!--<el-dropdown-item command="print">打印条码</el-dropdown-item>
+              <el-dropdown-item command="store">成品入库</el-dropdown-item>-->
             </el-dropdown-menu>
           </el-dropdown>
           <!-- <button class="nav-btn" @click="openTimeRegistration">计时登记</button> -->
@@ -80,7 +80,7 @@
               <EquipmentHistory />
             </div>
             <div class="right-box box-3">
-              <EquipmentTime />
+              <EquipmentTime :data="registrationInfo"/>
             </div>
           </div>
         </div>
@@ -90,17 +90,18 @@
         <!--  -->
         <MesDvMachinery ref="mesDvMachineryRef" :machinery-code="detail.machineryCode"  @success="getDetail"/>
         <!--  -->
-        <MesQcIpqc ref="mesQcIpqcRef" :item-code="detail.itemCode"/>
+        <MesQcIpqc ref="mesQcIpqcRef" :item-code="detail.itemCode" :task-code="detail.taskCode" />
         <!-- 生产上料 -->
         <MesProLoader ref="mesProLoaderRef" :taskCode="detail.taskCode" @success="getDetail"/>
         <!-- 打印条码 -->
-        <MesProPrint ref="mesProPrintRef"  @success="getDetail"/>
+        <!--<MesProPrint ref="mesProPrintRef"  @success="getDetail"/>-->
         <!-- 生产报工 -->
-        <MesProReport ref="mesProReportRef"  @success="getDetail"/>
+        <!--<MesProReport ref="mesProReportRef"  @success="getDetail"/>-->
+        <MesProFeedback ref="mesProFeedbackRef" :taskCode="detail.taskCode"  @success="getDetail"/>
         <!-- 生产领料 -->
-        <MesProReq v-bind="detail" :taskId="detail.id" ref="mesProReqRef"  @success="getDetail"/>
+<!--        <MesProReq v-bind="detail" :taskId="detail.id" ref="mesProReqRef"  @success="getDetail"/>-->
         <!-- 成品入库 -->
-        <MesProStore ref="mesProStoreRef" :taskCode="detail.taskCode" @success="getDetail"/>
+        <!--<MesProStore ref="mesProStoreRef" :taskCode="detail.taskCode" @success="getDetail"/>-->
         <!-- 异常登记 -->
         <MesException ref="mesExceptionRef" :task-code="detail.taskCode" @success="getDetail"/>
         <!-- 计时登记 -->
@@ -128,6 +129,7 @@ import MesQcIpqc from './dialogs/MesQcIpqc.vue'
 import MesProLoader from './dialogs/MesProLoader.vue'
 import MesProPrint from './dialogs/MesProPrint.vue'
 import MesProReport from './dialogs/MesProReport.vue'
+import MesProFeedback from './dialogs/MesProFeedback.vue'
 import MesProReq from './dialogs/MesProReq.vue'
 import MesProStore from './dialogs/MesProStore.vue'
 import MesIssueLine from './components/MesIssueLine.vue'
@@ -136,8 +138,14 @@ import MesRegistration from './dialogs/MesRegistration.vue'
 import { getProtask, updateProtask } from '@/api/mes/pro/protask.js'
 import { getByTeamCodeAndShiftInfo } from '@/api/mes/cal/teammember.js'
 import { listFeedback } from '@/api/mes/pro/feedback.js'
-import { listIssueline } from '@/api/mes/wm/issueline.js'
+import { listIssueline , getMachineryInfo } from '@/api/mes/wm/issueline.js'
+import { listIssueheader } from '@/api/mes/wm/issueheader.js'
+
+
+
 import mqttTool from '@/utils/mqttTool.js'
+import {getRegistrationLinePage} from "@/api/mes/registrationLine";
+
 
 export default {
   components: {
@@ -160,7 +168,8 @@ export default {
     MesProReport,
     MesProReq,
     MesProStore,
-    ScaleBox
+    ScaleBox,
+    MesProFeedback
   },
   data() {
     return {
@@ -173,7 +182,7 @@ export default {
         attr1: '',
         taskCode: '',
         status: 'NORMAL',
-        mechineryName: '',
+        machineryName: '',
         quantity: 0,
         quantityProduced: 0,
         quantityUnquanlify: 0,
@@ -184,13 +193,16 @@ export default {
         []
       ],
       feedbackInfo: [],
+      registrationInfo: [],
       staff: 0,
       syncData: {
         cl: 0,
         sd: 0,
       },
       issueList: [],
-      statusName: '待机'
+      statusName: '待机',
+      machineryCode: null,
+      productId: null,
     }
   },
   computed: {
@@ -199,13 +211,13 @@ export default {
       username: 'nickname'
     }),
     statusTopic() {
-      const productId = 144;
-      const deviceCode = 'FJ01';
+      const productId = this.productId;
+      const deviceCode = this.machineryCode;
       return `/${productId}/${deviceCode}/event/post`;
     },
     propertyTopic() {
-      const productId = 144;
-      const deviceCode = 'FJ01';
+      const productId = this.productId;
+      const deviceCode = this.machineryCode;
       return `/${productId}/${deviceCode}/ws/service`;
     }
   },
@@ -219,15 +231,23 @@ export default {
     async getDetail() {
       this.unsubscribe()
       const id = this.$route.params.id;
-      const res = await getProtask(id);
-      this.detail = res.data;
+      // const res = await getProtask(id);
+      await getProtask(id).then(async res =>{
+        this.detail = res.data;
+        const response = await getMachineryInfo(res.data.taskCode);
+        this.detail.machineryName = response.data?.machineryName;
+        this.machineryCode = response.data?.erpMachineryCode;
+        this.productId = response.data?.productId;
+      })
       this.getStaffInfo();
       this.getFeedbackInfo();
       this.subscribe();
-      this.getIssueList()
+      this.getIssueList();
+      this.getRegistrationInfo();
     },
-    getIssueList() {
-      listIssueline({ taskCode: this.detail.taskCode, pageSize: 100 }).then(res => {
+    async getIssueList() {
+      let response = await listIssueheader({ taskCode: this.detail.taskCode, pageSize: 1 });
+      listIssueline({ issueId: response.data.id, pageSize: 100 }).then(res => {
         this.issueList = res.data ? res.data.list : [];
       }).catch(err => {
         console.error('获取问题列表失败:', err);
@@ -241,11 +261,16 @@ export default {
       this.staffInfo = res.map(({data}) => {
         return data
       });
-      console.log(res)
     },
     async getFeedbackInfo(keyword) {
       const res = await listFeedback({taskCode: this.detail.taskCode, pageSize: 100, });
       this.feedbackInfo = res.data ? res.data.list: [];
+      this.feedbackInfo.forEach((item) => {
+        if(item.processCode === 'AM006' && item.machineryCode.split('-').pop().startsWith('BF')){
+          item.quantityFeedback = item.conversionQuantity;
+          item.unitOfMeasure = item.conversionUnit;
+        }
+      });
     },
     subscribe() {
       mqttTool.subscribe(this.propertyTopic)
@@ -270,14 +295,15 @@ export default {
           this.$refs.mesProLoaderRef.openDialog(this.detail);
           break;
         case 'report':
-          this.$refs.mesProReportRef.openDialog(this.detail);
+          //this.$refs.mesProReportRef.openDialog(this.detail);
+          this.$refs.mesProFeedbackRef.openDialog(this.detail);
           break;
-        case 'print':
+        /*case 'print':
           this.$refs.mesProPrintRef.openDialog(this.detail);
           break;
         case 'store':
           this.$refs.mesProStoreRef.openDialog(this.detail);
-          break;
+          break;*/
         default:
           console.warn('未知的命令:', command);
       }
@@ -336,6 +362,15 @@ export default {
     openTimeRegistration() {
       this.$refs.timeRegistrationRef.openDialog()
     },
+
+    getRegistrationInfo() {
+      getRegistrationLinePage({ "relatedTaskCode": this.detail.taskCode , pageSize: 100 }).then(response => {
+        if (response.data?.list) {
+          this.registrationInfo = response.data ? response.data.list: [];
+        }
+
+      });
+    }
   },
   created() {
     this.getDetail();
@@ -347,7 +382,7 @@ export default {
           acc[item.id] = item.value;
           return acc;
         }, {  });
-        console.log(this.syncData)
+        console.log("获取的MQTT信息: ", this.syncData)
       }
       if (topic === this.statusTopic) {
         const status = data.reduce((acc, item) => {

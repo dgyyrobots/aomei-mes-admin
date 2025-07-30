@@ -9,10 +9,28 @@ export function listFeedback(query) {
   });
 }
 
+// 查询生产报工记录列表
+export function traceFeedbackPage(query) {
+  return request({
+    url: '/mes/pro/feedback/traceFeedbackPage',
+    method: 'get',
+    params: query,
+  });
+}
+
+
 // 查询生产报工记录详细
 export function getFeedback(recordId) {
   return request({
     url: '/mes/pro/feedback/get?id=' + recordId,
+    method: 'get',
+  });
+}
+
+// 查询生产报工记录详细
+export function getFeedbackDetail(recordId) {
+  return request({
+    url: '/mes/pro/feedback/getDetail?id=' + recordId,
     method: 'get',
   });
 }
@@ -133,9 +151,70 @@ export function feedbackErp(id) {
   });
 }
 
+export function warehousingErp(data) {
+  return request({
+    url: '/mes/pro/feedback/warehousingErp',
+    method: 'post',
+    data: data
+  });
+}
+
+
 export function checkProcess(recordId) {
   return request({
     url: '/mes/pro/feedback/checkProcess?id=' + recordId,
+    method: 'get',
+  });
+}
+
+
+// 查询生产报工记录详细
+export function test(recordId) {
+  return request({
+    url: '/iot/device/getIotDevice',
+    method: 'get',
+  });
+}
+
+
+// 导出主订单 Excel
+export function exportExcel(query) {
+  return request({
+    url: '/mes/pro/feedback/export-excel',
+    method: 'get',
+    params: query,
+    responseType: 'blob',
+  });
+}
+
+// 导出主订单 Excel
+export function exportJimu(query) {
+  return request({
+    url: '/mes/pro/feedback/export-jimu',
+    method: 'get',
+    params: query,
+  });
+}
+
+export function syncwarehousingErp(ids) {
+  return request({
+    url: '/mes/pro/feedback/syncwarehousingErp?ids=' + ids,
+    method: 'put',
+  });
+}
+
+// 提交审核API
+export function submitFeedbackAudit(ids) {
+  return request({
+    url: '/mes/pro/feedback/audit',
+    method: 'post',
+    data: ids
+  })
+}
+
+export function getIotFeedbackData(machineryCode) {
+  return request({
+    url: '/mes/pro/feedback/getIotFeedbackData?machineryCode=' + machineryCode,
     method: 'get',
   });
 }

@@ -103,7 +103,7 @@
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList" />
 
     <!-- 添加或修改来料检验单对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="1080px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="85%" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-row>
           <el-col :span="8">
@@ -118,7 +118,7 @@
           </el-col>
           <el-col :span="9">
             <el-form-item label="检验单名称" prop="iqcName">
-              <el-input v-model="form.iqcName" placeholder="请输入内容" />
+              <el-input disabled v-model="form.iqcName" placeholder="请输入内容" />
             </el-form-item>
           </el-col>
           <el-col :span="3" align="middle">
@@ -131,59 +131,62 @@
         <el-row>
 
           <el-col :span="8">
-            <el-form-item label="采购单信息" prop="itemCode">
-              <el-input v-if="form.id == null" v-model="form.itemCode" readonly placeholder="请选择物料">
-                <el-button slot="append" @click="handleSelectGoods" icon="el-icon-search"></el-button>
+            <el-form-item label="采购单信息" prop="poNo"><!-- v-if="form.id == null" -->
+              <el-input  v-model="form.poNo" readonly placeholder="请选择物料">
+                <el-button slot="append" @click="handleSelectOrders" icon="el-icon-search"></el-button>
               </el-input>
-              <!--如果已经保存过，则产品不允许再修改，需要修改就删除重做-->
-              <el-input v-else v-model="form.itemCode"> </el-input>
             </el-form-item>
-
-            <GoodsSelect ref="goodsSelect" @onSelected="onGoodsSelected" ></GoodsSelect>
-
+            <OrderSelect ref="ordersSelect" @onSelected="onOrdersSelected" ></OrderSelect>
           </el-col>
 
           <el-col :span="8">
             <el-form-item label="产品物料编码" prop="itemCode">
-              <el-input disabled v-if="form.id == null" v-model="form.itemCode" readonly placeholder="请选择物料">
+<!--              <el-input disabled v-if="form.id == null" v-model="form.itemCode" readonly placeholder="请选择物料">
                 <el-button disabled slot="append" @click="handleSelectProduct" icon="el-icon-search"></el-button>
               </el-input>
-              <!--如果已经保存过，则产品不允许再修改，需要修改就删除重做-->
-              <el-input v-else v-model="form.itemCode"> </el-input>
+              <el-input v-else v-model="form.itemCode"> </el-input>-->
+              <el-select v-model="form.itemCode" placeholder="请选择物料编码" @change="handleItemCodeChange" clearable>
+                <el-option v-for="item in itemOptions" :key="item.itemCode" :label="item.itemCode" :value="item.itemCode"   />
+              </el-select>
             </el-form-item>
-            <ItemSelect ref="itemSelect" @onSelected="onItemSelected"> </ItemSelect>
+            <!-- <ItemSelect ref="itemSelect" @onSelected="onItemSelected"> </ItemSelect>-->
           </el-col>
+
           <el-col :span="8">
             <el-form-item label="产品物料名称" prop="itemName">
               <el-input disabled v-model="form.itemName" readonly="readonly" />
             </el-form-item>
           </el-col>
+
+        </el-row>
+        <el-row>
           <el-col :span="8">
             <el-form-item label="单位" prop="unitOfMeasure">
               <el-input disabled v-model="form.unitOfMeasure" readonly="readonly" />
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row>
+
           <el-col :span="8">
             <el-form-item label="供应商编码" prop="vendorCode">
-              <el-input v-model="form.vendorCode" readonly placeholder="请选择供应商">
-                <el-button slot="append" @click="handleSelectVendor" icon="el-icon-search"></el-button>
+              <el-input disabled v-model="form.vendorCode" readonly placeholder="请选择供应商">
+                <el-button disabled slot="append" @click="handleSelectVendor" icon="el-icon-search"></el-button>
               </el-input>
             </el-form-item>
             <VendorSelect ref="vendorSelect" @onSelected="onVendorSelected" />
           </el-col>
+
           <el-col :span="8">
             <el-form-item label="供应商简称" prop="vendorNick">
-              <el-input v-model="form.vendorNick" readonly="readonly" />
+              <el-input disabled v-model="form.vendorNick" readonly="readonly" />
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+<!--          <el-col :span="8">
             <el-form-item label="供应商批次号" prop="vendorBatch">
               <el-input v-model="form.vendorBatch" placeholder="请输入供应商批次号" />
             </el-form-item>
-          </el-col>
+          </el-col>-->
         </el-row>
+
         <el-divider content-position="center">检测情况</el-divider>
         <el-row>
           <el-col :span="8">
@@ -205,12 +208,12 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="来料日期" prop="reciveDate">
-              <el-date-picker clearable v-model="form.reciveDate" type="date" value-format="timestamp" placeholder="请选择来料日期"> </el-date-picker>
+              <el-date-picker clearable v-model="form.reciveDate" type="datetime" value-format="timestamp" placeholder="请选择来料日期"> </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="检测日期" prop="inspectDate">
-              <el-date-picker clearable v-model="form.inspectDate" type="date" value-format="timestamp" placeholder="请选择检测日期"> </el-date-picker>
+              <el-date-picker clearable v-model="form.inspectDate" type="datetime" value-format="timestamp" placeholder="请选择检测日期"> </el-date-picker>
             </el-form-item>
           </el-col>
               <!--   检验结果基于物料的检测项       -->
@@ -238,7 +241,7 @@
           </el-col>
         </el-row>
 
-        <el-collapse accordion>
+<!--        <el-collapse accordion>
           <el-collapse-item title="结果统计">
             <el-row>
               <el-col :span="8">
@@ -275,7 +278,8 @@
               </el-col>
             </el-row>
           </el-collapse-item>
-        </el-collapse>
+        </el-collapse>-->
+
         <el-divider v-if="form.iqcId != null" content-position="center">检测项</el-divider>
         <el-card shadow="always" v-if="form.id != null" class="box-card">
           <IqcLine ref="line" :iqcId="form.id" :optType="optType"></IqcLine>
@@ -296,19 +300,27 @@
 
 <script>
 import { listIqc, getIqc, delIqc, addIqc, updateIqc , updateIqcAdjuncts } from '@/api/mes/qc/iqc';
+
+import { initIqcQuantity } from '@/api/purchase/goods';
+
+
 import ItemSelect from '@/components/itemSelect/single.vue';
 import VendorSelect from '@/components/vendorSelect/single.vue';
 import IqcLine from './iqcline.vue';
 import { genCode } from '@/api/mes/autocode/rule';
 import { getReport2 } from '@/api/mes/report/report';
 import GoodsSelect from '@/components/purchaseGoods/single.vue';
+import OrderSelect from '@/components/purchaseOrders/single.vue';
+
+import {getGoodsSumQuantity} from '@/api/purchase/goods'
+
 import FileUpload from "@/components/FileUpload/index3.vue";
 import {updateMdItemAdjuncts} from "@/api/mes/md/mdItem";
 
 export default {
   name: 'Iqc',
   dicts: ['mes_qc_result', 'mes_order_status'],
-  components: {FileUpload, ItemSelect, VendorSelect, IqcLine , GoodsSelect},
+  components: {FileUpload, ItemSelect, VendorSelect, IqcLine , GoodsSelect , OrderSelect},
   data() {
     return {
       //自动生成编码
@@ -386,6 +398,7 @@ export default {
       // 用于管控图片删除按钮
       isShowDelete: true,
       adjunctTypes: null,
+      itemOptions: [],
     };
   },
   created() {
@@ -435,7 +448,7 @@ export default {
         majQuantity: null,
         minQuantity: null,
         checkResult: null,
-        reciveDate: null,
+        reciveDate: new Date(),
         inspectDate: null,
         inspector: null,
         status: 'PREPARE',
@@ -591,9 +604,11 @@ export default {
       if (autoGenFlag) {
         genCode('QC_IQC_CODE').then(response => {
           this.form.iqcCode = response;
+          this.form.iqcName = response;
         });
       } else {
         this.form.iqcCode = null;
+        this.form.iqcName = null;
       }
     },
     viewReport() {
@@ -621,6 +636,91 @@ export default {
         this.form.reciveDate = obj.createTime;
       }
     },
+    handleSelectOrders(){
+      this.$refs.ordersSelect.showFlag = true;
+    },
+    onOrdersSelected(obj) {
+      if (obj && typeof obj === 'object' && obj.poNo) {
+        this.$set(this.form, 'poNo', obj.poNo);
+        // 追加物料列表详情
+        this.getGoodsItem();
+      }
+    },
+    getGoodsItem(){
+      this.itemOptions = [];
+      getGoodsSumQuantity({poNo: this.form.poNo}).then(response => {
+        if(response.data.length === 0){
+          this.$message.error('当前采购单不存在已打印单据信息!');
+          return;
+        }
+        const obj = response.data;
+        for (let i = 0; i < obj.length; i++) {
+          const item = obj[i];
+          this.itemOptions.push({
+            id: item.id,
+            itemCode: item.goodsNumber,
+            itemName: item.goodsName,
+            specification: item.goodsSpecs,
+            unitOfMeasure: item.unitOfMeasure,
+            quantityRecived: item.receiveNum,
+            reciveDate: item.createTime,
+            vendorCode: item.vendorCode,
+            vendorName: item.vendorName,
+            vendorNick: item.vendorName
+          });
+        }
+        // 如果只有一个物料，自动选择它
+        if (this.itemOptions.length === 1) {
+          this.form.itemCode = this.itemOptions[0].itemCode;
+          this.handleItemCodeChange(this.form.itemCode);
+        }
+      }).catch(error => {
+        console.error('获取物料信息失败:', error);
+        this.$message.error('获取物料信息失败');
+      });
+
+    },
+
+    // 物料编码变化处理
+    async handleItemCodeChange(selectedItemCode) {
+      if (!selectedItemCode) {
+        // 清空选择时重置相关字段
+        this.form.itemName = '';
+        this.form.unitOfMeasure = '';
+        return;
+      }
+
+      // 在itemOptions中查找选中的物料
+      const selectedItem = this.itemOptions.find(
+        item => item.itemCode === selectedItemCode
+      );
+
+      if (selectedItem) {
+        // 填充物料名称和单位
+        const response = await initIqcQuantity({"poNo": this.form.poNo, "goodsNumber": selectedItemCode});
+
+        this.form.itemName = selectedItem.itemName || '';
+        this.form.unitOfMeasure = selectedItem.unitOfMeasure || '';
+        this.form.specification = selectedItem.specification || '';
+        this.form.quantityRecived = response.data || 0;
+        this.form.quantityCheck = response.data || 0;
+        this.form.vendorCode = selectedItem.vendorCode || '';
+        this.form.vendorName = selectedItem.vendorName || '';
+        this.form.vendorNick = selectedItem.vendorNick || '';
+
+      } else {
+        // 未找到物料时清空字段
+        this.form.itemName = '';
+        this.form.unitOfMeasure = '';
+        this.$message.warning('未找到对应的物料信息');
+      }
+    },
+    refreshIqcLines() {
+      if (this.$refs.line) {
+        this.$refs.line.getList();
+      }
+    }
+
   },
   'form.adjuncts': {
     handler(newVal, oldVal) {

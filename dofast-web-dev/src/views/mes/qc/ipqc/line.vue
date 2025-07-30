@@ -1,27 +1,124 @@
 <template>
   <div class="app-container">
     <el-table v-loading="loading" :data="ipqclineList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="检测项名称" width="120px" align="center" prop="indexName" />
-      <el-table-column label="检测项类型" width="100px" align="center" prop="indexType">
+<!--      <el-table-column type="selection" width="55" align="center" />-->
+      <el-table-column fixed="left" label="检测项名称" width="120px" align="center" prop="indexName" />
+      <el-table-column fixed="left" label="检测项类型" width="100px" align="center" prop="indexType">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.mes_index_type" :value="scope.row.indexType" />
         </template>
       </el-table-column>
-      <el-table-column label="检测工具" align="center" prop="qcTool" />
-      <el-table-column label="检测要求" align="center" prop="checkMethod" />
+      <el-table-column label="检测工具" align="center" prop="qcTool" :show-overflow-tooltip="true" />
+      <el-table-column label="检测要求" align="center" prop="checkMethod" :show-overflow-tooltip="true" />
       <el-table-column label="标准值" align="center" prop="standerVal" />
       <el-table-column label="单位" align="center" prop="unitOfMeasure" />
       <el-table-column label="误差上限" align="center" prop="thresholdMax" />
       <el-table-column label="误差下限" align="center" prop="thresholdMin" />
-      <el-table-column label="致命缺陷数量" align="center" prop="crQuantity" />
+<!--      <el-table-column label="致命缺陷数量" align="center" prop="crQuantity" />
       <el-table-column label="严重缺陷数量" align="center" prop="majQuantity" />
       <el-table-column label="轻微缺陷数量" align="center" prop="minQuantity" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleDefect(scope.row)" v-hasPermi="['qms:ipqc-line:update']" v-if="optType != 'view'">缺陷记录</el-button>
         </template>
+      </el-table-column>-->
+
+
+      <el-table-column label="检验数值1" width="120px" align="center">
+        <template slot-scope="scope">
+          <el-input-number
+            v-model="scope.row.inspectionValue1"
+            :min="0"
+            :step="0.1"
+            :precision="4"
+            :disabled="optType === 'view'"
+            @change="(value) => handleQuantityChange(scope.row, 'inspectionValue1', value)"
+            size="mini"
+            controls-position="right"
+          />
+        </template>
       </el-table-column>
+
+      <el-table-column label="检验数值2" width="120px" align="center">
+        <template slot-scope="scope">
+          <el-input-number
+            v-model="scope.row.inspectionValue2"
+            :min="0"
+            :step="0.1"
+            :precision="4"
+            :disabled="optType === 'view'"
+            @change="(value) => handleQuantityChange(scope.row, 'inspectionValue2', value)"
+            size="mini"
+            controls-position="right"
+          />
+        </template>
+      </el-table-column>
+
+      <el-table-column label="检验数值3" width="120px" align="center">
+        <template slot-scope="scope">
+          <el-input-number
+            v-model="scope.row.inspectionValue3"
+            :min="0"
+            :step="0.1"
+            :precision="4"
+            :disabled="optType === 'view'"
+            @change="(value) => handleQuantityChange(scope.row, 'inspectionValue3', value)"
+            size="mini"
+            controls-position="right"
+          />
+        </template>
+      </el-table-column>
+
+      <el-table-column label="检验数值4" width="120px" align="center">
+        <template slot-scope="scope">
+          <el-input-number
+            v-model="scope.row.inspectionValue4"
+            :min="0"
+            :step="0.1"
+            :precision="4"
+            :disabled="optType === 'view'"
+            @change="(value) => handleQuantityChange(scope.row, 'inspectionValue4', value)"
+            size="mini"
+            controls-position="right"
+          />
+        </template>
+      </el-table-column>
+
+      <el-table-column label="检验数值5" width="120px" align="center">
+        <template slot-scope="scope">
+          <el-input-number
+            v-model="scope.row.inspectionValue5"
+            :min="0"
+            :step="0.1"
+            :precision="4"
+            :disabled="optType === 'view'"
+            @change="(value) => handleQuantityChange(scope.row, 'inspectionValue5', value)"
+            size="mini"
+            controls-position="right"
+          />
+        </template>
+      </el-table-column>
+
+      <!-- 检验结果列 -->
+      <el-table-column label="检验结果" width="120px" align="center">
+        <template slot-scope="scope">
+          <el-select
+            v-model="scope.row.inspectionResult"
+            placeholder="请选择"
+            :disabled="optType === 'view'"
+            @change="(value) => handleQuantityChange(scope.row, 'inspectionResult', value)"
+            size="mini"
+          >
+            <el-option
+              v-for="dict in dict.type.mes_qc_result"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            />
+          </el-select>
+        </template>
+      </el-table-column>
+
     </el-table>
 
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList" />
@@ -34,7 +131,7 @@ import { listIpqcline, getIpqcline, delIpqcline, addIpqcline, updateIpqcline } f
 import Defectrecord from '../defectrecord/index.vue';
 export default {
   name: 'Ipqcline',
-  dicts: ['mes_index_type'],
+  dicts: ['mes_index_type', 'mes_qc_result'],
   props: {
     ipqcId: null,
     optType: undefined,
@@ -163,6 +260,48 @@ export default {
         this.$refs.defectDialog.showFlag = true;
         this.$refs.defectDialog.getList();
       });
+    },
+    // 添加处理数量变化的方法
+    handleQuantityChange(row, field, value) {
+      // 构造更新数据
+      const updateData = {
+        id: row.id,
+        ipqcId: row.ipqcId,
+        indexId: row.indexId,
+        [field]: value
+      };
+
+      // 调用API更新
+      updateIpqcline(updateData).then(response => {
+        this.$modal.msgSuccess(`${this.getFieldLabel(field)}更新成功`);
+
+        // 更新本地数据（可选）
+        const index = this.ipqclineList.findIndex(item => item.id === row.id);
+        if (index !== -1) {
+          this.$set(this.ipqclineList, index, {
+            ...this.ipqclineList[index],
+            [field]: value
+          });
+        }
+      }).catch(error => {
+        console.error('更新数量失败:', error);
+        this.$modal.msgError(`${this.getFieldLabel(field)}更新失败`);
+      });
+    },
+    // 获取字段中文标签
+    getFieldLabel(field) {
+      const labels = {
+        crQuantity: '致命缺陷数量',
+        majQuantity: '严重缺陷数量',
+        minQuantity: '轻微缺陷数量',
+        inspectionValue1: '检验数值1',
+        inspectionValue2: '检验数值1',
+        inspectionValue3: '检验数值1',
+        inspectionValue4: '检验数值1',
+        inspectionValue5: '检验数值1',
+        inspectionResult: "检验结果",
+      };
+      return labels[field] || '缺陷数量';
     },
   },
 };
