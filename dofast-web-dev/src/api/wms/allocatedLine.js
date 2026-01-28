@@ -52,3 +52,5 @@ export function exportAllocatedLineExcel(query) {
     responseType: 'blob'
   })
 }
+
+

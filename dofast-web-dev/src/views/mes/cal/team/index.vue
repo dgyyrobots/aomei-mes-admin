@@ -90,15 +90,23 @@
           </el-col>
         </el-row>
 
-
         <el-row>
           <el-col :span="8">
-            <el-form-item label="负责人" prop="principalName">
-              <el-input v-model="form.principalName" placeholder="请选择负责人" disabled>
+            <el-form-item label="白班负责人" prop="principalName">
+              <el-input v-model="form.principalName" placeholder="请选择" disabled>
                 <el-button slot="append" icon="el-icon-search" @click="handleUserSelect"></el-button>
               </el-input>
             </el-form-item>
             <UserSingleSelect ref="userSelect" @onSelected="userSelected"></UserSingleSelect>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="夜班负责人" prop="principalName">
+              <el-input v-model="form.nightPrincipalName" placeholder="请选择" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleNightUserSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <UserSingleSelect ref="nightUserSelect" @onSelected="nightUserSelected"></UserSingleSelect>
           </el-col>
 
           <el-col :span="8">
@@ -119,7 +127,7 @@
           </el-col>
         </el-row>
       </el-form>
-      <el-divider v-if="form.id != null" content-position="center">项目组成员</el-divider>
+      <el-divider v-if="form.id != null" content-position="center">班组成员</el-divider>
       <Teammember v-if="form.id != null" :optType="optType" :teamId="form.id"></Teammember>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="cancel" v-if="optType == 'view'">返回</el-button>
@@ -325,6 +333,9 @@ export default {
     handleUserSelect(){
       this.$refs.userSelect.open();
     },
+    handleNightUserSelect(){
+      this.$refs.nightUserSelect.open();
+    },
     // 回写用户
     userSelected(obj){
       console.log(obj);
@@ -333,6 +344,13 @@ export default {
         this.form.principalId = obj.id;
       }
     },
+    nightUserSelected(obj){
+      if (obj != undefined && obj != null) {
+        this.form.nightPrincipalName = obj.nickname;
+        this.form.nightPrincipalId = obj.id;
+      }
+    },
+
     handleMachineryAdd() {
       this.$refs.machinerySelect.showFlag = true;
     },

@@ -1,8 +1,7 @@
 <template>
   <div class="app-container">
-
     <!-- 搜索工作栏 -->
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="100px">
       <el-form-item label="审批单号" prop="auditCode">
         <el-input v-model="queryParams.auditCode" placeholder="请输入审批单号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
@@ -12,7 +11,7 @@
       </el-form-item>
       <el-form-item label="提交时间" prop="submitTime">
         <el-date-picker v-model="queryParams.submitTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
-                        range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']" />
+                        range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"/>
       </el-form-item>
 
       <el-form-item label="审批人" prop="auditUserName">
@@ -21,13 +20,19 @@
 
       <el-form-item label="审批时间" prop="auditTime">
         <el-date-picker v-model="queryParams.auditTime" style="width: 240px" value-format="yyyy-MM-dd HH:mm:ss" type="daterange"
-                        range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']" />
+                        range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"/>
       </el-form-item>
 
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
           <el-option v-for="dict in dict.type.mes_order_status" :key="dict.value" :label="dict.label"
                      :value="dict.value"/>
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="生产工序" prop="processCode">
+        <el-select @change="val => { handleProcessChange(val) }" v-model="queryParams.processCode" placeholder="请选择工序" clearable>
+          <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"/>
         </el-select>
       </el-form-item>
 
@@ -39,27 +44,29 @@
 
     <!-- 操作工具栏 -->
     <el-row :gutter="10" class="mb8">
-<!--      <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-                   v-hasPermi="['pro:feedback-audit:create']">新增</el-button>
-      </el-col>-->
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" :loading="exportLoading"
-                   v-hasPermi="['pro:feedback-audit:export']">导出</el-button>
+                   v-hasPermi="['pro:feedback-audit:export']">导出
+        </el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <!-- 列表 -->
     <el-table v-loading="loading" :data="list">
-      <el-table-column label="审批单号" width="150" align="center" prop="auditCode" />
-      <el-table-column label="提交人" align="center" prop="submitNickName" />
+      <el-table-column label="审批单号" width="150" align="center" prop="auditCode"/>
+      <el-table-column label="提交人" align="center" prop="submitNickName"/>
       <el-table-column label="提交时间" align="center" prop="submitTime" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.submitTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="审批人" align="center" prop="auditNickName" />
+      <el-table-column label="工序" align="center" prop="processName"/>
+      <el-table-column label="设备名称" align="center" prop="machineryName"/>
+      <el-table-column label="报工总数" align="center" prop="quantity"/>
+      <el-table-column label="合格总数" align="center" prop="quantityQuality"/>
+      <el-table-column label="工艺损耗" align="center" prop="quantityExcess"/>
+      <el-table-column label="审批人" align="center" prop="auditNickName"/>
       <el-table-column label="审批时间" align="center" prop="auditTime" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.auditTime) }}</span>
@@ -71,13 +78,15 @@
         </template>
       </el-table-column>
 
-      <el-table-column fixed="right" label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column fixed="right" width="150" label="操作" align="center" class-name="small-padding fixed-width">
         <template v-slot="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-                     v-if="scope.row.status === 'PREPARE'" v-hasPermi="['pro:feedback-audit:update']">修改</el-button>
+                     v-if="scope.row.status === 'PREPARE'" v-hasPermi="['pro:feedback-audit:update']">修改
+          </el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-                     v-if="scope.row.status === 'PREPARE'" v-hasPermi="['pro:feedback-audit:delete']">删除</el-button>
+                     v-if="scope.row.status === 'PREPARE'" v-hasPermi="['pro:feedback-audit:delete']">删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -92,18 +101,18 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="审批单号" prop="auditCode">
-              <el-input v-model="form.auditCode" placeholder="请输入审批单号" :disabled="readonly" />
+              <el-input v-model="form.auditCode" placeholder="请输入审批单号" :disabled="readonly"/>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="提交人" prop="submitNickName">
-              <el-input v-model="form.submitNickName" placeholder="请输入提交人" :disabled="readonly" />
+              <el-input v-model="form.submitNickName" placeholder="请输入提交人" :disabled="readonly"/>
             </el-form-item>
           </el-col>
 
           <el-col float-right :span="8">
             <el-form-item label="提交时间" prop="submitTime">
-              <el-date-picker clearable v-model="form.submitTime" type="date" value-format="timestamp" placeholder="选择提交时间" :disabled="readonly" />
+              <el-date-picker clearable v-model="form.submitTime" type="date" value-format="timestamp" placeholder="选择提交时间" :disabled="readonly"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -121,14 +130,14 @@
           <!-- 审批时间字段 - 状态非PREPARE时显示 -->
           <el-col :span="8" v-if="form.status !== 'PREPARE'">
             <el-form-item label="审批时间" prop="auditTime">
-              <el-date-picker clearable v-model="form.auditTime" type="date" value-format="timestamp" placeholder="选择审批时间" :disabled="true" />
+              <el-date-picker clearable v-model="form.auditTime" type="date" value-format="timestamp" placeholder="选择审批时间" :disabled="true"/>
             </el-form-item>
           </el-col>
 
           <!-- 审批人字段 - 状态非PREPARE时显示 -->
           <el-col :span="8" v-if="form.status !== 'PREPARE'">
             <el-form-item label="审批人" prop="auditNickName">
-              <el-input v-model="form.auditUserName" placeholder="请输入审批人姓名" :disabled="true" />
+              <el-input v-model="form.auditUserName" placeholder="请输入审批人姓名" :disabled="true"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -142,13 +151,19 @@
           height="230"
           @row-click="handleSummaryRowClick"
           style="margin-bottom: 20px;">
-          <el-table-column prop="workorderCode" label="工单号" width="170" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="taskCode" label="任务单号" width="120"></el-table-column>
-          <el-table-column prop="processName" label="工序" width="60"></el-table-column>
-          <el-table-column prop="nickName" label="报工人" width="70"></el-table-column>
-          <el-table-column prop="sumQuantityFeedback" label="总生产数量" align="center" ></el-table-column>
+          <el-table-column label="序号" width="50" align="center">
+            <template slot-scope="scope">
+              {{ scope.$index + 1 }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="workorderCode" label="工单号" width="170" :show-overflow-tooltip="true" align="center" />
+          <el-table-column prop="taskCode" label="任务单号" width="120" align="center"></el-table-column>
+          <el-table-column prop="processName" label="工序" width="60" align="center"></el-table-column>
+          <el-table-column prop="nickName" label="报工人" width="70" align="center"></el-table-column>
+          <el-table-column prop="sumQuantityFeedback" label="总生产数量" align="center"></el-table-column>
           <el-table-column prop="sumQuantityQualified" label="总合格数量" align="center"></el-table-column>
           <el-table-column prop="sumQuantityUnquanlified" label="总不良数量" align="center"></el-table-column>
+          <el-table-column prop="sumQuantityExcess" label="总工艺损耗数量" align="center"></el-table-column>
           <el-table-column prop="principalDisplay" width="350" label="参与人员" align="center" :show-overflow-tooltip="true"></el-table-column>
         </el-table>
 
@@ -157,22 +172,115 @@
           v-loading="detailLoading"
           :data="auditDetailList"
           border
-          height="250">
-          <el-table-column prop="feedbackCode" label="报工单号" width="190" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="workorderCode" label="工单号" width="160" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="itemName" label="物料名称" width="150" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="processName" label="工序" width="60"></el-table-column>
-          <el-table-column prop="nickName" label="报工人" width="70"></el-table-column>
+          height="250"
+          row-key="id"
+          :tree-props="{ children: 'feedbackDefectList', hasChildren: 'hasChildren' }">
+          <el-table-column label="序号" width="50" align="center">
+            <template slot-scope="scope">
+              <span v-if="scope.row.feedbackCode">{{ scope.row.tempIndex }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="feedbackCode" label="报工单号" width="160" :show-overflow-tooltip="true" />
+
+<!--          <el-table-column label="报工单号/缺陷名称" width="190" :show-overflow-tooltip="true">
+            <template  slot-scope="scope">
+              <span v-if="scope.row.defectName" style="color: #F56C6C;">
+                  {{ scope.row.defectName }}
+              </span>
+              <span v-else>
+                  {{ scope.row.feedbackCode }}
+              </span>
+            </template>
+          </el-table-column>-->
+
+
+<!--          <el-table-column prop="workorderCode" label="工单号/缺陷编码" width="160" :show-overflow-tooltip="true"></el-table-column>-->
+          <el-table-column label="工单号/缺陷名称" width="190" :show-overflow-tooltip="true">
+            <template  slot-scope="scope">
+              <span v-if="scope.row.defectName" >
+                  {{ scope.row.defectName }}
+              </span>
+              <span v-else>
+                  {{ scope.row.workorderCode }}
+              </span>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="itemName" label="物料名称" width="150" align="center" :show-overflow-tooltip="true" ></el-table-column>
+          <el-table-column prop="processName" label="工序/缺陷工序" width="100" align="center"></el-table-column>
+          <el-table-column prop="nickName" label="报工人" width="70" align="center"></el-table-column>
           <el-table-column prop="quantityFeedback" label="报工数量" align="center"></el-table-column>
+<!--          <el-table-column label="报工数量/起始米数" width="150" align="center" :show-overflow-tooltip="true">
+            <template  slot-scope="scope">
+              <span v-if="scope.row.startMeter" >
+                  {{ scope.row.startMeter }}
+              </span>
+              <span v-else>
+                  {{ scope.row.quantityFeedback }}
+              </span>
+            </template>
+          </el-table-column>-->
+
+
           <el-table-column prop="quantityQualified" label="合格数量" align="center"></el-table-column>
-          <el-table-column prop="quantityUnquanlified" label="不良数量" align="center"></el-table-column>
-          <el-table-column prop="feedbackTime" label="报工时间" width="180">
+<!--          <el-table-column label="合格数量/结束米数" width="150" :show-overflow-tooltip="true">
+            <template  slot-scope="scope">
+              <span v-if="scope.row.endMeter">
+                  {{ scope.row.endMeter }}
+              </span>
+              <span v-else>
+                  {{ scope.row.quantityQualified }}
+              </span>
+            </template>
+          </el-table-column>-->
+
+          <el-table-column label="不良数量" width="80" align="center" :show-overflow-tooltip="true">
+            <template  slot-scope="scope">
+              <span v-if="scope.row.defectMeter">
+                  {{ scope.row.defectMeter }}
+              </span>
+              <span v-else>
+                  {{ scope.row.quantityUnquanlified }}
+              </span>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="quantityExcess" label="工艺损耗" width="100" align="center"></el-table-column>
+
+          <el-table-column prop="feedbackTime" label="报工时间" width="180" align="center">
             <template slot-scope="scope">
               {{ parseTime(scope.row.feedbackTime) }}
             </template>
           </el-table-column>
-          <el-table-column prop="teamCode" label="班组" width="80"></el-table-column>
-          <el-table-column prop="batchCode" label="批次号" width="150"></el-table-column>
+<!--          <el-table-column prop="teamCode" label="班组" width="80" align="center"></el-table-column>-->
+          <el-table-column label="班组/来源班组" width="120" align="center" :show-overflow-tooltip="true">
+            <template  slot-scope="scope">
+              <span v-if="scope.row.defectMeter">
+                  {{ scope.row.originTeamCode }}
+              </span>
+              <span v-else>
+                  {{ scope.row.teamCode }}
+              </span>
+            </template>
+          </el-table-column>
+
+
+          <!--          <el-table-column prop="batchCode" label="批次号" width="150" align="center"></el-table-column>-->
+          <el-table-column label="批次号/来源批次" width="150" align="center" :show-overflow-tooltip="true">
+            <template  slot-scope="scope">
+              <span v-if="scope.row.defectMeter">
+                  {{ scope.row.originBatchCode }}
+              </span>
+              <span v-else>
+                  {{ scope.row.batchCode }}
+              </span>
+            </template>
+          </el-table-column>
+
+
+
+
         </el-table>
 
         <pagination
@@ -182,26 +290,89 @@
       <div slot="footer" class="dialog-footer">
         <el-button type="success" @click="handleExecute" v-if="form.status === 'PREPARE' && !readonly" v-hasPermi="['pro:feedback-audit:update']">审批通过
         </el-button>
+
+        <el-button type="warning" @click="handleTransfer" v-if="form.status === 'PREPARE'" v-hasPermi="['pro:feedback-audit:update']">转审
+        </el-button>
+
+        <el-button @click="cancel">取 消</el-button>
+
         <el-button type="danger" @click="handleReject" v-if="form.status === 'PREPARE' && !readonly" v-hasPermi="['pro:feedback-audit:update']">审批不通过
         </el-button>
-        <el-button @click="cancel">取 消</el-button>
+
+      </div>
+    </el-dialog>
+
+    <el-dialog title="审批转审" :visible.sync="transferOpen" width="90%" append-to-body>
+      <el-form :model="transferForm" label-width="100px">
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="目标审批人" prop="targetAuditUserId">
+              <el-input v-model="transferForm.targetAuditUserId" placeholder="请选择" disabled>
+                <el-button slot="append" icon="el-icon-search" @click="handleUserSelect"></el-button>
+              </el-input>
+            </el-form-item>
+            <UserSingleSelect ref="userSelect" @onSelected="onUserSelected"></UserSingleSelect>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item label="转审备注" prop="remark">
+              <el-input v-model="transferForm.remark" placeholder="请输入转审原因"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+
+      <el-divider content-position="left">选择要转审的报工明细（可多选）</el-divider>
+
+      <el-table
+        :data="transferDetailList"
+        @selection-change="handleTransferSelectionChange"
+        border
+        height="400"
+        style="margin-bottom: 20px;">
+        <el-table-column type="selection" width="55" align="center"></el-table-column>
+        <el-table-column label="序号" width="60" align="center">
+          <template slot-scope="scope">
+            {{ scope.$index + 1 }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="feedbackCode" label="报工单号" width="150" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="workorderCode" label="工单号" width="150" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="itemName" label="物料名称" width="120" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="processName" label="工序" width="80" align="center"></el-table-column>
+        <el-table-column prop="nickName" label="报工人" width="80" align="center"></el-table-column>
+        <el-table-column prop="quantityFeedback" label="报工数量" width="100" align="center"></el-table-column>
+        <el-table-column prop="quantityQualified" label="合格数量" width="100" align="center"></el-table-column>
+        <el-table-column prop="quantityUnquanlified" label="不良数量" width="100" align="center"></el-table-column>
+        <el-table-column prop="feedbackTime" label="报工时间" width="160" align="center">
+          <template slot-scope="scope">
+            {{ parseTime(scope.row.feedbackTime) }}
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="transferOpen = false">取 消</el-button>
+        <el-button type="primary" @click="submitTransferSelection">确 定</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 
+
 <script>
-import { createFeedbackAudit, updateFeedbackAudit, deleteFeedbackAudit, getFeedbackAudit, getFeedbackAuditPage, exportFeedbackAuditExcel , auditFeedback , executes } from "@/api/mes/pro/feedbackAudit";
+import {createFeedbackAudit, updateFeedbackAudit, deleteFeedbackAudit, getFeedbackAudit, getFeedbackAuditPage, exportFeedbackAuditExcel, auditFeedback, executes , transferFeedbackAuditDetails } from "@/api/mes/pro/feedbackAudit";
 
-import { getAuditSummary } from "@/api/mes/pro/feedbackAuditItem";
-import { getAuditDetails } from "@/api/mes/pro/feedbackAuditDetail";
+import {getAuditSummary} from "@/api/mes/pro/feedbackAuditItem";
+import {getAuditDetails} from "@/api/mes/pro/feedbackAuditDetail";
+import {listProcess} from "@/api/mes/pro/process";
 
+import UserSingleSelect from '@/components/userSelect/single.vue';
 
 export default {
   name: "FeedbackAudit",
   dicts: ['mes_order_status'],
-  components: {
-  },
+  components: { UserSingleSelect },
   data() {
     return {
       // 遮罩层
@@ -237,11 +408,11 @@ export default {
       form: {},
       // 表单校验
       rules: {
-        auditCode: [{ required: true, message: "审批单号不能为空", trigger: "blur" }],
-        submitUserId: [{ required: true, message: "提交人ID不能为空", trigger: "blur" }],
-        submitUserName: [{ required: true, message: "提交人姓名不能为空", trigger: "blur" }],
-        submitTime: [{ required: true, message: "提交时间不能为空", trigger: "blur" }],
-        status: [{ required: true, message: "状态不能为空", trigger: "blur" }],
+        auditCode: [{required: true, message: "审批单号不能为空", trigger: "blur"}],
+        submitUserId: [{required: true, message: "提交人ID不能为空", trigger: "blur"}],
+        submitUserName: [{required: true, message: "提交人姓名不能为空", trigger: "blur"}],
+        submitTime: [{required: true, message: "提交时间不能为空", trigger: "blur"}],
+        status: [{required: true, message: "状态不能为空", trigger: "blur"}],
       },
       // 汇总数据列表
       auditSummaryList: [],
@@ -258,13 +429,27 @@ export default {
         auditItemId: null
       },
       detailTotal: 0,
-      // 只读模式（查看模式）
+      // 只读模式
       readonly: false,
+      processOptions: [], // 工序选项
+      // 转审拓展
+      transferOpen: false, // 控制转审对话框显示
+      transferForm: {
+        id: undefined, // 原审批单ID
+        targetAuditUserId: undefined, // 目标审批人ID
+        targetAuditUserName: '', // 目标审批人姓名
+        remark: '' // 转审备注
+      },
+      transferDetailList: [], // 用于转审的明细列表
+      selectedTransferDetails: [], // 选中的转审明细
+      userList: [], // 用户列表
+      userListLoading: false,
 
     };
   },
   created() {
     this.getList();
+    this.getProcess();
   },
   methods: {
     /** 查询列表 */
@@ -374,12 +559,13 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const id = row.id;
-      this.$modal.confirm('是否确认删除报工审批主表编号为"' + id + '"的数据项?').then(function() {
+      this.$modal.confirm('是否确认删除报工审批主表编号为"' + id + '"的数据项?').then(function () {
         return deleteFeedbackAudit(id);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("删除成功");
-      }).catch(() => {});
+      }).catch(() => {
+      });
     },
     /** 导出按钮操作 */
     handleExport() {
@@ -393,7 +579,8 @@ export default {
       }).then(response => {
         this.$download.excel(response, '报工审批主表.xls');
         this.exportLoading = false;
-      }).catch(() => {});
+      }).catch(() => {
+      });
     },
 
     // 加载汇总数据
@@ -422,8 +609,28 @@ export default {
     // 汇总行点击事件
     loadAuditDetails() {
       this.detailLoading = true;
+      let feedbackCount = 0;
       getAuditDetails(this.detailQueryParams).then(response => {
-        this.auditDetailList = response.data.list;
+        this.auditDetailList = response.data.list.map(item => {
+          // 为缺陷记录添加前缀，确保ID唯一
+          if (item.feedbackDefectList && item.feedbackDefectList.length) {
+            item.feedbackDefectList = item.feedbackDefectList.map(defect => {
+              return {
+                ...defect,
+                id: 'defect-' + defect.id // 添加前缀确保ID唯一
+              };
+            });
+          }
+          // 只为报工行添加序号
+          if (item.feedbackCode) {
+            feedbackCount++;
+            return {
+              ...item,
+              tempIndex: feedbackCount
+            };
+          }
+          return item;
+        });
         this.detailTotal = response.data.total;
         this.detailLoading = false;
       }).catch(() => {
@@ -432,7 +639,6 @@ export default {
     },
     handleSummaryRowClick(row) {
       this.detailLoading = true;
-      console.log("row", row)
       this.detailQueryParams = {
         pageNo: 1,
         pageSize: 10,
@@ -495,6 +701,92 @@ export default {
         .catch(() => {
         });
     },
+    getProcess() {
+      // 初始化工序选项
+      this.processOptions = [];
+      listProcess().then(response => {
+        this.processOptions = response.data.list;
+      });
+    },
+    handleTransfer() {
+      // 初始化转审表单
+      this.transferForm = {
+        id: this.form.id,
+        targetAuditUserId: undefined,
+        targetAuditUserName: '',
+        remark: ''
+      };
+      // 加载可转审的明细数据
+      this.loadTransferDetails();
+      this.transferOpen = true;
+    },
+
+    /** 加载可转审的明细数据 */
+    loadTransferDetails() {
+      // 这里可以根据需要过滤，比如只显示未审批的明细
+      this.transferDetailList = JSON.parse(JSON.stringify(this.auditDetailList.filter(item => item.feedbackCode)));
+    },
+    handleUserSelect() {
+      this.$refs.userSelect.showFlag = true;
+    },
+    //人员选择返回
+    onUserSelected(obj) {
+      if (obj != undefined && obj != null) {
+        this.transferForm.targetAuditUserId = obj.id;
+      }
+    },
+    /** 处理明细选择变化 */
+    handleTransferSelectionChange(selection) {
+      this.selectedTransferDetails = selection;
+    },
+
+    /** 提交转审选择 */
+    submitTransferSelection() {
+      if (this.selectedTransferDetails.length === 0) {
+        this.$modal.msgWarning("请至少选择一条明细进行转审");
+        return;
+      }
+
+      if (!this.transferForm.targetAuditUserId) {
+        this.$modal.msgWarning("请选择目标审批人");
+        return;
+      }
+
+      this.$modal.confirm(`确认将选中的 ${this.selectedTransferDetails.length} 条明细转审给 ${this.transferForm.targetAuditUserName}?`).then(() => {
+        this.doTransfer();
+      }).catch(() => {}).finally(()=>{
+        this.getList();
+      });
+    },
+
+    /** 执行转审操作 */
+    async doTransfer() {
+      try {
+        // 准备转审数据
+        const transferData = {
+          sourceAuditId: this.transferForm.id,
+          targetAuditUserId: this.transferForm.targetAuditUserId,
+          remark: this.transferForm.remark,
+          detailIds: this.selectedTransferDetails.map(item => item.id)
+        };
+
+        // 调用转审API
+        await transferFeedbackAuditDetails(transferData);
+
+        this.$modal.msgSuccess("转审成功");
+        this.transferOpen = false;
+
+        // 刷新当前页面数据
+        this.loadAuditSummary(this.form.id);
+        this.loadAuditDetails();
+
+      } catch (error) {
+        console.error("转审操作失败", error);
+        this.$modal.msgError("转审操作失败");
+      }
+    },
+
+
   }
 };
 </script>

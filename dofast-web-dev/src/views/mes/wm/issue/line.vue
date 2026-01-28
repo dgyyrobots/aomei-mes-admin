@@ -1,5 +1,96 @@
 <template>
   <div class="app-container">
+    <el-collapse accordion style="margin-bottom: 3%">
+      <el-collapse-item  title="领用状态">
+        <!-- 已同步ERP提示 -->
+        <div v-if="erpSyncCount > 0" class="erp-alert">
+          <el-alert title="已同步ERP物料明细" type="success" show-icon :closable="false">
+            <template >  <!--  v-slot:description -->
+              <div class="material-summary">
+                <span>已同步: {{ erpSyncCount }} 条记录 | 总量: {{ erpSyncuantity }}</span>
+              </div>
+              <div class="material-details">
+                <div v-for="(item, index) in syncedMaterials" :key="index" class="material-item">
+                  <el-tag size="small" effect="dark" type="success">
+                    <i class="el-icon-caret-right"></i> {{ item.materialCode }}
+                  </el-tag>
+                  <span class="material-info">记录: {{ item.syncCount }} | 数量: {{ item.syncQuantity }}</span>
+                </div>
+              </div>
+            </template>
+          </el-alert>
+        </div>
+        <!-- 未同步ERP提示 -->
+        <div v-if="erpUnsyncCount > 0" class="erp-alert">
+          <el-alert title="未同步ERP物料明细" type="error" show-icon :closable="false">
+            <template >  <!-- v-slot:description -->
+              <div class="material-summary">
+                <span>未同步: {{ erpUnsyncCount }} 条记录 | 总量: {{ erpUnsyncuantity }}</span>
+              </div>
+              <div class="material-details">
+                <div v-for="(item, index) in unsyncedMaterials" :key="index" class="material-item">
+                  <el-tag size="small" effect="dark" type="danger">
+                    <i class="el-icon-warning"></i> {{ item.materialCode }}
+                  </el-tag>
+                  <span class="material-info">记录: {{ item.unsyncCount }} | 数量: {{ item.unsyncQuantity }}</span>
+                </div>
+              </div>
+            </template>
+          </el-alert>
+        </div>
+      </el-collapse-item>
+    </el-collapse>
+
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="100px">
+
+      <!--      <el-form-item  v-if="optType != 'view'"  label="物料条码" prop="barcode">
+              <el-row :gutter="5">
+                <el-col :span="18">
+                  <el-input
+                    v-model="purchaseId"
+                    placeholder="请扫描或输入物料条码"
+                    @focus="handleInputFocus"
+                    @compositionstart="handleCompositionStart"
+                    @compositionend="handleCompositionEnd"
+                    style="ime-mode: disabled"
+                  />
+                </el-col>
+                <el-col :span="6">
+                  <el-button type="primary" @click="getCameraInfo()" style="width:100%">摄像头</el-button>
+                </el-col>
+              </el-row>
+            </el-form-item>-->
+
+      <el-form-item label="设备信息" prop="status">
+        <el-input v-model="form.machineryName" placeholder="请选择" disabled>
+          <el-button slot="append" icon="el-icon-search" @click="handleMachineryAdd"></el-button>
+        </el-input>
+        <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
+      </el-form-item>
+
+      <el-form-item label="ERP状态" prop="erpEnable">
+        <el-select v-model="queryParams.erpEnable" placeholder="请选择" clear>
+          <el-option
+            v-for="item in erpStatusoptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value">
+          </el-option>
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="批次号" prop="batchCode">
+        <el-input v-model="queryParams.batchCode" placeholder="请输入批次"/>
+      </el-form-item>
+
+      <el-form-item>
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+      </el-form-item>
+
+      <!--      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>-->
+    </el-form>
+
     <el-row v-if="optType != 'view'" :gutter="10" class="mb8">
       <el-col :span="4">
         <el-input
@@ -17,56 +108,56 @@
         <el-button type="primary" round @click="getCameraInfo()">摄像头</el-button>
       </el-col>
 
-      <el-col :span="4">
-          <el-input v-model="form.machineryName" placeholder="请选择设备信息" disabled>
-            <el-button slot="append" icon="el-icon-search" @click="handleMachineryAdd"></el-button>
-          </el-input>
-        <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
-      </el-col>
+      <!--      <el-col :span="4">
+                <el-input v-model="form.machineryName" placeholder="请选择设备信息" disabled>
+                  <el-button slot="append" icon="el-icon-search" @click="handleMachineryAdd"></el-button>
+                </el-input>
+              <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
+            </el-col>-->
 
 
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleBlur" v-hasPermi="['wms:issue-header:create']">新增 </el-button>
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleBlur" v-hasPermi="['wms:issue-header:create']">新增</el-button>
       </el-col>
-<!--      <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
-      </el-col>-->
+      <!--      <el-col :span="1.5">
+              <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
+            </el-col>-->
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
-      </el-col>
-
-      <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleSwitchChange" v-hasPermi="['wms:issue-header:update']">启用 </el-button>
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:issue-header:delete']">删除</el-button>
       </el-col>
 
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleCancleIssue" :disabled="disabledFlag" >撤销领料 </el-button>
+        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleSwitchChange" v-hasPermi="['wms:issue-header:update']">启用</el-button>
+      </el-col>
+
+      <el-col :span="1.5">
+        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleCancleIssue" :disabled="disabledFlag">撤销领料</el-button>
       </el-col>
 
       <el-col :span="1.5"><!-- v-hasPermi="['wms:issue-header:erpInterface']" -->
-        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleIssueErp" :disabled="disabledFlag" >ERP领料</el-button>
+        <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleIssueErp" :disabled="disabledFlag">ERP领料</el-button>
       </el-col>
 
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+
     </el-row>
 
-    <el-table  ref="multipleTable"  v-loading="loading" :data="issuelineList" @selection-change="handleSelectionChange" @row-click="handleRowClick"><!--@row-click="handleRowClick"-->
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column type="index" label="序号" width="50" align="center" />
-      <el-table-column label="条码编号" align="center" prop="barcodeNumber" />
-      <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode" />
-      <el-table-column label="产品物料名称" width="120px" align="center" prop="itemName" :show-overflow-tooltip="true" />
-      <el-table-column label="产品物料规格" width="120px" align="center" prop="specification" :show-overflow-tooltip="true" />
-      <el-table-column label="设备名称" align="center" prop="machineryName" />
-      <el-table-column label="领料数量" align="center" prop="quantityIssued" />
-      <el-table-column label="领料状态" align="center" prop="status" >
+    <el-table ref="multipleTable" v-loading="loading" :data="issuelineList" @selection-change="handleSelectionChange" @row-click="handleRowClick"><!--@row-click="handleRowClick"-->
+      <el-table-column type="selection" width="55" align="center"/>
+      <el-table-column type="index" label="序号" width="50" align="center"/>
+      <el-table-column label="条码编号" align="center" prop="barcodeNumber"/>
+      <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode"/>
+      <el-table-column label="产品物料名称" width="120px" align="center" prop="itemName" :show-overflow-tooltip="true"/>
+      <el-table-column label="产品物料规格" width="120px" align="center" prop="specification" :show-overflow-tooltip="true"/>
+      <el-table-column label="设备名称" align="center" prop="machineryName"/>
+      <el-table-column label="领料数量" align="center" prop="quantityIssued"/>
+      <el-table-column label="领料状态" align="center" prop="status">
         <template v-slot="scope">
           <span v-if="scope.row.status === 'N'">未上料</span>
           <span v-else>已上料</span>
         </template>
       </el-table-column>
 
-      <el-table-column label="启用状态" align="center" prop="enableFlag" >
+      <el-table-column label="启用状态" align="center" prop="enableFlag">
         <template v-slot="scope">
           <el-switch
             disabled
@@ -77,44 +168,44 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="报工状态" align="center" prop="feedbackStatus" >
+      <el-table-column label="报工状态" align="center" prop="feedbackStatus">
         <template v-slot="scope">
           <span v-if="scope.row.feedbackStatus === 'N'">未报工</span>
           <span v-else>已报工</span>
         </template>
       </el-table-column>
-      <el-table-column  width="180" label="批次号" align="center" prop="batchCode" />
-      <el-table-column  width="180"  label="报工单" align="center" prop="feedbackCode" :show-overflow-tooltip="true" />
-      <el-table-column label="单位" align="center" prop="unitOfMeasure" />
+      <el-table-column width="180" label="批次号" align="center" prop="batchCode"/>
+      <el-table-column width="180" label="报工单" align="center" prop="feedbackCode" :show-overflow-tooltip="true"/>
+      <el-table-column label="单位" align="center" prop="unitOfMeasure"/>
 
-      <el-table-column width="180" label="仓库名称" align="center" prop="warehouseName" />
-      <el-table-column width="180" label="库区名称" align="center" prop="locationName" />
-      <el-table-column width="180" label="库位名称" align="center" prop="areaName" />
+      <el-table-column width="180" label="仓库名称" align="center" prop="warehouseName"/>
+      <el-table-column width="180" label="库区名称" align="center" prop="locationName"/>
+      <el-table-column width="180" label="库位名称" align="center" prop="areaName"/>
 
-      <el-table-column fixed="right"  label="领料人" align="center" prop="creator" />
-      <el-table-column fixed="right"  label="领料时间" align="center" prop="createTime" width="180">
+      <el-table-column fixed="right" label="领料人" align="center" prop="creator"/>
+      <el-table-column fixed="right" label="领料时间" align="center" prop="createTime" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column fixed="right" label="ERP状态" align="center" prop="erpEnable" >
+      <el-table-column fixed="right" label="ERP状态" align="center" prop="erpEnable">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.erp_status" :value="scope.row.erpEnable" />
+          <dict-tag :options="dict.type.erp_status" :value="scope.row.erpEnable"/>
         </template>
       </el-table-column>
 
-      <el-table-column fixed="right" label="操作" align="center"  v-if="optType != 'view'" width="100px" class-name="small-padding fixed-width">
+      <el-table-column fixed="right" label="操作" align="center" v-if="optType != 'view'" width="100px" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-<!--
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-if="optType != 'view'" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
--->
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-if="optType != 'view'" v-hasPermi="['wms:issue-header:delete']">删除 </el-button>
+          <!--
+                    <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-if="optType != 'view'" v-hasPermi="['wms:issue-header:update']">修改 </el-button>
+          -->
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-if="optType != 'view'" v-hasPermi="['wms:issue-header:delete']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList" />
+    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList"/>
 
     <!-- 添加或修改生产领料单行对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="960px" append-to-body>
@@ -130,31 +221,31 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="产品物料名称" prop="itemName">
-              <el-input v-model="form.itemName" readonly="readonly" />
+              <el-input v-model="form.itemName" readonly="readonly"/>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="领料数量" prop="quantityIssued">
-              <el-input-number :max="form.quantityMax" v-model="form.quantityIssued" placeholder="请输入领料数量" />
+              <el-input-number :max="form.quantityMax" v-model="form.quantityIssued" placeholder="请输入领料数量"/>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">
             <el-form-item label="规格型号" prop="specification">
-              <el-input v-model="form.specification" readonly="readonly" type="textarea" />
+              <el-input v-model="form.specification" readonly="readonly" type="textarea"/>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="8">
             <el-form-item label="单位" prop="unitOfMeasure">
-              <el-input v-model="form.unitOfMeasure" readonly="readonly" />
+              <el-input v-model="form.unitOfMeasure" readonly="readonly"/>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="批次号" prop="batchCode">
-              <el-input v-model="form.batchCode" readonly="readonly" />
+              <el-input v-model="form.batchCode" readonly="readonly"/>
             </el-form-item>
           </el-col>
           <el-col :span="8"></el-col>
@@ -162,24 +253,24 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="仓库" prop="warehouseName">
-              <el-input v-model="form.warehouseName" readonly="readonly" />
+              <el-input v-model="form.warehouseName" readonly="readonly"/>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="库区" prop="locationName">
-              <el-input v-model="form.locationName" readonly="readonly" />
+              <el-input v-model="form.locationName" readonly="readonly"/>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="库位" prop="areaName">
-              <el-input v-model="form.areaName" readonly="readonly" />
+              <el-input v-model="form.areaName" readonly="readonly"/>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
-              <el-input v-model="form.remark" type="textarea" />
+              <el-input v-model="form.remark" type="textarea"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -204,7 +295,7 @@
 </template>
 
 <script>
-import { listIssueline, getIssueline, delIssueline, addIssueline, updateIssueline , updateEnable, cancleIssue , checkMaxIssue , issueErp } from '@/api/mes/wm/issueline';
+import {listIssueline, getIssueline, delIssueline, addIssueline, updateIssueline, updateEnable, cancleIssue, checkMaxIssue, issueErp, getErpUnsyncCount} from '@/api/mes/wm/issueline';
 import StockSelect from '@/components/stockSelect/single.vue';
 import jsQR from "jsqr";
 import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
@@ -212,7 +303,7 @@ import MachinerySelectSingle from "@/components/machinerySelect/single.vue";
 
 export default {
   name: 'Issueline',
-  components: {MachinerySelectSingle, StockSelect },
+  components: {MachinerySelectSingle, StockSelect},
   dicts: ['erp_status'],
   props: {
     optType: null,
@@ -266,6 +357,7 @@ export default {
         areaId: null,
         areaCode: null,
         areaName: null,
+        erpEnable: null,
       },
       // 表单参数
       form: {
@@ -276,8 +368,8 @@ export default {
       },
       // 表单校验
       rules: {
-        itemId: [{ required: true, message: '产品物料不能为空', trigger: 'blur' }],
-        quantityIssued: [{ required: true, message: '领料数量不能为空', trigger: 'blur' }],
+        itemId: [{required: true, message: '产品物料不能为空', trigger: 'blur'}],
+        quantityIssued: [{required: true, message: '领料数量不能为空', trigger: 'blur'}],
       },
       //摄像头配置
       targetCameraId: null,
@@ -291,16 +383,40 @@ export default {
 
       hasShownInputTip: false, // 标记是否已显示过提示
       compositionLock: false,  // 标记是否处于中文输入法组合状态
+
+      erpStatusoptions: [{
+        value: 'N',
+        label: '未同步'
+      }, {
+        value: 'Y',
+        label: '已同步'
+      }],
+      erpUnsyncuantity: 0,// 存储未同步ERP的数量
+      erpSyncuantity: 0, // 存储同步ERP的数量
+      erpUnsyncCount: 0,// 存储未同步ERP的记录数量
+      erpSyncCount: 0, // 存储同步ERP的记录数量
+      materialDetails: [], // 存储物料详情数据
     };
+  },
+  computed: {
+    // 计算已同步的物料
+    syncedMaterials() {
+      return this.materialDetails.filter(item => item.syncCount > 0);
+    },
+    // 计算未同步的物料
+    unsyncedMaterials() {
+      return this.materialDetails.filter(item => item.unsyncCount > 0);
+    }
   },
   created() {
     // 初始化时读取设备缓存
     this.loadMachineryCache()
     this.getList();
+
   },
   watch: {
-    'purchaseId': function(newVal) {
-      if(!newVal){
+    'purchaseId': function (newVal) {
+      if (!newVal) {
         return;
       }
       if (typeof newVal === 'string' && newVal.includes('{') && newVal.includes('}')) {
@@ -318,9 +434,9 @@ export default {
           type = data.type;
         }
         this.handleBlur(type);
-      } else if(typeof newVal === 'string' && newVal.includes('-') && !newVal.includes('{') && !newVal.includes('}')){
+      } else if (typeof newVal === 'string' && newVal.includes('-') && !newVal.includes('{') && !newVal.includes('}')) {
         console.log('输入内容为批次号: ' + newVal);
-      }else {
+      } else {
         console.log('输入内容不包含完整的 "{" 和 "}"');
       }
     }
@@ -329,6 +445,10 @@ export default {
     /** 查询生产领料单行列表 */
     getList() {
       this.loading = true;
+      this.queryParams = {
+        ...this.queryParams,
+        "machineryCode": this.form.machineryCode
+      }
       listIssueline(this.queryParams).then(response => {
         this.issuelineList = response.data.list;
         this.total = response.data.total;
@@ -450,7 +570,8 @@ export default {
           this.getList();
           this.$modal.msgSuccess('删除成功');
         })
-        .catch(() => {});
+        .catch(() => {
+        });
     },
     handleSelectStock() {
       this.$refs.stockSelect.showFlag = true;
@@ -558,6 +679,7 @@ export default {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
       let type = '';
+
       function tick() {
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
           // 将视频流绘制到 canvas 上
@@ -619,10 +741,9 @@ export default {
       this.startScanning();
     },
 
-    handleBlur: function(type) {
-      console.log("当前选中的设备信息: ",  this.form.machineryId, this.form.machineryCode, this.form.machineryName);
-
-      if(!this.form.machineryId){
+    handleBlur: function (type) {
+      console.log("当前选中的设备信息: ", this.form.machineryId, this.form.machineryCode, this.form.machineryName);
+      if (!this.form.machineryId) {
         this.$message.error(`请选择领料机台`);
         this.purchaseId = null;
         return;
@@ -630,7 +751,7 @@ export default {
 
       let finType = '';
       let batchCode = '';
-      if(type){
+      if (type) {
         finType = type;
       }
       // 基于当前的采购单获取所有的物料数据
@@ -673,14 +794,14 @@ export default {
             this.$message.error('扫描结果不是有效的 JSON 字符串');
             return; // 如果 JSON 解析失败，直接返回
           }
-        } else if(this.purchaseId.includes('-') && !this.purchaseId.includes('{') && !this.purchaseId.includes('}')){
+        } else if (this.purchaseId.includes('-') && !this.purchaseId.includes('{') && !this.purchaseId.includes('}')) {
           console.log('输入内容包含完整的"-" ', this.purchaseId);
           batchCode = this.purchaseId;
           finType = null;
 
         }
       }
-      if(!finType && !batchCode){
+      if (!finType && !batchCode) {
         this.$message.error('未获取到条码类型, 请切换为英文输入法!');
         this.purchaseId = null;
         return;
@@ -695,14 +816,14 @@ export default {
       getStockInfoByPurchaseId(obj).then(response => {
         console.log("当前物料信息: ", response.data);
         let barcodeNumber = null;
-        if(!batchCode){
+        if (!batchCode) {
           barcodeNumber = this.purchaseId;
         }
         this.purchaseId = null;
         let obj = response.data;
         // 追加生产领料表单身信息
         obj.quantityIssued = obj.quantityOnhand;
-        const isItemExists = this.issuelineList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
+        const isItemExists = this.issuelineList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode && item.barcodeNumber === obj.id);
         // 如果物料Id不存在，则添加到this.allocatedList
         if (!isItemExists) {
           // 将当前数据传入领料单单身表
@@ -718,7 +839,7 @@ export default {
             checkMaxIssue(obj).then(response => {
               console.log("获取的膜类物料对应报工单个数: ", response);
               count = response.data;
-              if(count > 0){
+              if (count > 0) {
                 this.$confirm('当前已存在膜类物料, 绑定报工单个数为:  ' + count + ' 个, 是否继续上料?', '警告', {
                   confirmButtonText: '确定',
                   cancelButtonText: '取消',
@@ -729,7 +850,7 @@ export default {
                     this.getList();
                   });
                 });
-              }else{
+              } else {
                 addIssueline(obj).then(response => {
                   this.$modal.msgSuccess('新增成功');
                   this.getList();
@@ -770,15 +891,15 @@ export default {
 
       // 检查所有选中行状态
       const hasInvalidRow = selectedRows.some(item => {
-        console.log("item: " , item);
-        if(item.status === 'N') {
+        console.log("item: ", item);
+        if (item.status === 'N') {
           this.$message.error(`存在未上料的物料，无法启用!`);
           return true;
         }
         return false;
       });
 
-      if(hasInvalidRow) return;
+      if (hasInvalidRow) return;
 
       this.$confirm('是否确认变更物料状态?', '警告', {
         confirmButtonText: '确定',
@@ -801,14 +922,35 @@ export default {
     },
 
     // 加载设备缓存
-    loadMachineryCache() {
+    async loadMachineryCache() {
       try {
         const cached = localStorage.getItem('cachedMachinery')
         if (cached) {
-          const { id, code, name } = JSON.parse(cached)
+          const {id, code, name} = JSON.parse(cached)
           this.form.machineryId = id
           this.form.machineryCode = code
           this.form.machineryName = name
+        }
+        if (this.form.machineryCode) {
+          // 下周一上传
+          const response = await getErpUnsyncCount({"issueId": this.issueId, "machineryCode": this.form.machineryCode});
+          // this.erpUnsyncuantity = Number(response.data.unsyncQuantity);
+          // this.erpSyncuantity = Number(response.data.syncQuantity);
+          // this.erpUnsyncCount = Number(response.data.unsyncCount);
+          // this.erpSyncCount = Number(response.data.syncCount);
+
+          // 保存物料详情数据
+          this.materialDetails = response.data.materialDetails || [];
+          // 计算总数
+          this.erpUnsyncuantity = this.materialDetails.reduce((sum, item) =>
+            sum + (item.unsyncQuantity || 0), 0);
+          this.erpSyncuantity = this.materialDetails.reduce((sum, item) =>
+            sum + (item.syncQuantity || 0), 0);
+          this.erpUnsyncCount = this.materialDetails.reduce((sum, item) =>
+            sum + (item.unsyncCount || 0), 0);
+          this.erpSyncCount = this.materialDetails.reduce((sum, item) =>
+            sum + (item.syncCount || 0), 0);
+
         }
       } catch (e) {
         console.error('设备缓存读取失败', e)
@@ -841,9 +983,9 @@ export default {
       this.form.machineryCode = ''
       this.form.machineryName = ''
     },
-    handleCancleIssue(){
+    handleCancleIssue() {
       const ids = this.ids;
-      if(!ids || ids.length === 0){
+      if (!ids || ids.length === 0) {
         this.$message.error(`请至少选中一行数据!`);
         return;
       }
@@ -874,7 +1016,7 @@ export default {
           this.$message.success(`撤销成功!`);
         }).catch(error => {
           this.$message.error(`撤销失败!`);
-        }).finally(()=>{
+        }).finally(() => {
           this.loading = true;
           this.getList();
           this.disabledFlag = true;
@@ -882,9 +1024,9 @@ export default {
       });
 
     },
-    handleIssueErp(row){
+    handleIssueErp(row) {
       const ids = this.ids;
-      if(!ids || ids.length === 0){
+      if (!ids || ids.length === 0) {
         this.$message.error(`请至少选中一行数据!`);
         return;
       }
@@ -911,7 +1053,7 @@ export default {
           this.$message.success(`接口调用成功!`);
         }).catch(error => {
           this.$message.error(`接口调用失败! : ` + error);
-        }).finally(()=>{
+        }).finally(() => {
           this.loading = false;
           this.disabledFlag = false;
           this.getList();
@@ -983,4 +1125,104 @@ export default {
   },
 };
 </script>
+<!--<style>
+.erp-alert {
+  margin-bottom: 15px;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
 
+@keyframes pulse {
+  0% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+.erp-alert .el-alert {
+  animation: pulse 2s infinite;
+}
+
+
+</style>-->
+
+<style scoped>
+.erp-alert {
+  margin-bottom: 15px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.erp-alert:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.material-summary {
+  font-weight: 600;
+  margin-bottom: 3px;
+  padding-bottom: 2px;
+  border-bottom: 1px dashed #ebeef5;
+}
+
+.material-details {
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.material-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.material-item:last-child {
+  border-bottom: none;
+}
+
+.material-info {
+  margin-left: 12px;
+  font-size: 13px;
+  color: #606266;
+}
+
+/* 标签样式增强 */
+.el-tag {
+  min-width: 120px;
+  text-align: center;
+  font-weight: bold;
+  padding: 0 10px;
+}
+
+/* 滚动条样式 */
+.material-details::-webkit-scrollbar {
+  width: 6px;
+}
+
+.material-details::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 3px;
+}
+
+.material-details::-webkit-scrollbar-thumb:hover {
+  background-color: #a8a8a8;
+}
+
+/* 动画效果 */
+@keyframes highlight {
+  0% { background-color: rgba(103, 194, 58, 0.05); }
+  50% { background-color: rgba(103, 194, 58, 0.15); }
+  100% { background-color: rgba(103, 194, 58, 0.05); }
+}
+
+.erp-alert .el-alert--success {
+  animation: highlight 4s infinite;
+}
+</style>

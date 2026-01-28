@@ -9,6 +9,15 @@ export function listFeedback(query) {
   });
 }
 
+export function listFeedbackAuditPage(query) {
+  return request({
+    url: '/mes/pro/feedback/auditPage',
+    method: 'get',
+    params: query,
+  });
+}
+
+
 // 查询生产报工记录列表
 export function traceFeedbackPage(query) {
   return request({
@@ -52,6 +61,17 @@ export function updateFeedback(data) {
     data: data,
   });
 }
+
+
+// 修改生产报工记录备注
+export function updateFeedbackRemark(data) {
+  return request({
+    url: '/mes/pro/feedback/updateRemark',
+    method: 'put',
+    data: data,
+  });
+}
+
 
 // 删除生产报工记录
 export function delFeedback(recordId) {
@@ -215,6 +235,31 @@ export function submitFeedbackAudit(ids) {
 export function getIotFeedbackData(machineryCode) {
   return request({
     url: '/mes/pro/feedback/getIotFeedbackData?machineryCode=' + machineryCode,
+    method: 'get',
+  });
+}
+
+// 产成品撤销入库
+export function reWarehousing(data) {
+  return request({
+    url: '/mes/pro/feedback/reWareHousing',
+    method: 'post',
+    data: data,
+  });
+}
+
+export function updateMergeStatus(id) {
+  return request({
+    url: '/mes/pro/feedback/updateMergeStatus?id=' + id,
+    method: 'put',
+  });
+}
+
+
+
+export function initCertificate(ids) {
+  return request({
+    url: '/mes/pro/feedback/initCertificate?ids=' + ids,
     method: 'get',
   });
 }

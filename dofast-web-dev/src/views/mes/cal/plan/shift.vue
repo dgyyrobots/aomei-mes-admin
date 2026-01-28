@@ -190,6 +190,14 @@ export default {
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
+
+          if (this.form.startTime) {
+            this.form.startTime = this.convertToDateTimeString(this.form.startTime);
+          }
+          if (this.form.endTime) {
+            this.form.endTime = this.convertToDateTimeString(this.form.endTime);
+          }
+
           if (this.form.id != null) {
             updateShift(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
@@ -205,6 +213,18 @@ export default {
           }
         }
       });
+    },
+    convertToDateTimeString(timeStr) {
+      if (!timeStr) return null;
+
+      if (timeStr.includes(' ')) {
+        return timeStr;
+      }
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day} ${timeStr}:00`;
     },
     /** 删除按钮操作 */
     handleDelete(row) {

@@ -6,14 +6,7 @@
                   @keyup.enter.native="handleQuery"/>
       </el-form-item>
 
-
-      <el-form-item label="设备名称" prop="machineryName">
-        <el-input v-model="queryParams.machineryName" placeholder="请输入设备名称" clearable
-                  @keyup.enter.native="handleQuery"/>
-      </el-form-item>
-
-
-      <el-form-item label="生产工单编号" prop="workorderCode">
+      <el-form-item label="生产工单" prop="workorderCode">
         <el-input v-model="queryParams.workorderCode" placeholder="请输入生产工单编号" clearable
                   @keyup.enter.native="handleQuery"/>
       </el-form-item>
@@ -27,12 +20,15 @@
         <el-input v-model="queryParams.batchCode" placeholder="请输入批次号" clearable
                   @keyup.enter.native="handleQuery"/>
       </el-form-item>
+
       <el-form-item label="物料编码" prop="itemCode">
         <el-input v-model="queryParams.itemCode" placeholder="请输入物料编码" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
+
       <el-form-item label="物料名称" prop="itemName">
         <el-input v-model="queryParams.itemName" placeholder="请输入物料名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
+
       <el-form-item label="生产工序" prop="processCode">
         <el-select @change="val => { handleProcessChange(val) }" v-model="queryParams.processCode" placeholder="请选择工序" clearable>
           <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"/>
@@ -53,7 +49,6 @@
         </el-select>
       </el-form-item>
 
-
       <el-form-item label="ERP入库标识" prop="erpWarehousingStatus">
         <el-select v-model="queryParams.erpWarehousingStatus" placeholder="请选择ERP入库标识" clearable>
           <el-option v-for="dict in dict.type.erp_status" :key="dict.value" :label="dict.label"
@@ -61,11 +56,12 @@
         </el-select>
       </el-form-item>
 
-
-      <!--      <el-form-item label="报工时间" prop="feedbackTime">
-              <el-date-picker clearable v-model="queryParams.feedbackTime"  type="date" value-format="timestamp"
-                              placeholder="请选择报工时间"></el-date-picker>
-            </el-form-item>-->
+      <el-form-item label="设备信息" prop="machineryName">
+        <el-input v-model="queryParams.machineryName" placeholder="请选择设备信息" disabled>
+          <el-button slot="append" icon="el-icon-search" @click="handleQueryMachineryAdd"></el-button>
+        </el-input>
+      </el-form-item>
+      <MachinerySelectSingle ref="queryMachinerySelect" @onSelected="onQueryMachineryAdd"></MachinerySelectSingle>
 
       <el-form-item label="报工时间" prop="feedbackTime">
         <el-date-picker
@@ -108,8 +104,7 @@
       </el-col>
 
       <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" :disabled="multiple" size="mini" @click="handleCertificatePrint"
-                   v-hasPermi="['pro:feedback:print']"> 打印合格证
+        <el-button type="success" plain icon="el-icon-edit" :disabled="multiple" size="mini" @click="handleCertificatePrint"> 打印合格证
         </el-button>
       </el-col>
 
@@ -118,11 +113,15 @@
       </el-col>
 
       <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-success" size="mini" :disabled="single" @click="revokedWarehousing" v-hasPermi="['pro:feedback:warehousing']">MES撤销入库</el-button>
+      </el-col>
+
+      <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="single" @click="split" v-hasPermi="['pro:feedback:split']">拆分</el-button>
       </el-col>
 
       <el-col :span="1.5"><!---->
-        <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="single" @click="cancelReport" v-hasPermi="['pro:feedback:reFeedback']">撤销报工</el-button>
+        <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="single" @click="cancelReport" v-hasPermi="['pro:feedback:reFeedback']" :loading="reFeedbackLoading">撤销报工</el-button>
       </el-col>
 
       <el-col :span="1.5"><!--"-->
@@ -151,16 +150,19 @@
         <el-button type="primary" plain icon="el-icon-document" size="mini" @click="handleAudit">提交审核</el-button>
       </el-col>
 
+      <el-col :span="1.5"><!-- v-hasPermi="['pro:feedback:changeMergeStatus']" -->
+        <el-button type="success" plain icon="el-icon-merge" size="mini" :disabled="single" @click="changeMergeStatus">变更合并状态</el-button>
+      </el-col>
+
+
+      <el-col :span="1.5"><!-- v-hasPermi="['pro:feedback:changeMergeStatus']" -->
+        <el-button type="success" plain icon="el-icon-merge" size="mini" :disabled="single" @click="handleRemark">变更备注</el-button>
+      </el-col>
 
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
     <el-table :row-class-name="tableRowClassName" v-loading="loading" :data="feedbackList" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center"/>
-      <!--      <el-table-column label="报工类型" align="center" prop="feedbackType">
-              <template slot-scope="scope">
-                <dict-tag :options="dict.type.mes_feedback_type" :value="scope.row.feedbackType"/>
-              </template>
-            </el-table-column>-->
       <el-table-column label="工作站" width="180px" align="center" prop="workstationName"/>
       <el-table-column label="报工单号" width="210px" align="center" prop="feedbackCode"/>
       <el-table-column label="生产工单编号" width="150px" align="center" prop="workorderCode"/>
@@ -168,8 +170,10 @@
       <el-table-column label="产品物料名称" width="150px" align="center" prop="itemName" :show-overflow-tooltip="true"/>
       <el-table-column label="规格型号" align="center" prop="specification" :show-overflow-tooltip="true"/>
       <el-table-column label="生产工序" align="center" prop="processName"/>
+      <el-table-column label="工作序" align="center" prop="processSequence"/>
       <el-table-column fixed="right" label="生产数量" align="center" prop="quantityFeedback"/>
       <el-table-column fixed="right" label="合格数量" align="center" prop="quantityQualified"/>
+      <el-table-column fixed="right" label="工艺损耗" align="center" prop="quantityExcess"/>
       <el-table-column fixed="right" label="报工人" align="center" prop="nickName"/>
       <el-table-column fixed="right" label="报工时间" align="center" prop="feedbackTime" width="150">
         <template slot-scope="scope">
@@ -219,10 +223,10 @@
                 @pagination="getList"/>
 
     <!-- 添加或修改生产报工记录对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="960px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+    <el-dialog :title="title" :visible.sync="open" width="960px" append-to-body :before-close="cancel">
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px" v-loading="feedLoading"><!-- v-loading="feedLoading" -->
         <el-row>
-          <el-col :span="8">
+          <el-col :span="6">
             <el-form-item label="报工类型" prop="feedbackType">
               <el-select v-model="form.feedbackType" placeholder="请选择报工类型">
                 <el-option v-for="dict in dict.type.mes_feedback_type" :key="dict.value" :label="dict.label"
@@ -230,7 +234,7 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+          <el-col :span="10">
             <el-form-item label="生产工单" prop="workorderCode">
               <el-input v-model="form.workorderCode" placeholder="请选择生产工单">
                 <el-button slot="append" icon="el-icon-search" @click="handleWorkorderSelect"></el-button>
@@ -271,65 +275,60 @@
             </el-form-item>
           </el-col>
 
-          <!--          <el-col :span="8">
-                      <el-switch
-                        style="margin-left: 10%"
-                        v-model="form.iotFlag"
-                        active-text="数采导入"
-                        @change="handleIotSwitchChange">
-                      </el-switch>
-                    </el-col>
+          <el-col :span="8">
+            <el-switch
+              style="margin-left: 10%"
+              v-model="form.iotFlag"
+              active-text="数采导入"
+              @change="handleIotSwitchChange">
+            </el-switch>
+          </el-col>
 
-                    <el-col :span="8">
+          <!--          <el-col :span="8">
                       <el-form-item label="数采状态" v-if="iotLoading">
                         <el-tag type="info">正在获取设备数采数据...</el-tag>
                       </el-form-item>
                     </el-col>-->
 
-        </el-row>
-        <el-row>
           <el-col :span="8">
             <el-form-item label="报工数量" prop="quantityFeedback">
               <el-input readonly="readonly" v-model="form.quantityFeedback"/>
             </el-form-item>
           </el-col>
+
+        </el-row>
+        <el-row>
+
+          <el-col :span="8">
+            <el-form-item label="工艺损耗" prop="quantityExcess">
+              <el-input-number :min="0" @change="handleQuantityChanged" v-model="form.quantityExcess"
+                               placeholder="请输入余料数量"/><!-- :disabled="form.iotFlag" -->
+            </el-form-item>
+          </el-col>
+
+
           <el-col :span="8">
             <el-form-item label="合格品数量" prop="quantityQualified">
               <el-input-number :min="0" @change="handleQuantityChanged" v-model="form.quantityQualified"
-                               placeholder="请输入合格品数量"/>
+                               placeholder="请输入合格品数量" :disabled="form.iotFlag"/><!--  -->
             </el-form-item>
           </el-col>
+          <!--          <el-col :span="8">
+                      <el-form-item label="不良品数量" prop="quantityUnquanlified">
+                        <el-input-number :min="0" @change="handleQuantityChanged" v-model="form.quantityUnquanlified"
+                                         placeholder="请输入不良品数量"/>
+                      </el-form-item>
+                    </el-col>-->
+
           <el-col :span="8">
             <el-form-item label="不良品数量" prop="quantityUnquanlified">
-              <el-input-number :min="0" @change="handleQuantityChanged" v-model="form.quantityUnquanlified"
-                               placeholder="请输入不良品数量"/>
+              <div>
+                <el-input-number :min="0" v-model="form.quantityUnquanlified" placeholder="请输入不良品数量" readonly @click.native="handleDefectDialogOpen" :controls="false"/>
+              </div>
             </el-form-item>
           </el-col>
         </el-row>
-        <!--        <el-row>
-                  <el-col :span="8">
-                    <el-form-item label="报工人" prop="nickName">
-                      <el-input v-model="form.nickName" placeholder="请选择报工人">
-                        <el-button slot="append" @click="handleUserSelect" icon="el-icon-search"></el-button>
-                      </el-input>
-                    </el-form-item>
-                    <UserSingleSelect ref="userSelect" @onSelected="onUserSelected"></UserSingleSelect>
-                  </el-col>
-                  <el-col :span="8">
-                    <el-form-item label="报工时间" prop="feedbackTime">
-                      <el-date-picker clearable v-model="form.feedbackTime" type="date" value-format="timestamp"
-                                      placeholder="请选择报工时间"></el-date-picker>
-                    </el-form-item>
-                  </el-col>
-                  <el-col :span="8">
-                    <el-form-item label="审核人" prop="recordNick">
-                      <el-input v-model="form.recordNick" placeholder="请选择审核人">
-                        <el-button slot="append" @click="handleUser2Select" icon="el-icon-search"></el-button>
-                      </el-input>
-                    </el-form-item>
-                    <UserSingleSelect ref="user2Select" @onSelected="onUser2Selected"></UserSingleSelect>
-                  </el-col>
-                </el-row>-->
+
         <el-row>
 
           <el-col :span="8">
@@ -427,20 +426,25 @@
 
         <el-collapse v-model="activeName" accordion>
           <el-collapse-item title="班组成员信息" name="1">
-            <el-row>
-              <el-col :span="24">
-                <div style="text-align: right; margin-top: 20px;">
-                  <el-button type="primary" @click="addTeamMember()">新增</el-button>
-                </div>
-              </el-col>
-            </el-row>
             <el-card class="box-card">
+              <el-row>
+                <el-col :span="24">
+                  <!--                <div style="text-align: right; margin-top: 20px;">
+                                    <el-button type="primary" @click="addTeamMember()">新增</el-button>
+                                  </div>-->
+                  <div>
+                    <el-button type="primary" size="small" @click="addTeamMember()">新增</el-button> <!-- v-hasPermi="['cal:team:create']" -->
+                  </div>
+
+                </el-col>
+              </el-row>
+
               <el-table :data="teamMembers" style="width: 100%">
-                <el-table-column prop="username" label="成员账号" width="130"/>
-                <el-table-column prop="nickname" label="成员昵称" width="130"/>
-                <el-table-column prop="teamCode" label="所属班组" width="130"/>
-                <el-table-column prop="quantity" label="生产数量" width="130"/>
-                <el-table-column label="岗位">
+                <el-table-column prop="username" label="成员账号" width="130" align="center"/>
+                <el-table-column prop="nickname" label="成员昵称" width="130" align="center"/>
+                <el-table-column prop="teamCode" label="所属班组" width="130" align="center"/>
+                <el-table-column prop="quantity" label="生产数量" width="130" align="center"/>
+                <el-table-column label="岗位" align="center">
                   <template slot-scope="scope">
                     <el-select
                       v-model="scope.row.postIds"
@@ -458,77 +462,116 @@
                   </template>
                 </el-table-column>
 
-                <el-table-column label="操作">
+                <el-table-column label="操作" align="center">
                   <template slot-scope="scope">
-                    <el-button size="mini" type="text" icon="el-icon-delete" @click="deleteTeamMember(scope.row.id)">删除</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-delete" @click="deleteTeamMember(scope.row.id)">删除</el-button><!-- v-hasPermi="['cal:team:delete']" -->
                   </template>
                 </el-table-column>
               </el-table>
+
             </el-card>
           </el-collapse-item>
 
           <el-collapse-item title="机长自检" name="2">
             <el-card class="box-card">
-              <el-table :data="processDefectList" max-height="420px" style="width: 100%; height: 420px">
-                <el-table-column prop="index" label="序号" width="180"/>
-                <el-table-column prop="defectName" label="缺陷项名称" width="240"/>
-                <el-table-column label="起始米数" width="205">
+              <div>
+                <el-button type="primary" size="small" @click="handleDefectSelect">新增</el-button>
+                <el-button type="danger" size="small" :disabled="processDefectList.length === 0" @click="removeSelectedDefects">删除</el-button>
+              </div>
+              <el-table :data="processDefectList" max-height="420px" style="width: 100%; height: 420px" @selection-change="handleDefectSelectionChange">
+                <el-table-column type="selection" width="55"/>
+                <el-table-column label="序号" width="80" align="center">
                   <template slot-scope="scope">
-                    <el-input
-                      v-model.number="scope.row.startMeter"
-                      placeholder="请输入起始米数"
-                      type="number"
-                      @input="handleStartMeterInput(scope.$index, $event)"
-                    ></el-input>
+                    {{ scope.$index + 1 }}
                   </template>
                 </el-table-column>
-                <el-table-column label="结束米数" width="205">
-                  <template slot-scope="scope">
-                    <el-input
-                      v-model.number="scope.row.endMeter"
-                      placeholder="请输入结束米数"
-                      type="number"
-                      @input="handleEndMeterInput(scope.$index, $event)"
-                    ></el-input>
-                  </template>
-                </el-table-column>
-                <el-table-column label="缺陷米数" width="205">
+                <el-table-column prop="defectName" label="不良项名称" width="150" :show-overflow-tooltip="true" align="center"/>
+                <el-table-column prop="processName" label="不良工序" width="120" align="center"/>
+                <!--                <el-table-column label="起始米数" width="120" align="center" >
+                                  <template slot-scope="scope">
+                                    <el-input
+                                      v-model.number="scope.row.startMeter"
+                                      placeholder="请输入起始米数"
+                                      type="number"
+                                      min="1"
+                                      @input="handleStartMeterInput(scope.$index, $event)"
+                                    ></el-input>
+                                  </template>
+                                </el-table-column>
+                                <el-table-column label="结束米数" width="120" align="center" >
+                                  <template slot-scope="scope">
+                                    <el-input
+                                      v-model.number="scope.row.endMeter"
+                                      placeholder="请输入结束米数"
+                                      type="number"
+                                      min="1"
+                                      @input="handleEndMeterInput(scope.$index, $event)"
+                                    ></el-input>
+                                  </template>
+                                </el-table-column>-->
+                <el-table-column label="不良米数" width="120" align="center">
                   <template slot-scope="scope">
                     <el-input
                       v-model.number="scope.row.defectMeter"
-                      placeholder="请输入缺陷米数"
+                      placeholder="请输入不良米数"
                       type="number"
+                      @input="handleDefectMeterChange(scope.$index, $event)"
                     ></el-input>
                   </template>
                 </el-table-column>
+                <el-table-column prop="originBatchCode" label="来源批次" width="170" align="center"/>
+                <el-table-column prop="originTeamCode" label="来源班组" align="center"/>
+                <el-table-column prop="originFeedbackCode" label="来源报工单" width="200" align="center"/>
               </el-table>
             </el-card>
           </el-collapse-item>
         </el-collapse>
-
+        <DefectSelect ref="defectSelect" @onSelected="onDefectSelected" :processCode="this.cachedProcessCode" style="z-index: 9999" append-to-body></DefectSelect>
         <UserSingleSelect ref="userSelect" @onSelected="onUserSelected"></UserSingleSelect>
 
-        <!--        <el-row>
-                  <el-col :span="24">
-                    <el-form-item label="备注" prop="remark">
-                      <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"/>
-                    </el-form-item>
-                  </el-col>
-                </el-row>-->
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="cancel" v-if="optType == 'view' || form.status != 'PREPARE'">返回</el-button>
-        <el-button type="primary" @click="submitForm" v-if="form.status == 'PREPARE' && optType != 'view'">保 存
+<!--        <el-button type="primary" @click="cancel" v-if="optType == 'view' || form.status != 'PREPARE'"   >返回</el-button>
+        <el-button type="primary" @click="submitForm" v-if="form.status == 'PREPARE' && optType != 'view'" >保 存
         </el-button>
-        <el-button type="primary" @click="handleSubmit" v-if="form.status == 'PREPARE' && optType != 'view'" v-hasPermi="['pro:feedback:submit']">提交审批
-        </el-button>
-
-        <el-button type="success" @click="handleExecute" :disabled="disabledFlag" v-if="form.status == 'APPROVING' && form.id != null" v-hasPermi="['pro:feedback:approval']">审批通过
-        </el-button>
-        <el-button type="danger" @click="handleReject" :disabled="disabledFlag" v-if="form.status == 'APPROVING' && form.id != null" v-hasPermi="['pro:feedback:approval']">审批不通过
+        <el-button type="primary" @click="handleSubmit" v-if="form.status == 'PREPARE' && optType != 'view'" v-hasPermi="['pro:feedback:submit']" >提交审批
         </el-button>
 
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="success" @click="handleExecute" :disabled="disabledFlag" v-if="form.status == 'APPROVING' && form.id != null" v-hasPermi="['pro:feedback:approval']"  >审批通过
+        </el-button>
+
+        <el-button @click="cancel" >取 消</el-button>
+
+        <el-button type="danger" @click="handleReject" :disabled="disabledFlag" v-if="form.status == 'APPROVING' && form.id != null" v-hasPermi="['pro:feedback:approval']" >审批不通过
+        </el-button>-->
+
+        <el-button type="primary" @click="cancel" v-if="optType == 'view' || form.status != 'PREPARE'"
+                   :disabled="feedLoading || loading">返回</el-button>
+
+        <el-button type="primary" @click="submitForm" v-if="form.status == 'PREPARE' && optType != 'view'"
+                   :disabled="feedLoading || loading" :loading="feedLoading">
+          保 存
+        </el-button>
+
+        <el-button type="primary" @click="handleSubmit" v-if="form.status == 'PREPARE' && optType != 'view'"
+                   v-hasPermi="['pro:feedback:submit']" :disabled="feedLoading || loading" :loading="feedLoading">
+          提交审批
+        </el-button>
+
+        <el-button type="success" @click="handleExecute" :disabled="disabledFlag || feedLoading || loading"
+                   v-if="form.status == 'APPROVING' && form.id != null" v-hasPermi="['pro:feedback:approval']"
+                   :loading="feedLoading">
+          审批通过
+        </el-button>
+
+        <el-button @click="cancel" :disabled="feedLoading || loading" :loading="feedLoading">取 消</el-button>
+
+<!--        <el-button type="danger" @click="handleReject" :disabled="disabledFlag || feedLoading || loading"
+                   v-if="form.status == 'APPROVING' && form.id != null" v-hasPermi="['pro:feedback:approval']"
+                   :loading="feedLoading">
+          审批不通过
+        </el-button>-->
+
       </div>
     </el-dialog>
 
@@ -559,8 +602,8 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="入库数量" prop="quantityFeedback">
-              <el-input disabled v-model="splitForm.quantityFeedback" placeholder="请输入报工数量"/>
+            <el-form-item label="合格数量" prop="quantityQualified">
+              <el-input disabled v-model="splitForm.quantityQualified" placeholder="请输入合格数量"/>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -572,7 +615,7 @@
       </el-form>
 
       <div style="text-align: right; margin-top: 20px;">
-        <el-button type="primary" @click="addSplitDetailByQuantity">按数量拆分</el-button>
+<!--        <el-button type="primary" @click="addSplitDetailByQuantity">按数量拆分</el-button>-->
         <el-button type="primary" @click="addSplitDetail">新增</el-button>
       </div>
 
@@ -595,7 +638,7 @@
 
       <div slot="footer" class="dialog-footer">
         <el-button @click="splitDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitSplit">确定拆分</el-button>
+        <el-button type="primary" :disabled="splitDisabled" @click="submitSplit">确定拆分</el-button>
       </div>
     </el-dialog>
 
@@ -736,14 +779,14 @@
 
 
         <el-form-item label="生产工序" prop="processCode">
-          <el-select @change="val => { handleProcessChange(val) }" v-model="auditQueryParams.processCode" placeholder="请选择工序" clearable>
+          <el-select v-model="auditQueryParams.processCode" placeholder="请选择工序" clearable><!-- @change="val => { handleProcessChange(val) }" -->
             <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"/>
           </el-select>
         </el-form-item>
 
 
         <el-form-item label="班次信息" prop="shiftInfo">
-          <el-select v-model="auditQueryParams.shiftInfo" placeholder="请选择班次信息" @change="handleShiftChange">
+          <el-select v-model="auditQueryParams.shiftInfo" placeholder="请选择班次信息" @change="handleShiftChange" clearable>
             <el-option v-for="dict in dict.type.mes_shift_info" :key="dict.value" :label="dict.label"
                        :value="dict.value"></el-option>
           </el-select>
@@ -753,15 +796,32 @@
           <el-input v-model="auditQueryParams.nickName" placeholder="请输入报工人" clearable></el-input>
         </el-form-item>
 
-        <el-form-item label="报工时间" prop="feedbackTime">
+        <!--
+                <el-form-item label="报工时间" prop="feedbackTime">
+                  <el-date-picker
+                    v-model="auditQueryParams.feedbackTime"
+                    type="datetimerange"
+                    range-separator="至"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期"
+                    value-format="yyyy-MM-dd HH:mm:ss"
+                    :default-time="['00:00:00', '23:59:59']"
+                  ></el-date-picker>
+                </el-form-item>
+        -->
+        <el-form-item label="报工起始时间" prop="feedbackBeginTime">
           <el-date-picker
-            v-model="auditQueryParams.feedbackTime"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
+            v-model="auditQueryParams.feedbackBeginTime"
+            type="datetime"
             value-format="yyyy-MM-dd HH:mm:ss"
-            :default-time="['00:00:00', '23:59:59']"
+          ></el-date-picker>
+        </el-form-item>
+
+        <el-form-item label="报工结束时间" prop="feedbackEndTime">
+          <el-date-picker
+            v-model="auditQueryParams.feedbackEndTime"
+            type="datetime"
+            value-format="yyyy-MM-dd HH:mm:ss"
           ></el-date-picker>
         </el-form-item>
 
@@ -772,6 +832,34 @@
 
       <!-- 上方：报工详情表格（带勾选） -->
       <div class="audit-detail-container">
+        <!--        <el-table
+                  ref="detailTable"
+                  v-loading="auditLoading"
+                  :data="auditDetailList"
+                  border
+                  height="300"
+                  @selection-change="handleDetailSelectionChange"
+                >
+                  <el-table-column type="selection" width="55"></el-table-column>
+                  <el-table-column prop="feedbackCode" label="报工单号" width="190" :show-overflow-tooltip="true"></el-table-column>
+                  <el-table-column prop="workorderCode" label="工单号" width="160" :show-overflow-tooltip="true"></el-table-column>
+                  <el-table-column prop="itemName" label="物料名称" width="150" :show-overflow-tooltip="true"></el-table-column>
+                  <el-table-column prop="processName" label="工序" width="60"></el-table-column>
+                  <el-table-column prop="nickName" label="报工人" width="70"></el-table-column>
+                  <el-table-column prop="machineryName" label="报工设备" width="100"></el-table-column>
+                  <el-table-column prop="quantityFeedback" label="报工数量" align="center"></el-table-column>
+                  <el-table-column prop="quantityQualified" label="合格数量" align="center"></el-table-column>
+                  <el-table-column prop="quantityUnquanlified" label="不良数量" align="center"></el-table-column>
+                  <el-table-column prop="quantityExcess" label="工艺损耗" align="center"></el-table-column>
+                  <el-table-column prop="feedbackTime" label="报工时间" width="180">
+                    <template slot-scope="scope">
+                      {{ parseTime(scope.row.feedbackTime) }}
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="teamCode" label="班组" width="80"></el-table-column>
+                  <el-table-column prop="batchCode" label="批次号" width="150"></el-table-column>
+                </el-table>-->
+
         <el-table
           ref="detailTable"
           v-loading="auditLoading"
@@ -781,62 +869,69 @@
           @selection-change="handleDetailSelectionChange"
         >
           <el-table-column type="selection" width="55"></el-table-column>
-          <el-table-column prop="feedbackCode" label="报工单号" width="190" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="workorderCode" label="工单号" width="160" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="itemName" label="物料名称" width="150" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="processName" label="工序" width="60"></el-table-column>
-          <el-table-column prop="nickName" label="报工人" width="70"></el-table-column>
+          <el-table-column prop="feedbackCode" label="报工单号" width="100%" :show-overflow-tooltip="true"></el-table-column>
+          <el-table-column prop="workorderCode" label="工单号" width="100%" :show-overflow-tooltip="true"></el-table-column>
+          <el-table-column prop="itemName" label="物料名称" width="100%" :show-overflow-tooltip="true"></el-table-column>
+          <el-table-column prop="processName" label="工序" width="100%"></el-table-column>
+          <el-table-column prop="nickName" label="报工人" width="100%"></el-table-column>
+          <el-table-column prop="machineryName" label="报工设备" width="100%"></el-table-column>
           <el-table-column prop="quantityFeedback" label="报工数量" align="center"></el-table-column>
           <el-table-column prop="quantityQualified" label="合格数量" align="center"></el-table-column>
           <el-table-column prop="quantityUnquanlified" label="不良数量" align="center"></el-table-column>
-          <el-table-column prop="feedbackTime" label="报工时间" width="180">
+          <el-table-column prop="quantityExcess" label="工艺损耗" align="center"></el-table-column>
+          <el-table-column prop="feedbackTime" label="报工时间" width="100%" :show-overflow-tooltip="true">
             <template slot-scope="scope">
               {{ parseTime(scope.row.feedbackTime) }}
             </template>
           </el-table-column>
-          <el-table-column prop="teamCode" label="班组" width="80"></el-table-column>
-          <el-table-column prop="batchCode" label="批次号" width="150"></el-table-column>
+          <el-table-column prop="teamCode" label="班组" width="100%"></el-table-column>
+          <el-table-column prop="batchCode" label="批次号" width="100%" :show-overflow-tooltip="true"></el-table-column>
         </el-table>
 
         <pagination v-show="auditQueryTotal > 0" :total="auditQueryTotal" :page.sync="auditQueryParams.pageNo" :limit.sync="auditQueryParams.pageSize"
                     @pagination="getAuditData"/>
-
       </div>
 
       <!-- 下方：左右两个表格 -->
       <div class="audit-bottom-container">
         <!-- 左侧：报工汇总 -->
-        <div class="audit-summary">
-          <el-table
-            v-loading="auditItemLoading"
-            :data="auditSummaryList"
-            border
-            height="300"
-            @row-click="handleSummaryRowClick"
-          >
-            <el-table-column prop="workorderCode" label="工单号" width="170" :show-overflow-tooltip="true"></el-table-column>
-            <el-table-column prop="taskCode" label="任务单号" width="120"></el-table-column>
-            <el-table-column prop="processName" label="工序" width="60"></el-table-column>
-            <el-table-column prop="nickName" label="报工人" width="70"></el-table-column>
-            <el-table-column prop="totalQuantityFeedback" label="总生产数量" align="center"></el-table-column>
-            <el-table-column prop="totalQuantityQualified" label="总合格数量" align="center"></el-table-column>
-            <el-table-column prop="totalQuantityUnquanlified" label="总不良数量" align="center"></el-table-column>
-          </el-table>
-        </div>
+        <el-col :span="12">
+          <div class="audit-summary">
+            <el-table
+              v-loading="auditItemLoading"
+              :data="auditSummaryList"
+              border
+              height="300"
+              @row-click="handleSummaryRowClick"
+            >
+              <el-table-column prop="workorderCode" label="工单号" width="100%" :show-overflow-tooltip="true"></el-table-column>
+              <el-table-column prop="taskCode" label="任务单号" width="100%" :show-overflow-tooltip="true"></el-table-column>
+              <el-table-column prop="processName" label="工序" width="100%"></el-table-column>
+              <el-table-column prop="nickName" label="报工人" width="100%"></el-table-column>
+              <el-table-column prop="machineryName" label="设备" width="100%" :show-overflow-tooltip="true"></el-table-column>
+              <el-table-column prop="totalQuantityFeedback" label="总生产数" align="center"></el-table-column>
+              <el-table-column prop="totalQuantityQualified" label="总合格数" align="center"></el-table-column>
+              <el-table-column prop="totalQuantityUnquanlified" label="总不良数" align="center"></el-table-column>
+              <el-table-column prop="totalQuantityExcess" label="工艺损耗" align="center"></el-table-column>
+            </el-table>
+          </div>
+        </el-col>
 
         <!-- 右侧：班组人员 -->
-        <div class="audit-team">
-          <el-table
-            v-loading="teamLoading"
-            :data="auditTeamList"
-            border
-            height="300"
-          >
-            <el-table-column prop="teamCode" label="所属班组"></el-table-column>
-            <el-table-column prop="userName" label="成员账号"></el-table-column>
-            <el-table-column prop="nickName" label="成员姓名"></el-table-column>
-          </el-table>
-        </div>
+        <el-col :span="12">
+          <div class="audit-team">
+            <el-table
+              v-loading="teamLoading"
+              :data="auditTeamList"
+              border
+              height="300"
+            >
+              <el-table-column prop="teamCode" label="所属班组"></el-table-column>
+              <el-table-column prop="userName" label="成员账号"></el-table-column>
+              <el-table-column prop="nickName" label="成员姓名"></el-table-column>
+            </el-table>
+          </div>
+        </el-col>
       </div>
 
       <div slot="footer" class="dialog-footer">
@@ -845,11 +940,245 @@
       </div>
     </el-dialog>
 
+    <el-dialog title="机长自检" :visible.sync="defectDialogVisible" width="80%" append-to-body>
+      <el-card class="box-card">
+        <div>
+          <el-button type="primary" size="small" @click="handleDefectSelect">新增</el-button>
+          <el-button type="danger" size="small" :disabled="processDefectList.length === 0"
+                     @click="removeSelectedDefects">删除
+          </el-button>
+        </div>
+        <el-table :data="processDefectList" max-height="420px" style="width: 100%; height: 420px"
+                  @selection-change="handleDefectSelectionChange">
+          <el-table-column type="selection" width="55"/>
+          <el-table-column label="序号" width="80" align="center">
+            <template slot-scope="scope">
+              {{ scope.$index + 1 }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="defectName" label="不良项名称" :show-overflow-tooltip="true" align="center"/>
+          <el-table-column prop="processName" label="不良工序" align="center"/>
+          <!--          <el-table-column label="起始米数" align="center" width="120" >
+                      <template slot-scope="scope">
+                        <el-input
+                          v-model.number="scope.row.startMeter"
+                          placeholder="请输入起始米数"
+                          type="number"
+                          min="1"
+                          @input="handleStartMeterInput(scope.$index, $event)"
+                        ></el-input>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="结束米数" align="center" width="120">
+                      <template slot-scope="scope">
+                        <el-input
+                          v-model.number="scope.row.endMeter"
+                          placeholder="请输入结束米数"
+                          type="number"
+                          min="1"
+                          @input="handleEndMeterInput(scope.$index, $event)"
+                        ></el-input>
+                      </template>
+                    </el-table-column>-->
+          <el-table-column label="不良米数" align="center" width="120">
+            <template slot-scope="scope">
+              <el-input
+                v-model.number="scope.row.defectMeter"
+                placeholder="请输入不良米数"
+                type="number"
+              ></el-input>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="originBatchCode" label="来源批次" width="170" align="center"/>
+          <el-table-column prop="originTeamCode" label="来源班组" align="center"/>
+          <el-table-column prop="originFeedbackCode" label="来源报工单" width="200" align="center"/>
+
+        </el-table>
+      </el-card>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="defectDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveDefects">保存</el-button>
+      </div>
+    </el-dialog>
+
+    <el-dialog title="合格证信息编辑" :visible.sync="certificateEditVisible" width="50%" append-to-body>
+      <el-form :model="certificateForm" :rules="certificateRules" ref="certificateForm" label-width="120px">
+        <template>
+          <el-tabs v-model="qualifiedActiveName" type="card"  @tab-click="handleTabClick">
+            <el-tab-pane label="东莞智源" name="zyQualified">
+              <el-form-item label="智源订单号" prop="zyPoNum">
+                <el-input v-model="certificateForm.zyPoNum" placeholder="请输入智源订单号"/>
+              </el-form-item>
+              <el-form-item label="智源物料编码" prop="zyItemCode">
+                <el-input v-model="certificateForm.zyItemCode" placeholder="请输入智源物料编码"/>
+              </el-form-item>
+              <el-form-item label="年份对应编码" prop="zyYear">
+                <el-input v-model="certificateForm.zyYear" placeholder="请输入年份对应编码"/>
+              </el-form-item>
+              <el-form-item label="追溯号" prop="zySerial">
+                <el-input v-model="certificateForm.zySerial" placeholder="请输入追溯号"/>
+              </el-form-item>
+              <el-form-item label="流水号" prop="volumesNumber">
+                <el-input v-model="certificateForm.volumesNumber" placeholder="请输入流水号"/>
+              </el-form-item>
+              <el-form-item label="批次流水号" prop="volumesNumber">
+                <el-input v-model="certificateForm.batchcodeVolumes" placeholder="请输入批次流水号"/>
+              </el-form-item>
+            </el-tab-pane>
+            <el-tab-pane label="其他" name="otherQualified">
+              <el-form-item label="参数1" prop="attr1">
+                <el-input v-model="certificateForm.attr1" placeholder="请输入参数1"/>
+              </el-form-item>
+              <el-form-item label="参数2" prop="attr2">
+                <el-input v-model="certificateForm.attr2" placeholder="请输入参数2"/>
+              </el-form-item>
+              <el-form-item label="参数3" prop="attr3">
+                <el-input v-model="certificateForm.attr3" placeholder="请输入参数3"/>
+              </el-form-item>
+              <el-form-item label="参数4" prop="attr4">
+                <el-input v-model="certificateForm.attr4" placeholder="请输入参数4"/>
+              </el-form-item>
+              <el-form-item label="参数5" prop="attr5">
+                <el-input v-model="certificateForm.attr5" placeholder="请输入参数5"/>
+              </el-form-item>
+              <el-form-item label="参数6" prop="attr6">
+                <el-input v-model="certificateForm.attr6" placeholder="请输入参数6"/>
+              </el-form-item>
+              <el-form-item label="参数7" prop="attr7">
+                <el-input v-model="certificateForm.attr7" placeholder="请输入参数7"/>
+              </el-form-item>
+              <el-form-item label="参数8" prop="attr8">
+                <el-input v-model="certificateForm.attr8" placeholder="请输入参数8"/>
+              </el-form-item>
+              <el-form-item label="参数9" prop="attr9">
+                <el-input v-model="certificateForm.attr9" placeholder="请输入参数9"/>
+              </el-form-item>
+              <el-form-item label="参数10" prop="attr10">
+                <el-input v-model="certificateForm.attr10" placeholder="请输入参数10"/>
+              </el-form-item>
+            </el-tab-pane>
+          </el-tabs>
+        </template>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancel">取消</el-button>
+        <el-button type="primary" @click="saveCertificateData">保存并打印</el-button>
+      </div>
+    </el-dialog>
+
+    <el-dialog title="合格证信息编辑" :visible.sync="certificateFrontVisible" width="50%" append-to-body>
+      <el-form :model="certificateFrontForm" :rules="frontRules" ref="certificateFrontForm" label-width="120px">
+        <template>
+          <el-form-item label="批次流水号" prop="batchcodeVolumes">
+            <el-input v-model="certificateFrontForm.batchcodeVolumes" placeholder="请输入批次流水号"/>
+          </el-form-item>
+          <el-form-item label="膜接头" prop="membraneJoint" v-if="certificateFrontForm.type === true">
+            <el-input v-model="certificateFrontForm.membraneJoint" placeholder="请输入膜接头"/>
+          </el-form-item>
+          <el-form-item label="纸接头" prop="paperJoint"  v-if="certificateFrontForm.type === true">
+            <el-input v-model="certificateFrontForm.paperJoint" placeholder="请输入纸接头"/>
+          </el-form-item>
+
+          <el-form-item label="条形码显隐" prop="codeHide" v-if="certificateFrontForm.codeHideType === true">
+            <el-select  v-model="certificateFrontForm.codeHide" placeholder="请选择" >
+              <el-option
+                v-for="item in codeHideOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+
+        </template>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancel">取消</el-button>
+        <el-button type="primary" @click="saveCertificateFrontData">保存并打印</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 合并弹出框 -->
+    <el-dialog title="合并详情" :visible.sync="mergeDialogVisible" width="50%" v-dialogDrag append-to-body>
+      <el-form ref="mergeForm" :model="mergeForm" label-width="120px">
+        <el-row :gutter="24">
+            <el-col :span="12">
+<!--              <el-form-item label="报工单号" prop="feedbackCode" >
+                <el-select  style="width:100%" v-model="mergeForm.feedbackCode" @change="handleMergeFeedbackCodeChange" placeholder="请选择报工单号">
+                  <el-option
+                    v-for="item in mergeFeedbackOptions"
+                    :key="item.feedbackCode"
+                    :label="item.feedbackCode"
+                    :value="item.feedbackCode">
+                  </el-option>
+                </el-select>
+              </el-form-item>-->
+
+              <el-form-item label="工单号" prop="workorderCode" >
+                <el-select  style="width:100%" v-model="mergeForm.workorderCode" @change="handleMergeFeedbackCodeChange" placeholder="请选择工单号">
+                  <el-option
+                    v-for="item in mergeFeedbackOptions"
+                    :key="item.workorderCode"
+                    :label="item.workorderCode"
+                    :value="item.workorderCode">
+                  </el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+
+<!--            <el-col :span="12">
+              <el-form-item label="工单号" prop="workorderCode">
+                <el-input disabled  v-model="mergeForm.workorderCode" placeholder="请输入工单号"/>
+              </el-form-item>
+            </el-col>-->
+          <el-col :span="12">
+            <el-form-item label="任务单号" prop="taskCode">
+              <el-input disabled  v-model="mergeForm.taskCode" placeholder="请输入任务单号"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="24">
+
+          <el-col :span="12">
+            <el-form-item label="物料号" prop="itemCode">
+              <el-input disabled v-model="mergeForm.itemCode" placeholder="请输入物料号"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancel">取消</el-button>
+        <el-button type="primary" :disabled="mergeDisabled" @click="mergeFunction">确定合并</el-button>
+      </div>
+    </el-dialog>
+
+    <!--  备注补录弹出框  -->
+    <el-dialog title="补录备注" :visible.sync="remarkDialogVisible" width="50%" v-dialogDrag append-to-body>
+      <el-form ref="remarkForm" :model="remarkForm" label-width="120px">
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="备注" prop="remark">
+              <el-input v-model="remarkForm.remark" placeholder="请输入内容"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancel">取消</el-button>
+        <el-button type="primary" @click="updateRemark">确定修改</el-button>
+      </div>
+    </el-dialog>
+
+<!--      -->
+
   </div>
 </template>
 
 <script>
-import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback, mergeFeedback, initWarehouse, updatePrintStatus, feedbackErp, checkProcess, test, warehousingErp, getFeedbackDetail, exportJimu, syncwarehousingErp, submitFeedbackAudit, getIotFeedbackData} from '@/api/mes/pro/feedback';
+import {listFeedback, getFeedback, delFeedback, addFeedback, updateFeedback, execute, executes, startWareHousing, splitFeedback, checkWarehousing, reFeedback, mergeFeedback, initWarehouse, updatePrintStatus, feedbackErp, checkProcess, updateMergeStatus, warehousingErp, getFeedbackDetail, exportJimu, syncwarehousingErp, submitFeedbackAudit, getIotFeedbackData, reWarehousing, listFeedbackAuditPage, initCertificate, updateFeedbackRemark} from '@/api/mes/pro/feedback';
 import {auditFeedback} from "@/api/mes/pro/feedbackAudit";
 
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
@@ -870,15 +1199,20 @@ import {listProcess} from "@/api/mes/pro/process";
 import {getQcindexByProcessCode} from '@/api/mes/qc/qcindex';
 import MachinerySelectSingle from "@/components/machinerySelect/single.vue";
 import {listSimplePosts} from "@/api/system/post";
-import {getTaskDetail} from "@/api/mes/pro/protask";
+import {getProtask, getTaskDetail} from "@/api/mes/pro/protask";
 import {exportOrderExcel} from "@/api/channel/order";
 import {getFeedbackWarehousingLogPage} from "@/api/pro/feedbackWarehousingLog";
+import {getDict} from "@/api/system/dict/data";
+import {toBoolean} from "vue-qr/src/packages/util";
+
+// import DefectSelect from '@/components/qmsDefectSelect/single.vue';
+import DefectSelect from '@/components/qmsDefectSelect/index.vue';
 
 
 export default {
   name: 'Feedback',
-  components: {MachinerySelectSingle, WorkorderSelect, WorkstationSelect, UserSingleSelect, ProtaskSelect},
-  dicts: ['mes_order_status', 'mes_feedback_type', 'mes_shift_info', 'mes_pro_task_status', 'sys_yes_no', 'erp_status'],
+  components: {MachinerySelectSingle, WorkorderSelect, WorkstationSelect, UserSingleSelect, ProtaskSelect, DefectSelect},
+  dicts: ['mes_order_status', 'mes_feedback_type', 'mes_shift_info', 'mes_pro_task_status', 'sys_yes_no', 'erp_status', 'mes_shift_time'],
   props: {
     itemCode: {
       type: String,
@@ -950,6 +1284,7 @@ export default {
         quantityFeedback: null,
         quantityQualified: null,
         quantityUnquanlified: null,
+        quantityExcess: null,
         userName: null,
         nickName: null,
         feedbackChannel: null,
@@ -957,6 +1292,9 @@ export default {
         recordUser: null,
         recordNick: null,
         status: null,
+        machineryId: null,
+        machineryCode: null,
+        machineryName: null
       },
       historyQueryParams: {
         pageNo: 1,
@@ -1045,34 +1383,18 @@ export default {
       // 拆分详情列表
       splitDetails: [],
       teamMembers: [],
-      // 缺陷列表
+      // 不良列表
       processDefectList: [],
-      // 测试缺陷级联选择器
-      cascaderOptions: [],
-      cascaderProps: {
-        value: 'value',
-        label: 'label',
-        children: 'children',
-        multiple: true,
-        lazy: true,
-        lazyLoad: this.lazyLoad
-      },
-      upperLimit: 100,  // 米数区间的上限
-      lowerLimit: 5000, // 米数区间的下限
-      step: 100,        // 步长
-      loadingMore: false, // 控制加载更多的状态
       exportLoading: false,
       currentMaxLimit: 5000,  // 当前加载的最大下限
       loadingStatus: {},
       processOptions: [], // 工序选项
       activeName: '1',
-      qcIndexList: [], // 机长自检列表
       wareHouse: [], // 仓库信息
       // 岗位选项
       postOptions: [],
       // 完工入库历史记录
       historyList: [],
-
       // 提交审核对话框显示状态
       auditDialogVisible: false,
       // 审批参数
@@ -1081,7 +1403,10 @@ export default {
         pageSize: 10,
         workorderCode: undefined,
         nickName: undefined,
-        feedbackTime: undefined
+        feedbackTime: undefined,
+        feedbackBeginTime: undefined,
+        feedbackEndTime: undefined,
+        shiftInfo: undefined,
       },
       // 报工详情列表
       auditDetailList: [],
@@ -1107,6 +1432,141 @@ export default {
       disabledFlag: false,
       iotLoading: false,
       initialized: false,
+      splitDisabled: false, // 拆分按钮禁用状态
+      selectedDefects: [], // 存储选中的不良项
+      defectDialogVisible: false, // 控制机长自检对话框显示
+
+      // 合格证的数据属性
+      certificateEditVisible: false, // 分条控制编辑框显示
+      certificateFrontVisible: false,  // 涂布, 分切控制编辑框显示
+
+      selectedProcessCode: '', // 当前选中的工序代码
+      certificateForm: {
+        // 智源参数
+        zyPoNum: null,
+        zyItemCode: null,
+        zyYear: null,
+        zySerial: null,
+        volumesNumber: null,
+        // 其他参数
+        attr1: null,
+        attr2: null,
+        attr3: null,
+        attr4: null,
+        attr5: null,
+        attr6: null,
+        attr7: null,
+        attr8: null,
+        attr9: null,
+        attr10: null,
+      },
+      certificateFrontForm: {
+        type: false, // 管控是否填写膜接头与纸接头
+        codeHideType: false, // 管控是否有条形码显影, 默认不展示
+        batchcodeVolumes: null, // 批次号流水号
+        membraneJoint: null, // 膜接头
+        paperJoint: null, // 纸接头
+        codeHide: false, // 条形码显隐, 默认false不展示
+      },
+      certificateRules: {
+        zyPoNum: [{required: true, message: '请输入智源订单号', trigger: 'blur'}],
+        zyItemCode: [{required: true, message: '请输入智源物料编码', trigger: 'blur'}],
+        zyYear: [{required: true, message: '请输入年份对应编码', trigger: 'blur'}],
+        zySerial: [{required: true, message: '请输入追溯号', trigger: 'blur'}],
+        volumesNumber: [{required: true, message: '请输入流水号', trigger: 'blur'}],
+        batchcodeVolumes: [{required: true, message: '请输入批次流水号', trigger: 'blur'}],
+      },
+
+      frontRules: {
+        batchcodeVolumes: [{required: true, message: '请输入批次流水号', trigger: 'blur'}],
+        /*membraneJoint: [{required: true, message: '请输入膜接头', trigger: 'blur'}],
+        paperJoint: [{required: true, message: '请输入纸接头', trigger: 'blur'}],*/
+      },
+
+      originalRules:{
+
+      },
+      pendingPrintIds: [], // 待打印的ID列表
+      qualifiedActiveName: 'zyQualified',
+      reFeedbackLoading: false, // 撤销按钮加载状态
+      mergeDialogVisible: false, // 合并弹出框
+      mergeForm: {
+        feedbackType: null,
+        workstationId: null,
+        workstationCode: null,
+        workstationName: null,
+        workorderId: null,
+        workorderCode: null,
+        workorderName: null,
+        taskId: null,
+        taskCode: null,
+        itemId: null,
+        itemCode: null,
+        itemName: null,
+        unitOfMeasure: null,
+        specification: null,
+        quantity: null,
+        quantityFeedback: null,
+        quantityQualified: null,
+        quantityUnquanlified: null,
+        quantityExcess: null,
+        userName: null,
+        nickName: null,
+        feedbackChannel: null,
+        feedbackTime: null,
+        recordUser: null,
+        recordNick: null,
+        status: null,
+        machineryId: null,
+        machineryCode: null,
+        machineryName: null
+      }, // 合并表单
+      mergeFeedbackOptions: [], // 合并报工单选项
+      mergeDisabled: false, // 合并禁用按钮
+      remarkDialogVisible: false, // 备注弹出框
+      remarkForm: {
+        feedbackType: null,
+        workstationId: null,
+        workstationCode: null,
+        workstationName: null,
+        workorderId: null,
+        workorderCode: null,
+        workorderName: null,
+        taskId: null,
+        taskCode: null,
+        itemId: null,
+        itemCode: null,
+        itemName: null,
+        unitOfMeasure: null,
+        specification: null,
+        quantity: null,
+        quantityFeedback: null,
+        quantityQualified: null,
+        quantityUnquanlified: null,
+        quantityExcess: null,
+        userName: null,
+        nickName: null,
+        feedbackChannel: null,
+        feedbackTime: null,
+        recordUser: null,
+        recordNick: null,
+        status: null,
+        machineryId: null,
+        machineryCode: null,
+        machineryName: null,
+        remark: null
+      },
+      feedLoading: null,
+      codeHideOptions: [
+        {
+          value: true,
+          label: '显示'
+        },
+        {
+          value: false,
+          label: '隐藏'
+        }
+      ]
     };
   },
   created() {
@@ -1141,18 +1601,25 @@ export default {
       this.open = false;
       this.wareOpen = false;
       this.teamMembers = []; // 清空班组成员
-      this.processDefectList = []; // 清空缺陷列表
-      this.cascaderOptions = []; // 清空缺陷级联选择器
+      this.processDefectList = []; // 清空不良列表
       //this.removeScrollListener();
       this.wareList = []; // 清空入库列表
       this.wareHouse = [];
-
       this.auditDialogVisible = false
       this.auditDetailList = [];
       this.auditSummaryList = [];
       this.auditTeamList = [];
+      this.certificateEditVisible = false
+      this.certificateFrontVisible = false
+      this.mergeDialogVisible = false
+      this.remarkDialogVisible = false
+
+      // 重置加载状态
+      this.feedLoading = false;
+      this.loading = false;
 
       this.reset();
+
     },
     // 表单重置
     reset() {
@@ -1178,6 +1645,7 @@ export default {
         quantityFeedback: null,
         quantityQualified: null,
         quantityUnquanlified: null,
+        quantityExcess: null,
         userName: null,
         nickName: null,
         feedbackChannel: null,
@@ -1207,12 +1675,109 @@ export default {
       };
       this.resetForm('form');
       this.teamMembers = []; // 清空班组成员
-      this.processDefectList = []; // 清空缺陷列表
-      this.cascaderOptions = []; // 清空缺陷级联选择器
+      this.processDefectList = []; // 清空不良列表
+      this.initialized = false; // 重置初始化状态
+      this.iotLoading = false;  // 重置加载状态
+      this.certificateForm = {
+        zyPoNum: null,
+        zyItemCode: null,
+        zyYear: null,
+        zySerial: null,
+        volumesNumber: null,
+        batchcodeVolumes: null, // 批次号流水号
+        attr1: null,
+        attr2: null,
+        attr3: null,
+        attr4: null,
+        attr5: null,
+        attr6: null,
+        attr7: null,
+        attr8: null,
+        attr9: null,
+        attr10: null,
+
+      },
+      this.certificateFrontForm ={
+        batchcodeVolumes: null, // 批次号流水号
+        membraneJoint: null, // 膜接头
+        paperJoint: null, // 纸接头
+        codeHide: false, // 条形码显隐
+      }
+      this.resetForm('certificateForm');
+      this.mergeForm = {
+        feedbackType: null,
+        workstationId: null,
+        workstationCode: null,
+        workstationName: null,
+        workorderId: null,
+        workorderCode: null,
+        workorderName: null,
+        taskId: null,
+        taskCode: null,
+        itemId: null,
+        itemCode: null,
+        itemName: null,
+        unitOfMeasure: null,
+        specification: null,
+        quantity: null,
+        quantityFeedback: null,
+        quantityQualified: null,
+        quantityUnquanlified: null,
+        quantityExcess: null,
+        userName: null,
+        nickName: null,
+        feedbackChannel: null,
+        feedbackTime: null,
+        recordUser: null,
+        recordNick: null,
+        status: null,
+        machineryId: null,
+        machineryCode: null,
+        machineryName: null
+      };
+      this.resetForm('mergeForm');
+
+      this.remarkForm  = {
+        feedbackType: null,
+        workstationId: null,
+        workstationCode: null,
+        workstationName: null,
+        workorderId: null,
+        workorderCode: null,
+        workorderName: null,
+        taskId: null,
+        taskCode: null,
+        itemId: null,
+        itemCode: null,
+        itemName: null,
+        unitOfMeasure: null,
+        specification: null,
+        quantity: null,
+        quantityFeedback: null,
+        quantityQualified: null,
+        quantityUnquanlified: null,
+        quantityExcess: null,
+        userName: null,
+        nickName: null,
+        feedbackChannel: null,
+        feedbackTime: null,
+        recordUser: null,
+        recordNick: null,
+        status: null,
+        machineryId: null,
+        machineryCode: null,
+        machineryName: null,
+        remark: null
+      };
+      this.resetForm('remarkForm');
+
+      // 重置加载状态
+      this.feedLoading = false;
+      this.loading = false;
+
     },
     handleQuantityChanged() {
-      this.form.quantityFeedback = this.form.quantityQualified + this.form.quantityUnquanlified;
-      //this.currentMaxLimit = this.form.quantityFeedback;
+      this.form.quantityFeedback = this.form.quantityQualified + this.form.quantityUnquanlified + this.form.quantityExcess;
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -1239,7 +1804,8 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.form.iotFlag = false; // 默认手动录入
+      // 默认手动录入
+      this.form.iotFlag = true;
       if (this.taskCode) this.handleTaskCodeChange(this.taskCode);
       this.form.feedbackTime = new Date(); // 追加当前时间展示
       this.form.feedbackType = "UNI"; // 默认选中
@@ -1249,10 +1815,15 @@ export default {
       this.optType = 'add';
       // 初始化时读取设备缓存
       this.loadMachineryCache();
+      /* if (this.form.machineryCode && this.form.iotFlag) {
+         this.fetchIotData();
+       }*/
+
     },
     /** 修改按钮操作 */
     async handleUpdate(row) {
       this.reset();
+
       const recordId = row.id || this.ids;
       await getFeedback(recordId).then(response => {
         this.form = response.data;
@@ -1268,18 +1839,13 @@ export default {
           }
         }
 
+        this.form.iotFlag = toBoolean(response.data.iotFlag);
         this.teamMembers = this.form.memberList;
         this.processDefectList = response.data.processDefectList.map((item, index) => ({
           ...item,
           index: index + 1  // 从1开始编号
         }));
-        /* if (this.form.processCode) {
-          // 追加缺陷下拉框
-          getByCode(this.form.processCode).then(response => {
-            this.processDefectList = response.data;
-            this.changeDefectList();
-          });
-        }*/
+        this.initialized = true;
       });
 
       await initWarehouse({
@@ -1321,20 +1887,14 @@ export default {
             }
           }
         }
-
+        this.form.iotFlag = toBoolean(response.data.iotFlag);
         this.teamMembers = this.form.memberList;
         this.processDefectList = response.data.processDefectList.map((item, index) => ({
           ...item,
           index: index + 1  // 从1开始编号
         }));
 
-        /*if (this.form.processCode) {
-          // 追加缺陷下拉框
-          getByCode(this.form.processCode).then(response => {
-            this.processDefectList = response.data;
-            this.changeDefectList();
-          });
-        }*/
+        this.initialized = true;
       });
 
       await initWarehouse({
@@ -1357,10 +1917,24 @@ export default {
       });
 
     },
+
+
     /** 提交按钮 */
     submitForm() {
       this.loading = true;
-      this.$refs['form'].validate(valid => {
+      this.$refs['form'].validate(async valid => {
+
+        // 2025-10-15 追加: 校验当前任务单所属工单与当前表单提交工单是否一致
+        await getProtask(this.form.taskId).then(response => {
+          const workorderCode = response.data.workorderCode;
+          if (workorderCode != this.form.workorderCode) {
+            this.$message.error('当前工单与任务单不匹配, 请您校验!');
+            valid = false;
+            return;
+          }
+        });
+
+
         this.form.processDefectList = this.processDefectList; // 追加缺陷项管控
         this.form.processDefectList.forEach((defect, index) => {
           const startMeter = parseFloat(defect.startMeter);
@@ -1389,8 +1963,20 @@ export default {
         });
 
         // 卡控报工数量不能为0
-        if (!this.form.quantityFeedback) {
+        if (!this.form.quantityFeedback || this.form.quantityFeedback === 0) {
           this.$message.error(`请输入正确的报工数量!`);
+          valid = false;
+          return;
+        }
+        if (this.form.quantityExcess > this.form.quantityFeedback) {
+          this.$message.error(`请输入正确的损耗数量!`);
+          valid = false;
+          return;
+        }
+
+
+        if (!this.form.machineryCode) {
+          this.$message.error(`请选择正确的报工设备!`);
           valid = false;
           return;
         }
@@ -1400,6 +1986,19 @@ export default {
           valid = false;
           return;
         }
+
+        // 新增不良品数量校验
+        // 计算所有缺陷项的缺陷米数总和
+        const totalDefectMeter = this.processDefectList.reduce((sum, defect) => {
+          return sum + (parseFloat(defect.defectMeter) || 0);
+        }, 0);
+        // 检查缺陷米数总和是否等于不良品数量
+        /*if (totalDefectMeter !== this.form.quantityUnquanlified) {
+          this.$message.error(`不良品数量(${this.form.quantityUnquanlified})与缺陷米数总和(${totalDefectMeter})不匹配`);
+          valid = false;
+          return;
+        }*/
+
 
         if (valid) {
           if ((this.form.processCode === 'AM005') || (this.form.processCode === 'AM007') ||
@@ -1416,9 +2015,9 @@ export default {
           if (this.form.id != null) {
             updateFeedback(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
+            }).finally(() => {
               this.teamMembers = []; // 清空班组成员
               this.processDefectList = []; // 清空缺陷列表
-              this.cascaderOptions = []; // 清空缺陷级联选择器
               this.open = false;
               this.loading = false;
               this.getList();
@@ -1426,9 +2025,9 @@ export default {
           } else {
             addFeedback(this.form).then(response => {
               this.$modal.msgSuccess('新增成功');
+            }).finally(() => {
               this.teamMembers = []; // 清空班组成员
               this.processDefectList = []; // 清空缺陷列表
-              this.cascaderOptions = []; // 清空缺陷级联选择器
               this.open = false;
               this.loading = false;
               this.getList();
@@ -1440,13 +2039,70 @@ export default {
     handleSubmit() {
       this.form.status = 'APPROVING';
       this.$refs['form'].validate(valid => {
+        this.loading = true;
+        this.feedLoading = true;
         if (valid) {
-          if (this.form.id != null) {
+          if(!this.form.id){
+            this.$modal.msgError('当前单据未保存, 请先点击保存按钮!');
+            // 重置状态
+            this.form.status = 'PREPARE';
+            this.optType = 'add';
+            this.loading = false;
+            this.feedLoading = false;
+            return;
+          }
+
+          if (this.form.id) {
             this.form.feedbackMemberList = this.teamMembers;
-            updateFeedback(this.form).then(response => {
+            updateFeedback(this.form).then(async response => {
               this.$modal.msgSuccess('提交成功');
               //this.open = false;
-              //this.getList();
+              this.getList();
+              // 重新进入渲染当前form内容
+              await getFeedback(this.form.id).then(response => {
+                this.form = response.data;
+                for (let i = 0; i < this.form.memberList.length; i++) {
+                  this.form.memberList[i].nickname = this.form.memberList[i].nickName;
+                  this.form.memberList[i].username = this.form.memberList[i].userName;
+
+                  if (this.form.memberList[i].postIds) {
+                    const idsString = this.form.memberList[i].postIds.replace(/[^0-9,]/g, ''); // 清理字符串
+                    if (idsString) {
+                      this.form.memberList[i].postIds = idsString.split(',').map(Number); // 转换为数字数组
+                    }
+                  }
+                }
+
+                this.form.iotFlag = toBoolean(response.data.iotFlag);
+                this.teamMembers = this.form.memberList;
+                this.processDefectList = response.data.processDefectList.map((item, index) => ({
+                  ...item,
+                  index: index + 1  // 从1开始编号
+                }));
+                this.initialized = true;
+                this.loading = false;
+                this.feedLoading = false;
+              });
+
+              await initWarehouse({
+                workorderId: this.form.workorderId,
+                taskId: this.form.taskId
+              }).then(response => {
+                this.wareHouse = [
+                  response.warehouse.id,
+                  response.location.id,
+                  response.area.id
+                ];
+                this.form.warehouseId = response.warehouse.id;
+                this.form.locationId = response.location.id;
+                this.form.areaId = response.area.id;
+                this.$nextTick(() => {
+                  this.open = true;
+                  this.title = '修改生产报工记录';
+                  this.optType = 'edit';
+                });
+              });
+
             });
           }
         }
@@ -1466,23 +2122,21 @@ export default {
       try {
         this.disabledFlag = true;
         await this.$modal.confirm('确认执行报工？');
-        await executes({
+        const response = await executes({
           id: this.form.id,
           status: 'APPROVED',
           warehouseId: this.form.warehouseId,
           locationId: this.form.locationId,
           areaId: this.form.areaId
-        }).catch(error => {
-          // 处理错误
-          this.$message.error('执行报工异常: ' + error);
         }).finally(() => {
           this.cancel();
           this.getList();
           this.loading = false;
           this.disabledFlag = false;
         });
-        this.getList();
-        this.$modal.msgSuccess('执行成功');
+        if(response.code === 0){
+          this.$modal.msgSuccess('执行成功');
+        }
       } catch (error) {
         if (error !== 'cancel') {
           this.$modal.msgError('执行失败');
@@ -1556,12 +2210,9 @@ export default {
           this.exportLoading = true;
           try {
             const response = await exportJimu(params);
-            console.log('response: ', response.data);
             if (response.data) {
               //window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/1099904632157564928?token=${getAccessToken()}&ids=${response.data}`);
               window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/1099927802109648896?token=${getAccessToken()}&ids=${response.data}`);
-
-
             }
           } catch (error) {
             console.error('Export failed:', error);
@@ -1578,8 +2229,17 @@ export default {
     handleWorkorderSelect() {
       this.$refs.woSelect.showFlag = true;
     },
-    onWorkorderSelected(row) {
+    /*onWorkorderSelected(row) {
       if (row != undefined && row != null) {
+        this.form.workorderId = null;
+        this.form.workorderCode = null;
+        this.form.workorderName = null;
+        this.form.itemId = null;
+        this.form.itemCode = null;
+        this.form.itemName = null;
+        this.form.specification = null;
+        this.form.unitOfMeasure = null;
+
         this.form.workorderId = row.id;
         this.form.workorderCode = row.workorderCode;
         this.form.workorderName = row.workorderName;
@@ -1589,7 +2249,107 @@ export default {
         this.form.specification = row.productSpc;
         this.form.unitOfMeasure = row.unitOfMeasure;
       }
+    },*/
+    onWorkorderSelected(row) {
+      if (!row) return;
+      // 清空表单数据
+      this.form = {
+        ...this.form,
+        workorderId: null,
+        workorderCode: null,
+        workorderName: null,
+        itemId: null,
+        itemCode: null,
+        itemName: null,
+        specification: null,
+        unitOfMeasure: null,
+        taskId: null,
+        taskCode: null,
+        taskName: null,
+      };
+      const {
+        id: workorderId,
+        workorderCode,
+        workorderName,
+        productId: itemId,
+        productCode: itemCode,
+        productName: itemName,
+        productSpc: specification,
+        unitOfMeasure
+      } = row;
+
+      // 更新表单数据
+      this.form = {
+        ...this.form,
+        workorderId,
+        workorderCode,
+        workorderName,
+        itemId,
+        itemCode,
+        itemName,
+        specification,
+        unitOfMeasure
+      };
     },
+
+
+    handleDefectSelect() {
+      this.$refs.defectSelect.showFlag = true;
+    },
+    /*onDefectSelected(row) {
+      if (row != undefined && row != null) {
+        console.log("row: ", row)
+        const obj = {
+          ...row,
+          startMeter: '',
+          endMeter: '',
+          defectMeter: ''
+        };
+        // 若当前缺陷项已存在相同缺陷编码, 则报错
+        const isDuplicate = this.processDefectList.some(item => item.defectCode === row.defectCode);
+        if (isDuplicate) {
+          this.$message.error('缺陷项已存在相同缺陷编码, 请重新选择!');
+          return;
+        }
+        this.processDefectList.push(obj);
+      }
+    },*/
+    onDefectSelected(rows) {
+      if (rows && rows.length > 0) {
+        rows.forEach(row => {
+          // 检查是否重复
+          const isDuplicate = this.processDefectList.some(item => item.defectCode === row.defectCode);
+          if (!isDuplicate) {
+            const obj = {
+              ...row,
+              startMeter: '',
+              endMeter: '',
+              defectMeter: ''
+            };
+            this.processDefectList.push(obj);
+          } else {
+            this.$message.error(`缺陷项 ${row.defectCode} 已存在，请重新选择!`);
+          }
+        });
+      }
+    },
+    removeSelectedDefects() {
+      // 获取表格的选中行
+      const selectedRows = this.selectedDefects;
+      if (!selectedRows || selectedRows.length === 0) {
+        this.$message.warning('请先选择要删除的缺陷项');
+        return;
+      }
+      // 从processDefectList中移除选中的行
+      this.processDefectList = this.processDefectList.filter(
+        item => !selectedRows.some(selected => selected.id === item.id)
+      );
+      // 删除后重新计算缺陷米数总和
+      this.handleDefectMeterChange();
+      this.$message.success('删除成功');
+    },
+
+
     handleTaskSelect() {
       this.$refs.taskSelect.showFlag = true;
       this.$refs.taskSelect.getList();
@@ -1605,23 +2365,16 @@ export default {
         this.form.processId = row.processId;
         this.form.processCode = row.processCode;
         this.form.processName = row.processName;
+        this.form.processSequence = row.processSequence;
         // this.form.teamCode = row.attr1; // 默认带出派工班组编码
       }
-
       // 校验当前设备编码是否存在缓存, 存在则基于缓存设备编码带出班组编号
       if (this.form.machineryCode) {
         const response = await listTeam({"machineryCode": this.form.machineryCode});
-        console.log("response: ", response);
-
         const teamCode = response.data.list[0].teamCode;
-        console.log("teamCode: ", teamCode);
         this.form.teamCode = teamCode;
-
       }
 
-      /*if(this.form.processCode === 'AM005'){
-        this.form.unitOfMeasure = '米';
-      }*/
       if ((this.form.processCode === 'AM005') || (this.form.processCode === 'AM007') ||
         (
           this.form.processCode === 'AM006' &&
@@ -1642,16 +2395,38 @@ export default {
           this.form.machineryId = result.machineryId;
         });*/
         // 判定时间, 若为当前时间为上午7点至晚上19点这段时间, shiftInfo为1, 否则为0
+
+        let startTime = this.dict.type.mes_shift_time.find(item => item.value === "day_shift_start")?.label || null;
+        let endTime = this.dict.type.mes_shift_time.find(item => item.value === "day_shift_end")?.label || null;
+
+        if (!startTime || !endTime) {
+          this.$message.error('班次时间未配置, 请配置班次时间!');
+          return;
+        }
+
+        let shift = null;
         const now = new Date();
-        const hour = now.getHours();
-        const time = hour >= 7 && hour < 19 ? '0' : '1';
-        if (!this.form.shiftInfo) this.form.shiftInfo = time;
-        const shiftInfo = this.form.shiftInfo;
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+
+        // 判定当前时间是否大于startTime且小于endTime. 符合则将shift设置为0否则设置为1
+        shift = ((currentHour > startHour || (currentHour === startHour && currentMinute >= startMinute)) &&
+          (currentHour < endHour || (currentHour === endHour && currentMinute <= endMinute))) ? '0' : '1';
+
+        if (!this.form.shiftInfo) this.form.shiftInfo = shift;
+        const shiftInfo = this.form.shiftInfo
         getByTeamCodeAndShiftInfo(this.form.teamCode, shiftInfo).then(response => {
           let teamInfo = response.data;
-          console.log("teamInfo: ", teamInfo);
-          this.form.principalName = teamInfo[0].principalName;
-          this.form.principalId = teamInfo[0].principalId;
+          // 2025-8-12 白班与夜班分别对应不同的负责人
+          if (shiftInfo === '0') {
+            this.form.principalName = teamInfo[0].principalName;
+            this.form.principalId = teamInfo[0].principalId;
+          } else {
+            this.form.principalName = teamInfo[0].nightPrincipalName;
+            this.form.principalId = teamInfo[0].nightPrincipalId;
+          }
           this.teamMembers = []; // 清空当前班组成员列表
           for (let i = 0; i < teamInfo.length; i++) {
             let obj = teamInfo[i];
@@ -1664,25 +2439,11 @@ export default {
           this.$message.error('获取班组人员失败');
         });
       }
-
       // 追加问题缺陷与检验项
       if (this.form.processCode) {
+        // 2025-8-21 缺陷问题让用户手动配置
         // 基于工序获取对应的缺陷问题
-        /*getByCode(this.form.processCode).then(response => {
-          console.log(response.data);
-          let index =  1;
-          this.processDefectList = response.data.map(defect => ({
-            ...defect,
-            index: index++,
-            startMeter: '',
-            endMeter: '',
-            defectMeter: ''
-          }));
-          this.changeDefectList();
-        });*/
-
-        getQcdefectByCode(this.form.processCode).then(response => {
-          console.log(response.data);
+        /*getQcdefectByCode(this.form.processCode).then(response => {
           let index = 1;
           this.processDefectList = response.data.map(defect => ({
             ...defect,
@@ -1691,19 +2452,11 @@ export default {
             endMeter: '',
             defectMeter: ''
           }));
-        });
-
-        // 基于当前工序编码获取检测项
-        getQcindexByProcessCode(this.form.processCode).then(response => {
-          console.log(response.data);
-          this.qcIndexList = response.data;
-        });
-
+        });*/
         // 如果设备已存在且是数采模式，自动获取数采记录
-        /*if (this.form.machineryCode && !this.form.iotFlag) {
+        if (this.form.iotFlag && this.form.machineryCode && !this.initialized) {
           this.fetchIotData();
-        }*/
-
+        }
       }
 
     },
@@ -1713,7 +2466,14 @@ export default {
     },
     //人员选择返回
     onUserSelected(row) {
-      console.log(row);
+      // 2025-9-3 不允许追加相同用户
+      // 循环teamMembers, 判定是否存在相同nickName
+      for (let i = 0; i < this.teamMembers.length; i++) {
+        if (this.teamMembers[i].username === row.username) {
+          this.$message.error('已存在相同人员: ' + row.nickname);
+          return;
+        }
+      }
       this.teamMembers.push(row);
     },
     //点击人员选择按钮
@@ -1722,12 +2482,10 @@ export default {
     },
     //人员选择返回
     onUser2Selected(obj) {
-      console.log(obj);
       if (obj != undefined && obj != null) {
         this.form.principalName = obj.nickname;
         this.form.principalId = obj.id;
       }
-      console.log(this.form);
     },
 
     async handleBatchPrint() {
@@ -1769,12 +2527,15 @@ export default {
         LODOP.ADD_PRINT_TEXT(105, 120, 280, 35, obj.workstationName);
 
         LODOP.ADD_PRINT_TEXT(145, 15, 120, 35, "物料名称:");
-        LODOP.ADD_PRINT_TEXT(145, 120, 280, 35, obj.itemName);
+        LODOP.SET_PRINT_STYLE("FontSize", 12);
+        LODOP.ADD_PRINT_TEXT(145, 120, 490, 35, obj.itemName);
 
+        LODOP.SET_PRINT_STYLE("FontSize", 14);
         LODOP.ADD_PRINT_TEXT(185, 15, 120, 35, "工单号:");
         LODOP.ADD_PRINT_TEXT(185, 120, 280, 35, obj.workorderCode);
 
         LODOP.ADD_PRINT_TEXT(225, 15, 120, 35, "合格数量:");
+
         if (obj.machineryCode === 'AMSB-BF202401') {
           // 分切工序中, 剥离复卷机产成品单位为"米"
           LODOP.ADD_PRINT_TEXT(225, 120, 280, 35, obj.quantityQualified + '米');
@@ -1863,6 +2624,12 @@ export default {
           this.$message.error('请勾选已完成的单据进行入库');
           return;
         }
+
+        if (row.mergeStatus === 'Y') {
+          this.$message.error('勾选单据存在合并需求, 请检查!');
+          return;
+        }
+
       }
 
       await checkProcess(this.selectedRows[0].id).then(response => {
@@ -1897,20 +2664,44 @@ export default {
           });
         }
       })
+    },
+    async revokedWarehousing() {
+      if (this.selectedRows.length < 1) {
+        this.$message.error('请勾选要MES撤销入库的产成品');
+        return;
+      }
 
-      /*this.$modal.confirm('确认入库选中的 ' + this.selectedRows.length + ' 条报工单？').then(() => {
+      // 只允许勾选已完成单据进行入库
+      for (const row of this.selectedRows) {
+        if (row.status !== 'WAREHOUSED') {
+          this.$message.error('请勾选已入库的单据进行入库');
+          return;
+        }
+
+        if (row.mergeStatus === 'Y') {
+          this.$message.error('勾选单据存在合并需求, 请检查!');
+          return;
+        }
+
+        if (row.erpWarehousingStatus === 'Y') {
+          this.$message.error('该单据已ERP入库, 无法撤销!');
+          return;
+        }
+      }
+
+      this.$modal.confirm('确认撤销入库选中的 ' + this.selectedRows.length + ' 条报工单？').then(async () => {
         this.loading = true;
-        startWareHousing({"wareList": this.selectedRows}).then(response => {
-          this.$modal.msgSuccess("入库成功");
+        await reWarehousing({"wareList": this.selectedRows}).then(response => {
+          this.$modal.msgSuccess("撤销成功");
           this.getList();
         }).catch(error => {
-          console.error('入库失败:', error);
-          this.$message.error(`入库失败`);
+          console.error('撤销失败:', error);
+          this.$message.error(`撤销失败`);
         }).finally(() => {
           this.loading = false;
           this.getList(); // 刷新列表
         });
-      });*/
+      });
 
     },
     async getCameraInfo() {
@@ -1921,14 +2712,11 @@ export default {
         const specificCamera = videoDevices.find(device => device.label === 'GC8034');
         if (specificCamera) {
           this.targetCameraId = specificCamera.deviceId;
-          console.log('找到指定摄像头:', specificCamera);
         } else {
           const defaultCamera = videoDevices[0];
           if (defaultCamera) {
             this.targetCameraId = defaultCamera.deviceId;
-            console.log('使用默认摄像头:', defaultCamera);
           } else {
-            console.log('未找到任何可用的摄像头');
             this.$notify({
               title: '错误',
               message: '未找到任何可用的摄像头',
@@ -1996,7 +2784,6 @@ export default {
             inversionAttempts: "dontInvert",
           });
           if (code) {
-            console.log('QR Code scanned:', code.data);
             //this.stopScanning();
             // 处理扫描到的二维码数据
             // let fin = null;// 最终扫描的数据
@@ -2014,10 +2801,9 @@ export default {
                 if (data && data.id) {
                   that.wareForm.id = data.id;
                 } else {
-                  console.log("data is undefined");
+                  console.log("undefined");
                 }
               } catch (error) {
-                console.error('解析 JSON 出错:', error);
                 that.$message.error('扫描结果不是有效的 JSON 字符串');
               }
               that.handleBlur();
@@ -2087,13 +2873,20 @@ export default {
         }
       }
 
-
       getFeedbackDetail(this.wareForm.id).then(response => {
         let obj = response.data;
         let id = obj.id;
         /*this.wareList = this.wareList.filter(item => {
           return !id.includes(item.id);
         });*/
+
+        // 2025-10-24 卡控先填写仓库
+        if (!this.wareForm.locationId){
+          this.$message.error('请先选择入库位置!');
+          this.wareForm.id = undefined;
+          return;
+        }
+
         // 追加校验, 不允许同一个单号扫码多次
         if (this.wareList.some(item => item.id === obj.id)) {
           this.$message.error('当前报工单已扫码!');
@@ -2109,9 +2902,19 @@ export default {
         }
 
         if (obj.erpWarehousingStatus !== 'N') {
-          this.$message.error('只有未同步入库状态的报工单才能进行ERP反馈!');
+          this.$message.error('只有未同步入库状态的报工单才能进行ERP报工!');
           this.wareForm.id = undefined;
           return;
+        }
+
+
+        // TODO 2025-10-24 若当前ERP完工入库选择不良品仓, 需卡控备注是否填写
+        if (this.wareForm.locationId === 69){
+          if(!obj.remark){
+            this.$message.error('判定当前ERP入库库区为不良品仓, 请填写当前报工单备注!');
+            this.wareForm.id = undefined;
+            return;
+          }
         }
 
         // 追加报工入库明细
@@ -2119,7 +2922,6 @@ export default {
         this.wareForm.id = undefined;
       }).catch(error => {
         // 处理错误
-        console.error('获取报工单详情失败:', error);
         this.$message.error('获取报工单详情失败，请稍后再试');
         this.wareForm.id = undefined;
       });
@@ -2142,7 +2944,6 @@ export default {
         return;
       }
 
-      console.log("this.wareForm.wareHouse", this.wareForm.wareHouse);
       // 校验表单数据
       let obj = {
         "wareList": this.wareList,
@@ -2159,14 +2960,14 @@ export default {
         }).catch(error => {
           // 处理错误
           console.error('获取报工单详情失败:', error);
-          this.$message.error('error: '+ error);
+          this.$message.error('error: ' + error);
         }).finally(() => {
           this.cancel();
           this.getList();
           this.loading = false;
           this.disabledFlag = false;
         });
-      }catch(error){
+      } catch (error) {
         this.$message.error('ERP接口调用失败!');
         this.cancel();
         this.getList();
@@ -2210,25 +3011,30 @@ export default {
         return;
       }
       const firstRow = this.selectedRows[0]; // 访问第一行
-      if (firstRow.status != 'FINISHED') {
-        this.$message.warning('仅允许拆分已完成的报工单!');
+      if (firstRow.status != 'FINISHED' && firstRow.status != 'PRINTED') {
+        this.$message.warning('仅允许拆分已完成或已打印的报工单!');
         return;
       }
+
+      if (firstRow.processCode === 'AM006' || firstRow.processCode === 'AM007') {
+        this.$message.warning('当前工序无需拆分!');
+        return;
+      }
+
       this.splitForm = {
         id: firstRow.id,
         workorderCode: firstRow.workorderCode,
         itemCode: firstRow.itemCode,
         quantityFeedback: firstRow.quantityFeedback,
+        quantityQualified: firstRow.quantityQualified,
         unitOfMeasure: firstRow.unitOfMeasure
       };
-      console.log(this.splitForm);
       this.splitDetails = this.selectedRows.map(row => ({
         workorderCode: row.workorderCode,
         itemCode: row.itemCode,
         unitOfMeasure: row.unitOfMeasure,
         quantity: '' // 用户需要填写的数量
       }));
-      console.log(this.splitDetails);
       this.splitDialogVisible = true;
     },
     // 新增拆分行
@@ -2271,7 +3077,7 @@ export default {
       this.splitDetails.splice(index, 1);
     },
     // 提交拆分
-    submitSplit() {
+    async submitSplit() {
       // 校验拆分详情中的数量总和是否小于等于报工数量
       let totalQuantity = this.splitDetails.reduce((sum, detail) => {
         return sum + (parseFloat(detail.quantity) || 0);
@@ -2289,9 +3095,7 @@ export default {
           return;
         }
       }
-      // 这里添加提交拆分逻辑
-
-      // 这里添加提交拆分逻辑
+      this.splitDisabled = true;
       let obj = {
         'id': this.splitForm.id,
         'workorderCode': this.splitForm.workorderCode,
@@ -2301,11 +3105,16 @@ export default {
         'splitDetails': this.splitDetails
       }
 
-      splitFeedback(obj).then(response => {
-        this.splitDialogVisible = false;
+      try {
+        await splitFeedback(obj);
         this.$message.success('拆分成功');
+      } catch (error) {
+        this.$message.error('拆分失败' + error);
+      } finally {
+        this.splitDisabled = false;
+        this.splitDialogVisible = false;
         this.getList();
-      });
+      }
 
     },
     addTeamMember() {
@@ -2319,41 +3128,56 @@ export default {
     },
     // 撤销报工
     async cancelReport() {
-      console.log(this.selectedRows);
       // 校验当前报工产成品是否入库, 入库不允许进行撤销
       try {
+        this.reFeedbackLoading = true;
         const response = await checkWarehousing(this.selectedRows[0].id);
         if (response.data === "Y") { // 入库不允许进行撤销
-          this.$message.error('该报工产成品已入库, 不能进行撤销!');
-          return; // 确保return语句在此处
+          this.$message.error('该报工产成品已入库, 请先调用撤销入库接口!');
+          this.reFeedbackLoading = false;
+          return;
+        }
+
+        if(this.selectedRows[0].status === 'WAREHOUSED'){
+          this.$message.error('该报工产成品已入库, 请先调用撤销入库接口!');
+          this.reFeedbackLoading = false;
+          return;
         }
 
         // 校验当前选中行状态是否为已完成, 已完成才允许进行撤销
-        if (this.selectedRows[0].status != 'FINISHED') {
-          this.$message.error('该单据未报工!');
+        if (this.selectedRows[0].status != 'FINISHED' && this.selectedRows[0].status != 'PRINTED' && this.selectedRows[0].status != 'UNAPPROVED') {
+          this.$message.error('该单据不满足撤销需求!');
+          this.reFeedbackLoading = false;
           return;
         }
         // 校验当前选中行是否存在来源单据, 存在不允许撤销
         if (this.selectedRows[0].originCode) {
           this.$message.error('该单据存在来源单据, 不能进行撤销!');
+          this.reFeedbackLoading = false;
           return;
         }
-
         // 开始进行撤销报工操作
         // 追加弹出框, 当用户点击确认后在执行reFeedback方法
-        this.$confirm('确定要撤销)?', '提示', {
+        this.$confirm('确定要撤销?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
           reFeedback(this.selectedRows[0].id).then(response => {
+            this.getList();
             this.$message.success('撤销成功');
+            this.reFeedbackLoading = false;
+          }).catch(()=>{
+            this.$message.error('撤销失败');
+            this.reFeedbackLoading = false;
           });
         }).catch(() => {
           this.$message.info('已取消');
+          this.reFeedbackLoading = false;
         });
       } catch (error) {
         console.error('检查入库状态时出错:', error);
+        this.reFeedbackLoading = false;
       }
     },
     defectChange(value) {
@@ -2369,102 +3193,6 @@ export default {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
     },
-    // 缺陷列表
-    /*  changeDefectList() {
-        this.cascaderOptions = this.processDefectList.map(defect => ({
-          value: defect.id,
-          label: defect.defectName,
-          children: this.generateRanges(100, 10000, 100), // 初始时生成100到10000的区间，步长为100
-          leaf: false, // 标记为非叶子节点，表示还有子节点
-        }));
-      },*/
-
-
-    /*changeDefectList() {
-      this.cascaderOptions = this.processDefectList.map(defect => {
-        let upperRanges = [];
-        let lowerRanges = [];
-
-        // 生成米数区间
-        this.generateRanges(upperRanges);
-
-        // 对于每个上沿，生成对应的下沿
-        upperRanges.forEach(range => {
-          let lowerStart = range.value + 10;  // 假设下沿的起点比上沿大10米
-          let lowerEnd = range.value + 50;    // 假设下沿的终点比上沿大50米
-          let stepLower = 10; // 下沿的步长
-
-          let lowerRange = [];
-          for (let i = lowerStart; i <= lowerEnd; i += stepLower) {
-            lowerRange.push({value: i, label: `${i}米`});
-          }
-
-          range.children = lowerRange;  // 将下沿区间作为上沿的子级
-        });
-
-        return {
-          value: defect.id,
-          label: defect.defectName,
-          children: upperRanges  // 上沿区间作为缺陷问题的子级
-        };
-      });
-    },
-    // 生成米数区间
-    generateRanges(upperRanges) {
-      for (let i = this.upperLimit; i <= this.currentMaxLimit; i += this.step) {
-        upperRanges.push({value: i, label: `${i}米`});
-      }
-    },*/
-
-    // 监听滚动事件，判断是否滚动到最底部
-    /*onScroll(event) {
-      console.log("滚动事件: loadingMore=> " + this.loadingMore);
-      const el = event.target;
-      const bottom = el.scrollHeight === el.scrollTop + el.clientHeight;
-
-      if (bottom && !this.loadingMore) {
-        this.loadingMore = true;  // 开始加载更多
-        this.loadMoreRanges();
-      }
-    },*/
-
-    // 动态加载更多的米数区间
-    /*loadMoreRanges() {
-      console.log("加载更多米数");
-      setTimeout(() => {
-        // 更新 currentMaxLimit，增加米数区间的范围
-        this.currentMaxLimit += 1000;  // 每次增加 5000 米的区间范围
-
-        // 将新的米数区间加入到 cascaderOptions 中
-        this.changeDefectList();
-
-        // 加载完成后设置 loadingMore 为 false
-        this.loadingMore = false;
-      }, 1000); // 模拟异步加载的延迟
-    },*/
-    /*addScrollListener() {
-      // 获取第二个 .el-scrollbar el-cascader-menu 下的 .el-scrollbar__bar.is-vertical
-      const verticalScrollBar = this.$refs.cascader?.$el?.querySelector('.el-cascader-panel .el-scrollbar.el-cascader-menu:nth-child(2) .el-scrollbar__bar.is-vertical');
-      if (verticalScrollBar) {
-        verticalScrollBar.addEventListener('scroll', this.onScroll);
-      } else {
-        console.error('未找到第二个 .el-scrollbar el-cascader-menu 下的垂直滚动条');
-      }
-    },
-    removeScrollListener() {
-      // 获取第二个 .el-scrollbar el-cascader-menu 下的 .el-scrollbar__bar.is-vertical
-      const verticalScrollBar = this.$refs.cascader?.$el?.querySelector('.el-cascader-panel .el-scrollbar.el-cascader-menu:nth-child(2) .el-scrollbar__bar.is-vertical');
-      if (verticalScrollBar) {
-        verticalScrollBar.removeEventListener('scroll', this.onScroll);
-      }
-    },*/
-
-    /* onCascaderChange(value) {
-       console.log('级联选择器变化', value);
-       // 重新添加滚动监听器，因为级联选择器的内容可能发生变化
-       this.removeScrollListener();
-       this.addScrollListener();
-     },*/
 
     // 班次信息变化时的处理方法
     handleShiftChange() {
@@ -2486,55 +3214,8 @@ export default {
         });
       }
     },
-    /*changeDefectList() {
-      this.cascaderOptions = this.processDefectList.map(defect => ({
-        value: defect.id,
-        label: defect.defectName,
-        children: [], // 初始时不加载子节点
-        leaf: false, // 标记为非叶子节点，表示还有子节点
-        loading: false, // 当前节点的加载状态
-      }));
-    },*/
-    lazyLoad(node, resolve) {
-      const {value} = node;
-      // 如果是根节点，则直接返回
-      if (!value) {
-        resolve(this.cascaderOptions);
-        return;
-      }
 
-      // 如果已经在加载中，则直接返回
-      if (this.loadingStatus[value]) {
-        return;
-      }
 
-      // 设置当前节点的加载状态为 true
-      this.loadingStatus[value] = true;
-      node.loading = true;
-
-      // 模拟异步加载数据
-      setTimeout(() => {
-        // 生成新的米数区间
-        const newRanges = [];
-        this.generateRanges(newRanges, this.currentMaxLimit, this.currentMaxLimit + 1000, this.step);
-        this.currentMaxLimit += 1000;
-
-        // 将新的米数区间作为子节点添加到当前节点
-        node.children = newRanges;
-
-        // 设置当前节点的加载状态为 false
-        this.loadingStatus[value] = false;
-        node.loading = false;
-
-        // 调用 resolve 函数，表示数据加载完成
-        resolve(newRanges); // 确保传递正确的参数
-      }, 1000);
-    },
-    generateRanges(ranges, start, end, step) {
-      for (let i = start; i <= end; i += step) {
-        ranges.push({value: i, label: `${i}米`});
-      }
-    },
     handleStartMeterInput(index, event) {
       const defect = this.processDefectList[index];
       if (defect.startMeter === '') {
@@ -2550,6 +3231,7 @@ export default {
         return;
       }
       defect.defectMeter = endMeter - startMeter;
+      this.handleDefectMeterChange();
     },
     handleEndMeterInput(index, event) {
       const defect = this.processDefectList[index];
@@ -2566,6 +3248,7 @@ export default {
         return;
       }
       defect.defectMeter = endMeter - startMeter;
+      this.handleDefectMeterChange();
     },
     //查询工序信息
     getProcess() {
@@ -2573,7 +3256,6 @@ export default {
       this.processOptions = [];
       listProcess().then(response => {
         this.processOptions = response.data.list;
-        console.log(this.processOptions)
       });
     },
     // 合并单据
@@ -2583,33 +3265,57 @@ export default {
         return;
       }
 
+
       // 验证是否可合并
       const first = this.selectedRows[0];
+      /*const canMerge = this.selectedRows.every(row =>
+        row.itemCode === first.itemCode &&
+        // 2025-8-20 允许跨工单合并
+        // row.workorderCode === first.workorderCode &&
+        // row.taskCode === first.taskCode &&
+        row.processCode === first.processCode &&
+        // row.machineryCode === first.machineryCode &&
+        (row.status === 'FINISHED' || row.status === 'PRINTED')
+      );*/
+
       const canMerge = this.selectedRows.every(row =>
         row.itemCode === first.itemCode &&
-        row.workorderCode === first.workorderCode &&
-        row.taskCode === first.taskCode &&
+        // 2025-8-20 允许跨工单合并
         row.processCode === first.processCode &&
-        // row.status === 'WAREHOUSED'
-        row.status === 'FINISHED'
+        (row.status === 'FINISHED' || row.status === 'PRINTED')
       );
 
       if (!canMerge) {
-        this.$message.error('只能合并相同任务单、相同物料且已完成的报工单');
+        this.$message.error('只能合并相同物料的报工单');
         return;
       }
+      // 将当前选择的工单信息传递到mergeFeedbackOptions中
+      this.mergeFeedbackOptions = this.selectedRows;
 
+     // this.mergeDialogVisible = true;
+      // 若当前同属于一个工单, 则直接调用mergeFunction()方法, 否则打开弹出框
+      if (this.selectedRows.every(row => row.workorderCode === first.workorderCode)) {
+        this.mergeFunction()
+      }else{
+        this.mergeDialogVisible = true;
+      }
+    },
+    // 2025-10-21 追加卡控, 允许用户手动选择合并到哪个工单
+    mergeFunction() {
       this.$modal.confirm('确认合并选中的 ' + this.selectedRows.length + ' 条报工单？').then(() => {
         const ids = this.selectedRows.map(item => item.id);
         this.loading = true;
-        mergeFeedback(ids).then(response => {
+        mergeFeedback({"feedbackIds": ids,"baseFeedbackId" : Number(this.mergeForm.id)}).then(response => {
           this.$modal.msgSuccess("合并成功");
+          this.mergeDialogVisible = false
+          this.mergeForm = {};
           this.getList();
         }).finally(() => {
           this.loading = false;
         });
       });
     },
+
     // 工序缓存
     handleProcessChange(val) {
       this.cachedProcessCode = val;
@@ -2624,9 +3330,11 @@ export default {
     handleMachineryAdd() {
       this.$refs.machinerySelect.showFlag = true;
     },
+    handleQueryMachineryAdd() {
+      this.$refs.queryMachinerySelect.showFlag = true;
+    },
 
     loadMachineryCache() {
-      console.log("加载缓存!", localStorage.getItem('cachedMachinery'));
       try {
         const cachedMachinery = localStorage.getItem('cachedMachinery')
         if (cachedMachinery) {
@@ -2636,6 +3344,9 @@ export default {
             this.form.machineryId = id
             this.form.machineryCode = code
             this.form.machineryName = name
+            this.queryParams.machineryId = id
+            this.queryParams.machineryCode = code
+            this.queryParams.machineryName = name
           }
         }
       } catch (e) {
@@ -2645,7 +3356,6 @@ export default {
     },
 
     saveMachineryCache(data) {
-      console.log("保存缓存!", data);
       localStorage.setItem('cachedMachinery', JSON.stringify({
         id: data.id,
         code: data.machineryCode,
@@ -2667,9 +3377,10 @@ export default {
         this.form.machineryCode = rows.machineryCode
         this.form.machineryName = rows.machineryName
 
-        /*if (this.form.iotFlag) {
+        /* if (this.form.iotFlag) {
+           console.log("CCC")
           this.fetchIotData();
-        }*/
+         }*/
 
         // 保存到缓存
         this.saveMachineryCache(rows)
@@ -2681,6 +3392,15 @@ export default {
         this.form.machineryName = ''
       }
     },
+    onQueryMachineryAdd(rows) {
+      if (rows) {
+        // 更新表单数据
+        this.queryParams.machineryId = rows.id
+        this.queryParams.machineryCode = rows.machineryCode
+        this.queryParams.machineryName = rows.machineryName
+      }
+    },
+
     handlePostChange(row) {
       console.log('修改后的岗位:', row.postIds)
     },
@@ -2692,7 +3412,7 @@ export default {
       }
       const selectedRow = this.selectedRows[0];
       if (selectedRow.status !== 'WAREHOUSED' && selectedRow.erpFeedbackStatus !== 'N') {
-        this.$message.warning('只有完成状态的报工单且未同步才能进行ERP反馈!');
+        this.$message.warning('只有完成状态的报工单且未同步才能进行ERP报工!');
         return;
       }
       this.$modal.confirm('确认进行ERP报工？').then(() => {
@@ -2717,11 +3437,11 @@ export default {
       }
       const selectedRow = this.selectedRows;
 
-      // 循环selectedRow, 判定每一行 "只有未同步入库状态的报工单才能进行ERP反馈"
+      // 循环selectedRow, 判定每一行 "只有未同步入库状态的报工单才能进行ERP报工"
       for (let i = 0; i < selectedRow.length; i++) {
         const row = selectedRow[i];
         if (row.erpWarehousingStatus !== 'N') {
-          this.$message.error('只有未同步入库状态的报工单才能进行ERP反馈!');
+          this.$message.error('只有未同步入库状态的报工单才能进行ERP报工!');
           return;
         }
       }
@@ -2787,15 +3507,18 @@ export default {
 
       if (this.form.teamCode) {
         // 基于当前班组编码获取班组人员
-        // 判定时间, 若为当前时间为上午7点至晚上19点这段时间, shiftInfo为1, 否则为0
+        // 判定时间, 若为当前时间为上午7点30至晚上19点30这段时间, shiftInfo为1, 否则为0
         const now = new Date();
         const hour = now.getHours();
-        const time = hour >= 7 && hour < 19 ? '0' : '1';
+        const minute = now.getMinutes();
+        const isDuringShift = (hour > 7 || (hour === 7 && minute >= 30)) &&
+          (hour < 19 || (hour === 19 && minute < 30));
+        const time = isDuringShift ? '0' : '1';
+
         if (!this.form.shiftInfo) this.form.shiftInfo = time;
         const shiftInfo = this.form.shiftInfo;
         getByTeamCodeAndShiftInfo(this.form.teamCode, shiftInfo).then(response => {
           let teamInfo = response.data;
-          console.log("teamInfo: ", teamInfo);
           this.form.principalName = teamInfo[0].principalName;
           this.form.principalId = teamInfo[0].principalId;
           this.teamMembers = []; // 清空当前班组成员列表
@@ -2812,7 +3535,8 @@ export default {
       }
       // 追加问题缺陷与检验项
       if (this.form.processCode) {
-        getQcdefectByCode(this.form.processCode).then(response => {
+        // 2025-8-21 缺陷项改为用户手动配置
+        /* getQcdefectByCode(this.form.processCode).then(response => {
           console.log(response.data);
           let index = 1;
           this.processDefectList = response.data.map(defect => ({
@@ -2822,12 +3546,8 @@ export default {
             endMeter: '',
             defectMeter: ''
           }));
-        });
-        // 基于当前工序编码获取检测项
-        getQcindexByProcessCode(this.form.processCode).then(response => {
-          console.log(response.data);
-          this.qcIndexList = response.data;
-        });
+        });*/
+
       }
     },
     handleInput(inputValue) {
@@ -2860,12 +3580,34 @@ export default {
         this.auditSummaryList = [...this.cachedAuditSummary];
       }
       this.getAuditData();
+
+      let startTime = this.dict.type.mes_shift_time.find(item => item.value === "day_shift_start")?.label || null;
+      let endTime = this.dict.type.mes_shift_time.find(item => item.value === "day_shift_end")?.label || null;
+
+      if (!startTime || !endTime) {
+        this.$message.error('班次时间未配置, 请配置班次时间!');
+        return;
+      }
+
+      // TODO: 追加当前用户
+
+
+      let shift = null;
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+
+      const [startHour, startMinute] = startTime.split(':').map(Number);
+      const [endHour, endMinute] = endTime.split(':').map(Number);
+
+      shift = ((currentHour > startHour || (currentHour === startHour && currentMinute >= startMinute)) &&
+        (currentHour < endHour || (currentHour === endHour && currentMinute <= endMinute))) ? '0' : '1';
+      this.auditQueryParams.shiftInfo = shift;
     },
 
     // 获取报工详情数据
     async getAuditData() {
       this.auditLoading = true;
-
       // 保存当前页的选中状态
       if (this.auditDetailList.length > 0) {
         this.cachedSelections.set(
@@ -2874,8 +3616,12 @@ export default {
         );
       }
 
+      this.auditQueryParams.feedbackTime = [
+        this.auditQueryParams.feedbackBeginTime,
+        this.auditQueryParams.feedbackEndTime
+      ];
       try {
-        const response = await listFeedback(this.auditQueryParams);
+        const response = await listFeedbackAuditPage(this.auditQueryParams);
         this.auditDetailList = response.data.list;
         this.auditQueryTotal = response.data.total;
 
@@ -2911,14 +3657,13 @@ export default {
     },
 
     // 计算报工汇总数据
-    // 修改后的 calcSummaryData 方法
     calcSummaryData() {
       const summaryMap = new Map();
       this.auditTeamList = [];
       this.teamMemberCount = 0;
 
       this.selectedDetails.forEach(item => {
-        const key = `${item.workorderCode}-${item.taskCode}-${item.nickName}`;
+        const key = `${item.workorderCode}-${item.taskCode}-${item.nickName}-${item.machineryCode}`;
 
         if (!summaryMap.has(key)) {
           summaryMap.set(key, {
@@ -2938,9 +3683,12 @@ export default {
             userName: item.userName,
             nickName: item.nickName,
             teamCode: item.teamCode,
+            machineryCode: item.machineryCode,
+            machineryName: item.machineryName,
             totalQuantityFeedback: 0,
             totalQuantityQualified: 0,
             totalQuantityUnquanlified: 0,
+            totalQuantityExcess: 0,
             teamMembers: [],
             feedbackIds: []
           });
@@ -2950,6 +3698,7 @@ export default {
         summary.totalQuantityFeedback += item.quantityFeedback;
         summary.totalQuantityQualified += item.quantityQualified;
         summary.totalQuantityUnquanlified += item.quantityUnquanlified;
+        summary.totalQuantityExcess += item.quantityExcess;
 
         // 将当前报工记录ID添加到汇总项中
         if (!summary.feedbackIds.includes(item.id)) {
@@ -2962,7 +3711,6 @@ export default {
             const exists = summary.teamMembers.some(m =>
               m.userName === member.userName
             );
-
             if (!exists) {
               summary.teamMembers.push({
                 userName: member.userName,
@@ -3001,8 +3749,14 @@ export default {
         return;
       }
 
+      /*if(!this.auditQueryParams.feedbackBeginTime || !this.auditQueryParams.feedbackEndTime){
+        this.$message.warning('请选择报工时间范围!');
+        return;
+      }*/
+
       // 构造提交数据
       const submitData = {
+        queryParams: this.auditQueryParams,
         feedbackIds: this.selectedDetails.map(item => item.id),
         summaryList: this.auditSummaryList
       };
@@ -3023,23 +3777,20 @@ export default {
 
     },
     async fetchIotData() {
-      console.log("触发fetchIotData")
-      if (!this.form.machineryCode) {
+      if (this.initialized || !this.form.machineryCode) {
         return;
       }
-
       this.iotLoading = true;
       try {
-        // 调用API获取数采记录（假设API为getIotFeedbackData）
         const response = await getIotFeedbackData(this.form.machineryCode);
-
         if (response.data) {
           const iotData = response.data;
           // 更新表单数据
           this.form.quantityQualified = iotData || 0;
           this.form.quantityFeedback = this.form.quantityQualified + this.form.quantityUnquanlified;
-
+          this.initialized = true; // 标记数据已初始化
           this.$message.success('成功获取设备数采记录');
+
         }
       } catch (error) {
         console.error('获取数采记录失败:', error);
@@ -3048,47 +3799,742 @@ export default {
         this.iotLoading = false;
       }
     },
+
     handleIotSwitchChange(value) {
       if (value && this.form.machineryCode) {
-        //this.fetchIotData();
+        this.fetchIotData();
       }
     },
+
     async handleCertificatePrint(row) {
-      console.log("row: ", row);
-      const id = row.id || this.ids;
-      const response = await checkProcess(id);
-      if (response.data.process) {
-        this.$message.error('该任务单存在下道制程, 无需打印合格证!');
+      if (this.selectedRows.length < 1) {
+        this.$message.error('请至少选择一行数据进行操作');
         return;
       }
 
-      await this.$modal.confirm('确认打印？')
-      window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/1108245689397080064?token=${getAccessToken()}&id=${id}`);
+      const selectedIds = this.selectedRows.map(item => item.id);
+
+      // 并行检查所有ID的制程状态
+      const processChecks = await Promise.all(
+        selectedIds.map(id => checkProcess(id))
+      );
+
+      // 检查是否有任何ID存在下道制程
+      const hasProcess = processChecks.some(response => response.data.process);
+      if (hasProcess) {
+        // 找出第一个有问题的ID
+        const problematicIndex = processChecks.findIndex(response => response.data.process);
+        const problematicId = selectedIds[problematicIndex];
+        const response = processChecks[problematicIndex];
+        this.$message.error(`报工单${response.data.feedbackCode}存在下道制程, 无需打印合格证!`);
+        return;
+      }
+      // 检查工序类型: 如果是涂布直接打印
+      const processCodes = [...new Set(this.selectedRows.map(item => item.processCode))];
+      if (processCodes.length > 1) {
+        this.$message.error('不同工序的报工单不能混合打印，请选择相同工序的报工单');
+        return;
+      }
+
+      // 查看当前选中行, 如果为分切(processCode = AM006) 则需要获取当前行单位
+      const unit = this.selectedRows[0].unitOfMeasure;
+
+      const processCode = processCodes[0];
+      if (processCode === 'AM001' || (processCode === 'AM006' && unit === "张")) {
+        this.certificateFrontForm.type = false;
+        if(processCode === 'AM006'){
+          this.certificateFrontForm.codeHideType = true;
+        }
+        this.certificateFrontVisible = true;
+        //  this.executeCertificatePrint();
+      } else if(processCode === 'AM006' && unit === "米"){
+        this.certificateFrontForm.type = true;
+        if(processCode === 'AM006'){
+          this.certificateFrontForm.codeHideType = true;
+        }
+        this.certificateFrontVisible = true;
+      }else {
+        // AM004工序弹出输入框
+        this.certificateEditVisible = true;
+      }
+
+    },
+    async saveCertificateData() {
+      this.$refs.certificateForm.validate(async valid => {
+        if (valid) {
+          this.certificateEditVisible = false;
+          await this.executeCertificatePrint();
+        }
+      });
+    },
+    async saveCertificateFrontData(){
+      this.$refs.certificateFrontForm.validate(async valid => {
+        if (valid) {
+          this.certificateEditVisible = false;
+          await this.executeCertificatePrint();
+        }
+      });
+    },
+    async executeCertificatePrint() {
+      const selectedIds = this.selectedRows.map(item => item.id);
+      try {
+        this.loading = true;
+        const printData = await initCertificate(selectedIds);
+        const lodopItems = [];
+        for (let i = 0; i < printData.data.length; i++) {
+          const jsonObject = printData.data[i];
+          if (jsonObject.processCode === "AM004" || jsonObject.processCode === "AM001" || jsonObject.processCode === "AM006") {
+            lodopItems.push(jsonObject);
+          }
+        }
+
+        if (lodopItems.length > 0) {
+          LODOP.PRINT_INITA(0, 0, 150, 100);
+          LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
+
+          for (const jsonObject of lodopItems) {
+            // 一维码生成
+            // 获取当前月份
+            const month = new Date().getMonth() + 1;
+            const date = new Date().getDate();
+            // 日期转换, 1 -> 1 , 2->2 , 10 -> A , 11 -> B , 12 -> C
+            const monthCode = month <= 9 ? month : String.fromCharCode(month - 10 + 65);
+            const dateCode = date <= 9 ? date : String.fromCharCode(date - 10 + 65);
+            const lastThreeChars = jsonObject.volumesNumber.slice(-3);
+            const modifiedVolumesNumber = lastThreeChars.slice(0, -1);
+
+            let barcodeData = null;
+            if(this.qualifiedActiveName == 'zyQualified'){
+              barcodeData = this.certificateForm.zyPoNum + '-' + this.certificateForm.zyItemCode + '-' + this.certificateForm.zyYear + monthCode + dateCode + this.certificateForm.zySerial + '-' + jsonObject.weight + '/';
+            }else{
+              // 追加判定, 若attr参数不为空才进行追加, 以防止null
+              barcodeData = [
+                this.certificateForm.attr1,
+                this.certificateForm.attr2,
+                this.certificateForm.attr3,
+                this.certificateForm.attr4,
+                this.certificateForm.attr5,
+                this.certificateForm.attr6,
+                this.certificateForm.attr7,
+                this.certificateForm.attr8,
+                this.certificateForm.attr9,
+                this.certificateForm.attr10
+              ].filter(attr => attr != null && attr !== '').join('');
+            }
+
+            let batchCodeVolumn = (!this.certificateForm.batchcodeVolumes ? this.certificateFrontForm.batchcodeVolumes : this.certificateForm.batchcodeVolumes);
+            let hideCodeHeight = (this.certificateFrontForm.codeHide !== true ? 50 : 0);
+
+            if (jsonObject.processCode === "AM004") {
+              // 开始拼接分条合格证
+              LODOP.NEWPAGE();
+              // 添加整体边框
+              LODOP.ADD_PRINT_RECT(8, 5, 150 * 3.78 - 10, 100 * 3.75 - 10, 0, 1); // 整体边框
+              // 添加网络图片
+              LODOP.ADD_PRINT_IMAGE(10, 20, "15mm", "15mm", "http://172.18.12.250:9000/ammes/userAvatar_userBlob06310_21a3a05d2092420d8ca8220c1d23f478.");
+              // 设置图片样式为自动缩放
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+
+              LODOP.ADD_PRINT_IMAGE(55, 20, "15mm", "5mm", "http://172.18.12.250:9000/ammes/jimureport/images/aomei_text.png");
+              // 设置图片样式为自动缩放
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+
+
+              // 添加标题及标题边框
+              LODOP.SET_PRINT_STYLE("FontSize", 15);
+              LODOP.SET_PRINT_STYLE("FontName", "Microsoft YaHei");
+              LODOP.SET_PRINT_STYLE("Bold", 1);
+              LODOP.ADD_PRINT_TEXT(13, 150, 500, 30, "江苏澳美镭射包装材料有限公司");
+
+              LODOP.SET_PRINT_STYLE("FontSize", 15);
+              LODOP.SET_PRINT_STYLE("FontName", "宋体");
+              LODOP.ADD_PRINT_TEXT(43, 100, 500, 30, "Jiangsu Aomei Laser Packaging Co.,Ltd");
+
+              // 内容样式及分块边框
+              LODOP.SET_PRINT_STYLE("FontSize", 14);
+              LODOP.SET_PRINT_STYLE("Bold", 0);
+              LODOP.SET_PRINT_STYLE("Horient", 0); // 取消居中
+
+              LODOP.ADD_PRINT_TEXT(75, 15, 120, 35, "类    型:");
+              LODOP.ADD_PRINT_TEXT(75, 120, 500, 35, jsonObject.itemName); // 内容部分
+
+              LODOP.ADD_PRINT_TEXT(115, 15, 120, 35, "规    格:");
+              LODOP.ADD_PRINT_TEXT(115, 120, 500, 35, jsonObject.specification);
+
+              LODOP.ADD_PRINT_TEXT(155, 15, 120, 35, "净    重:");
+              LODOP.ADD_PRINT_TEXT(155, 120, 490, 35, jsonObject.weight + 'KG');
+
+              LODOP.ADD_PRINT_TEXT(155, 360, 120, 35, "保质期:");
+              LODOP.ADD_PRINT_TEXT(155, 430, 280, 35, "12个月");
+
+              LODOP.ADD_PRINT_TEXT(195, 15, 120, 35, "批    号:");
+              LODOP.ADD_PRINT_TEXT(195, 120, 280, 35, jsonObject.workorderCode + "-" + batchCodeVolumn);
+
+              const printDate = new Date(jsonObject.printDate);
+              const localTime = printDate.toLocaleString('zh-CN', {
+                hour12: false,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+              });
+
+              LODOP.ADD_PRINT_TEXT(235, 15, 120, 35, "生产日期:");
+              LODOP.ADD_PRINT_TEXT(235, 120, 280, 35, localTime);
+
+              LODOP.ADD_PRINT_TEXT(275, 15, 500, 35, "公司地址: 江苏省扬州市宝应县低碳产业园C区1号");
+
+              LODOP.ADD_PRINT_BARCODE(310, 10, 560, 58, '128AUTO', barcodeData) // barcodeData
+
+              let jsonQc = {
+                "id": jsonObject.id,
+                "type": "feedback"
+              }
+
+              LODOP.ADD_PRINT_BARCODE(180, 435, 140, 140, "QRCode", JSON.stringify(jsonQc));
+
+            } else if (jsonObject.processCode === "AM001") {
+              LODOP.NEWPAGE();
+              // 添加整体边框
+              LODOP.ADD_PRINT_RECT(8, 5, 150 * 3.78 - 10, 100 * 3.75 - 10, 0, 1); // 整体边框
+              // 添加网络图片
+              LODOP.ADD_PRINT_IMAGE(10, 20, "15mm", "15mm", "http://172.18.12.250:9000/ammes/userAvatar_userBlob06310_21a3a05d2092420d8ca8220c1d23f478.");
+              // 设置图片样式为自动缩放
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+              LODOP.ADD_PRINT_IMAGE(55, 20, "15mm", "5mm", "http://172.18.12.250:9000/ammes/jimureport/images/aomei_text.png");
+              // 设置图片样式为自动缩放
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+
+              // 添加标题及标题边框
+              LODOP.SET_PRINT_STYLE("FontSize", 15);
+              LODOP.SET_PRINT_STYLE("FontName", "Microsoft YaHei");
+              LODOP.SET_PRINT_STYLE("Bold", 1);
+              LODOP.ADD_PRINT_TEXT(13, 150, 500, 30, "江苏澳美镭射包装材料有限公司");
+
+              LODOP.SET_PRINT_STYLE("FontSize", 15);
+              LODOP.SET_PRINT_STYLE("FontName", "宋体");
+              LODOP.ADD_PRINT_TEXT(43, 100, 500, 30, "Jiangsu Aomei Laser Packaging Co.,Ltd");
+
+              // 内容样式及分块边框
+              LODOP.SET_PRINT_STYLE("FontSize", 14);
+              LODOP.SET_PRINT_STYLE("Bold", 0);
+              LODOP.SET_PRINT_STYLE("Horient", 0); // 取消居中
+
+              LODOP.ADD_PRINT_TEXT(75, 15, 120, 35, "客户名称:");
+              LODOP.ADD_PRINT_TEXT(75, 110, 500, 35, ""); // 内容部分
+
+              LODOP.ADD_PRINT_TEXT(120, 15, 120, 35, "品    名:");
+              // 追加正则表达式, 只展示中文
+              const chineseRegex = /[\u4e00-\u9fa5]+/g;
+              LODOP.ADD_PRINT_TEXT(120, 105, 280, 35, jsonObject.itemName.match(chineseRegex)); // 内容部分
+
+              const specRegex = /[\d.]+μm\*[\d.]+mm/;
+              LODOP.ADD_PRINT_TEXT(120, 300, 120, 35, "规    格:");
+
+              LODOP.ADD_PRINT_TEXT(120, 405, 280, 35, jsonObject.specification.split('（')[0].trim().split('(')[0].trim());
+
+              LODOP.ADD_PRINT_TEXT(165, 15, 120, 35, "批    号:");
+              LODOP.ADD_PRINT_TEXT(165, 105, 280, 35, jsonObject.workorderCode + "-" + batchCodeVolumn);
+
+              LODOP.ADD_PRINT_TEXT(165, 300, 120, 35, "米    长:");
+              LODOP.ADD_PRINT_TEXT(165, 405, 280, 35, jsonObject.quantityQualified);
+
+              LODOP.ADD_PRINT_TEXT(210, 15, 120, 35, "检    验:");
+              LODOP.ADD_PRINT_TEXT(210, 105, 280, 35, "合格");
+
+              if (jsonObject.shiftInfo) {
+                LODOP.ADD_PRINT_TEXT(210, 160, 120, 35, "班  组:");
+                LODOP.ADD_PRINT_TEXT(210, 235, 280, 35, jsonObject.shiftInfo === 0 ? 'A' : 'B');
+              }
+
+              LODOP.ADD_PRINT_TEXT(210, 300, 120, 35, "净    重:");
+              LODOP.ADD_PRINT_TEXT(210, 405, 280, 35, jsonObject.weight + 'KG');
+
+              const printDate = new Date(jsonObject.printDate);
+              const localTime = printDate.toLocaleString('zh-CN', {
+                hour12: false,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+              });
+
+              LODOP.ADD_PRINT_TEXT(255, 15, 120, 35, "生产日期:");
+              LODOP.ADD_PRINT_TEXT(255, 105, 280, 35, localTime);
+
+              LODOP.ADD_PRINT_TEXT(300, 15, 250, 35, "公司地址: 江苏省扬州市宝应县低碳产业园C区1号");
+
+              /*LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+              LODOP.ADD_PRINT_IMAGE(300, 250, "14mm", "14mm", "http://172.18.12.250:9000/ammes/jimureport/images/excel1_1758099413052.png");
+
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+              LODOP.ADD_PRINT_IMAGE(300, 295, "14mm", "14mm", "http://172.18.12.250:9000/ammes/jimureport/images/excel2_1758099288756.png");
+
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+              LODOP.ADD_PRINT_IMAGE(300, 340, "14mm", "14mm", "http://172.18.12.250:9000/ammes/jimureport/images/excel3_1758099297347.png");
+
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+              LODOP.ADD_PRINT_IMAGE(300, 375, "14mm", "14mm", "http://172.18.12.250:9000/ammes/jimureport/images/excel4_1758099303191.jpg");
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);*/
+
+              LODOP.ADD_PRINT_IMAGE(300, 250, 184, 68, "http://172.18.12.250:9000/ammes/jimureport/images/new_logo.png");
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+
+              let jsonQc = {
+                "id": jsonObject.id,
+                "type": "feedback"
+              }
+
+              LODOP.ADD_PRINT_BARCODE(248, 435, 140, 140, "QRCode", JSON.stringify(jsonQc));
+            } else if (jsonObject.processCode === "AM006") {
+
+              // todo: 基于报工单单位需进行区分 字段 unitOfMeasure
+              LODOP.NEWPAGE();
+              const scaleFactor = 1.9;
+
+              // 设置线条样式
+              LODOP.SET_PRINT_STYLE("LineWidth", 1);
+              LODOP.SET_PRINT_STYLE("LineStyle", "0");
+
+              // 添加网络图片
+              LODOP.ADD_PRINT_IMAGE(10, 20, "30mm", "30mm", "http://172.18.12.250:9000/ammes/userAvatar_userBlob06310_21a3a05d2092420d8ca8220c1d23f478.");
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+
+              LODOP.ADD_PRINT_IMAGE(105, 20, "30mm", "10mm", "http://172.18.12.250:9000/ammes/jimureport/images/aomei_text.png");
+              // 设置图片样式为自动缩放
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+
+              // 添加标题及标题边框
+              // 添加整体边框
+              LODOP.ADD_PRINT_RECT(5, 5, 1083,755, 0, 1); // 整体边框
+
+
+              LODOP.SET_PRINT_STYLE("FontSize", 25);
+              LODOP.SET_PRINT_STYLE("FontName", "Microsoft YaHei");
+              LODOP.SET_PRINT_STYLE("Bold", 1);
+              LODOP.ADD_PRINT_TEXT(13 * scaleFactor, 160 * scaleFactor, 500 * scaleFactor, 30 * scaleFactor, "江苏澳美镭射包装材料有限公司");
+
+              LODOP.SET_PRINT_STYLE("FontSize", 18);
+              LODOP.SET_PRINT_STYLE("FontName", "宋体");
+              LODOP.ADD_PRINT_TEXT(40 * scaleFactor, 150 * scaleFactor, 500 * scaleFactor, 30 * scaleFactor, "Jiangsu Aomei Laser Packaging Co.,Ltd");
+
+              // 添加合格证标题
+              LODOP.SET_PRINT_STYLE("Horient", 0);
+              LODOP.SET_PRINT_STYLE("FontSize", 22);
+              LODOP.SET_PRINT_STYLE("FontName", "楷体");
+              LODOP.SET_PRINT_STYLE("Bold", 1);
+              LODOP.ADD_PRINT_TEXT(58 * scaleFactor, 180 * scaleFactor, 200 * scaleFactor, 40 * scaleFactor, "产品合格证");
+              LODOP.SET_PRINT_STYLEA(0, "Alignment", 2);
+
+              // 定义表格参数
+              const rowHeight = 66.5 + (this.certificateFrontForm.codeHide !== true ? 15 : 0);
+              const startY = 142.5;
+              const leftLabelWidth = 228;
+              const leftContentWidth = 532;
+              const leftAddLineWidth = 120;
+
+              const rightLabelWidth = 228;
+              const rightContentWidth = 532;
+              const rightAddLineWidth = 200;
+
+              const leftLabelX = 28.5;
+              const leftContentX = 152;
+              const leftSubStartX = 50
+              const rightLabelX = 712.5;
+              const rightContentX = 893;
+
+              const textCentered = 19;
+
+              // 计算左侧栏右边框的X坐标（左侧内容区域结束位置）
+              const leftBorderX = leftContentX + leftContentWidth;
+
+              // 第一行：品名和定量  leftLabelX - leftSubStartX
+              LODOP.ADD_PRINT_LINE(startY , 5 , startY, rightContentX + rightContentWidth, 0, 1); // 上横线
+
+              // 左侧栏文本右边框
+              LODOP.ADD_PRINT_LINE(startY , leftBorderX, startY + rowHeight + hideCodeHeight, leftBorderX, 0, 1);
+              // 左侧栏标题右边框
+              LODOP.ADD_PRINT_LINE(startY, leftLabelX + leftAddLineWidth, startY + rowHeight + hideCodeHeight, leftLabelX + leftAddLineWidth, 0, 1);
+              // 右侧栏右边框
+              LODOP.ADD_PRINT_LINE(startY, leftBorderX + rightAddLineWidth, startY + rowHeight + hideCodeHeight, leftBorderX + rightAddLineWidth, 0, 1);
+
+              LODOP.ADD_PRINT_TEXT(startY + textCentered + (hideCodeHeight/3), leftLabelX, leftLabelWidth, rowHeight, "品  名:");
+              LODOP.ADD_PRINT_TEXT(startY + (hideCodeHeight/3), leftContentX, leftContentWidth, rowHeight, jsonObject.itemName || "");
+              LODOP.ADD_PRINT_TEXT(startY + textCentered + (hideCodeHeight/3), rightLabelX  , rightLabelWidth, rowHeight, "定量(g/m2):");
+              LODOP.ADD_PRINT_TEXT(startY + textCentered + (hideCodeHeight/3), rightContentX , rightContentWidth, rowHeight, jsonObject.quantitative || "");
+
+              const row2Y = startY + rowHeight;
+              const row3Y = row2Y + rowHeight;
+              const row4Y = row3Y + rowHeight;
+              const row5Y = row4Y + rowHeight;
+
+              if(jsonObject.unitOfMeasure === "张"){
+                // 第二行：宽幅和批号
+                LODOP.ADD_PRINT_LINE(row2Y + hideCodeHeight, 5, row2Y + hideCodeHeight, rightContentX + rightContentWidth, 0, 1); // 中间横线
+                // 左侧栏文本右边框
+                LODOP.ADD_PRINT_LINE(row2Y + hideCodeHeight, leftBorderX, row2Y + rowHeight + hideCodeHeight, leftBorderX, 0, 1); // 竖线
+                // 左侧栏标题右边框
+                LODOP.ADD_PRINT_LINE(row2Y + hideCodeHeight, leftLabelX + leftAddLineWidth, row2Y + rowHeight+ hideCodeHeight , leftLabelX + leftAddLineWidth, 0, 1); // 竖线
+                // 右侧栏右边框
+                LODOP.ADD_PRINT_LINE(row2Y + hideCodeHeight, leftBorderX + rightAddLineWidth , row2Y + rowHeight + hideCodeHeight, leftBorderX + rightAddLineWidth, 0, 1); // 竖线
+
+                LODOP.ADD_PRINT_TEXT(row2Y + textCentered  + hideCodeHeight, rightLabelX, rightLabelWidth, rowHeight, "宽 幅 (mm):");
+                LODOP.ADD_PRINT_TEXT(row2Y + textCentered  + hideCodeHeight, rightContentX, rightContentWidth, rowHeight, jsonObject.wide || "");
+                LODOP.ADD_PRINT_TEXT(row2Y + textCentered  + hideCodeHeight , leftLabelX, leftLabelWidth, rowHeight, "批  号:");
+                LODOP.ADD_PRINT_TEXT(row2Y + textCentered  + hideCodeHeight , leftContentX, leftContentWidth, rowHeight, jsonObject.workorderCode + "-" + batchCodeVolumn || "");
+
+                // 第三行：板距和检验
+                LODOP.ADD_PRINT_LINE(row3Y  + hideCodeHeight, 5, row3Y  + hideCodeHeight, rightContentX + rightContentWidth, 0, 1); // 中间横线
+                // 左侧栏文本右边框
+                LODOP.ADD_PRINT_LINE(row3Y, leftBorderX, row3Y + rowHeight + hideCodeHeight, leftBorderX, 0, 1);
+                // 左侧栏标题右边框
+                LODOP.ADD_PRINT_LINE(row3Y + hideCodeHeight, leftLabelX + leftAddLineWidth, row3Y + rowHeight + hideCodeHeight, leftLabelX + leftAddLineWidth, 0, 1);
+                // 右侧栏右边框
+                LODOP.ADD_PRINT_LINE(row3Y + hideCodeHeight, leftBorderX + rightAddLineWidth, row3Y + rowHeight + hideCodeHeight, leftBorderX + rightAddLineWidth, 0, 1);
+
+                LODOP.ADD_PRINT_TEXT(row3Y + textCentered  + hideCodeHeight , rightLabelX, rightLabelWidth, rowHeight, "版 距 (mm):");
+                LODOP.ADD_PRINT_TEXT(row3Y + textCentered  + hideCodeHeight, rightContentX, rightContentWidth, rowHeight, jsonObject.width || "");
+                LODOP.ADD_PRINT_TEXT(row3Y + textCentered  + hideCodeHeight, leftLabelX, leftLabelWidth, rowHeight, "检  验:");
+                LODOP.ADD_PRINT_TEXT(row3Y + textCentered  + hideCodeHeight, leftContentX, leftContentWidth, rowHeight, "合 格");
+
+                // 第四行：数量、班组和净重量
+                // 第四行区域开头横线
+                LODOP.ADD_PRINT_LINE(row4Y + hideCodeHeight, 5, row4Y + hideCodeHeight, rightContentX + rightContentWidth, 0, 1); // 中间横线
+
+                // 右侧标题文本左边框
+                LODOP.ADD_PRINT_LINE(row4Y + hideCodeHeight, leftBorderX, row4Y + rowHeight + hideCodeHeight, leftBorderX, 0, 1);
+
+                // 左侧标题文本右边框
+                LODOP.ADD_PRINT_LINE(row4Y+ hideCodeHeight, leftLabelX + leftAddLineWidth, row4Y + rowHeight + hideCodeHeight, leftLabelX + leftAddLineWidth, 0, 1);
+
+                // 左侧栏标题左边框2
+                LODOP.ADD_PRINT_LINE(row4Y + hideCodeHeight, rightLabelX - 195 * scaleFactor, row4Y + rowHeight + hideCodeHeight, rightLabelX - 195 * scaleFactor , 0, 1);
+                // 左侧栏标题右边框2
+                LODOP.ADD_PRINT_LINE(row4Y + hideCodeHeight, rightLabelX - 195 * scaleFactor + leftAddLineWidth + 50, row4Y + rowHeight + hideCodeHeight, rightLabelX - 195 * scaleFactor + leftAddLineWidth + 50 , 0, 1);
+
+                // 右侧栏标题文本右边框
+                LODOP.ADD_PRINT_LINE(row4Y+ hideCodeHeight, leftBorderX + rightAddLineWidth, row4Y + rowHeight+ hideCodeHeight, leftBorderX + rightAddLineWidth, 0, 1);
+
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered + hideCodeHeight, rightLabelX, rightLabelWidth, rowHeight, "数 量 (张):");
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered + hideCodeHeight, rightContentX, rightContentWidth, rowHeight, jsonObject.quantityQualified || null);
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered + hideCodeHeight, leftLabelX, leftLabelWidth, rowHeight, "班  组:");
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered + hideCodeHeight, leftContentX, leftContentWidth, rowHeight, jsonObject.shiftCode || null);
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered + hideCodeHeight, rightLabelX - 195 * scaleFactor, rightLabelWidth, rowHeight, "净重量(kg):");
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered + hideCodeHeight, rightContentX - 195 * scaleFactor, rightContentWidth, rowHeight, jsonObject.weight || null);
+
+                // 第五行：日期
+                LODOP.ADD_PRINT_LINE(row5Y + hideCodeHeight, 5, row5Y + hideCodeHeight, rightContentX + rightContentWidth , 0, 1); // 中间横线
+                // 左侧栏标题右边框
+                LODOP.ADD_PRINT_LINE(row5Y + hideCodeHeight, leftLabelX + leftAddLineWidth, row5Y + rowHeight + hideCodeHeight, leftLabelX + leftAddLineWidth, 0, 1);
+
+                const printDate = new Date(jsonObject.printDate || new Date());
+                const localTime = printDate.toLocaleString('zh-CN', {
+                  hour12: false,
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                });
+                LODOP.ADD_PRINT_TEXT(row5Y + textCentered + hideCodeHeight, leftLabelX, leftLabelWidth, rowHeight, "日  期:");
+                LODOP.ADD_PRINT_TEXT(row5Y + textCentered + hideCodeHeight, leftContentX, leftContentWidth, rowHeight, localTime);
+
+              }else{
+
+                // 第二行：宽幅和批号
+                LODOP.ADD_PRINT_LINE(row2Y  + hideCodeHeight, 5, row2Y  + hideCodeHeight, rightContentX + rightContentWidth, 0, 1); // 中间横线
+                // 左侧栏文本右边框
+                LODOP.ADD_PRINT_LINE(row2Y + hideCodeHeight, leftBorderX, row2Y + rowHeight + hideCodeHeight, leftBorderX, 0, 1);
+                // 左侧栏标题右边框
+                LODOP.ADD_PRINT_LINE(row2Y + hideCodeHeight, leftLabelX + leftAddLineWidth, row2Y + rowHeight  + hideCodeHeight, leftLabelX + leftAddLineWidth, 0, 1);
+                // 右侧栏右边框
+                LODOP.ADD_PRINT_LINE(row2Y + hideCodeHeight, leftBorderX + rightAddLineWidth , row2Y + rowHeight + hideCodeHeight, leftBorderX + rightAddLineWidth, 0, 1);
+
+                LODOP.ADD_PRINT_TEXT(row2Y + textCentered + hideCodeHeight, rightLabelX, rightLabelWidth, rowHeight, "宽 幅 (mm):");
+                LODOP.ADD_PRINT_TEXT(row2Y + textCentered + hideCodeHeight, rightContentX, rightContentWidth, rowHeight, jsonObject.wide || "");
+                LODOP.ADD_PRINT_TEXT(row2Y + textCentered + hideCodeHeight, leftLabelX, leftLabelWidth, rowHeight, "批  号:");
+                LODOP.ADD_PRINT_TEXT(row2Y + textCentered + hideCodeHeight, leftContentX, leftContentWidth, rowHeight, jsonObject.workorderCode + "-" + batchCodeVolumn || "");
+
+                // 第三行：板距和检验
+                LODOP.ADD_PRINT_LINE(row3Y + hideCodeHeight, 5, row3Y + hideCodeHeight, rightContentX + rightContentWidth, 0, 1); // 中间横线
+                // 左侧栏文本右边框
+                LODOP.ADD_PRINT_LINE(row3Y + hideCodeHeight, leftBorderX, row3Y + rowHeight + hideCodeHeight, leftBorderX, 0, 1);
+                // 左侧栏标题右边框
+                LODOP.ADD_PRINT_LINE(row3Y + hideCodeHeight, leftLabelX + leftAddLineWidth, row3Y + rowHeight  + hideCodeHeight, leftLabelX + leftAddLineWidth, 0, 1);
+                // 右侧栏右边框
+                LODOP.ADD_PRINT_LINE(row3Y + hideCodeHeight, leftBorderX + rightAddLineWidth, row3Y + rowHeight + hideCodeHeight, leftBorderX + rightAddLineWidth, 0, 1);
+
+                LODOP.ADD_PRINT_TEXT(row3Y + textCentered + hideCodeHeight, rightLabelX, rightLabelWidth, rowHeight, "膜接头:");
+                LODOP.ADD_PRINT_TEXT(row3Y + textCentered + hideCodeHeight, rightContentX, rightContentWidth, rowHeight, this.certificateFrontForm.membraneJoint || "/");
+                LODOP.ADD_PRINT_TEXT(row3Y + textCentered + hideCodeHeight, leftLabelX  - 18, leftLabelWidth, rowHeight, "数量(米):");
+                LODOP.ADD_PRINT_TEXT(row3Y + textCentered + hideCodeHeight, leftContentX, leftContentWidth, rowHeight, jsonObject.quantityQualified || null);
+
+                // 左侧栏标题左边框2
+                LODOP.ADD_PRINT_LINE(row3Y + hideCodeHeight, rightLabelX - 195 * scaleFactor, row3Y + rowHeight  + hideCodeHeight, rightLabelX - 195 * scaleFactor , 0, 1);
+                // 左侧栏标题右边框2
+                LODOP.ADD_PRINT_LINE(row3Y + hideCodeHeight, rightLabelX - 195 * scaleFactor + leftAddLineWidth + 50, row3Y + rowHeight + hideCodeHeight , rightLabelX - 195 * scaleFactor + leftAddLineWidth + 50 , 0, 1);
+
+                LODOP.ADD_PRINT_TEXT(row3Y + textCentered + hideCodeHeight, rightLabelX - 195 * scaleFactor, rightLabelWidth, rowHeight, "检  验:");
+                LODOP.ADD_PRINT_TEXT(row3Y + textCentered + hideCodeHeight, rightContentX - 195 * scaleFactor, rightContentWidth, rowHeight, "合 格");
+
+                // 第四行：数量、班组和净重量
+                LODOP.ADD_PRINT_LINE(row4Y+ hideCodeHeight, 5, row4Y+ hideCodeHeight, rightContentX + rightContentWidth, 0, 1); // 中间横线
+                // 左侧栏文本右边框
+                LODOP.ADD_PRINT_LINE(row4Y+ hideCodeHeight, leftBorderX, row4Y + rowHeight+ hideCodeHeight, leftBorderX, 0, 1);
+                // 左侧栏标题右边框
+                LODOP.ADD_PRINT_LINE(row4Y+ hideCodeHeight, leftLabelX + leftAddLineWidth, row4Y + rowHeight + hideCodeHeight, leftLabelX + leftAddLineWidth, 0, 1);
+
+                // 左侧栏标题左边框2
+                LODOP.ADD_PRINT_LINE(row4Y+ hideCodeHeight, rightLabelX - 195 * scaleFactor, row4Y + rowHeight+ hideCodeHeight , rightLabelX - 195 * scaleFactor , 0, 1);
+                // 左侧栏标题右边框2
+                LODOP.ADD_PRINT_LINE(row4Y+ hideCodeHeight, rightLabelX - 195 * scaleFactor + leftAddLineWidth + 50, row4Y + rowHeight + hideCodeHeight, rightLabelX - 195 * scaleFactor + leftAddLineWidth + 50 , 0, 1);
+
+                // 右侧栏右边框
+                LODOP.ADD_PRINT_LINE(row4Y+ hideCodeHeight, leftBorderX + rightAddLineWidth, row4Y + rowHeight + hideCodeHeight, leftBorderX + rightAddLineWidth, 0, 1);
+
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered+ hideCodeHeight, rightLabelX, rightLabelWidth, rowHeight, "纸接头:");
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered+ hideCodeHeight, rightContentX, rightContentWidth, rowHeight, this.certificateFrontForm.paperJoint || "/");
+
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered + hideCodeHeight, leftLabelX, leftLabelWidth, rowHeight, "班  组:");
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered+ hideCodeHeight, leftContentX, leftContentWidth, rowHeight, jsonObject.shiftCode || null);
+
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered+ hideCodeHeight, rightLabelX - 195 * scaleFactor, rightLabelWidth, rowHeight, "净重量(kg):");
+                LODOP.ADD_PRINT_TEXT(row4Y + textCentered+ hideCodeHeight, rightContentX - 195 * scaleFactor, rightContentWidth, rowHeight, jsonObject.weight || null);
+
+                // 第五行：日期
+                LODOP.ADD_PRINT_LINE(row5Y+ hideCodeHeight, 5, row5Y+ hideCodeHeight, rightContentX + rightContentWidth, 0, 1); // 中间横线
+                // 左侧栏标题右边框
+                LODOP.ADD_PRINT_LINE(row5Y+ hideCodeHeight, leftLabelX + leftAddLineWidth, row5Y + rowHeight + hideCodeHeight, leftLabelX + leftAddLineWidth, 0, 1);
+
+                const printDate = new Date(jsonObject.printDate || new Date());
+                const localTime = printDate.toLocaleString('zh-CN', {
+                  hour12: false,
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                });
+                LODOP.ADD_PRINT_TEXT(row5Y + textCentered+ hideCodeHeight, leftLabelX, leftLabelWidth, rowHeight, "日  期:");
+                LODOP.ADD_PRINT_TEXT(row5Y + textCentered+ hideCodeHeight, leftContentX, leftContentWidth, rowHeight, localTime);
+
+                // 左侧栏标题右边框2
+                LODOP.ADD_PRINT_LINE(row5Y+ hideCodeHeight, rightLabelX - 195 * scaleFactor + leftAddLineWidth + 50, row5Y + rowHeight + hideCodeHeight, rightLabelX - 195 * scaleFactor + leftAddLineWidth + 50 , 0, 1);
+
+                // 左侧栏文本右边框
+                LODOP.ADD_PRINT_LINE(row5Y+ hideCodeHeight, leftBorderX - 65, row5Y + rowHeight+ hideCodeHeight, leftBorderX - 65, 0, 1);
+                LODOP.ADD_PRINT_TEXT(row5Y + textCentered+ hideCodeHeight, rightContentX - 195 * scaleFactor, rightContentWidth, rowHeight, "备 注:");
+                LODOP.ADD_PRINT_IMAGE(row5Y+ hideCodeHeight, rightLabelX - 65, 297, 75, "http://172.18.12.250:9000/ammes/jimureport/images/paper_output.png");
+
+                LODOP.ADD_PRINT_TEXT(row5Y + textCentered + hideCodeHeight, rightContentX + 70 , rightContentWidth, rowHeight, "出纸方向");
+              }
+
+
+              // 底部横线
+              const bottomY = row5Y + rowHeight;
+
+              // 左侧栏右边框延伸到表格底部
+              // 不知干嘛 先观察
+              //  LODOP.ADD_PRINT_LINE(bottomY, leftBorderX, bottomY, leftBorderX, 0, 1);
+
+
+              if(this.certificateFrontForm.codeHide === true){
+                // 左侧栏文本右边框
+                LODOP.ADD_PRINT_LINE(bottomY, leftLabelX + leftAddLineWidth, bottomY + rowHeight * 1.8, leftLabelX + leftAddLineWidth, 0, 1);
+                // 条形码上方横线, 若隐藏条形码, 则注释
+                LODOP.ADD_PRINT_LINE(bottomY, 5, bottomY, rightContentX + rightContentWidth, 0, 1);
+                // 条形码标签
+                LODOP.ADD_PRINT_TEXT(bottomY + 45, leftLabelX, leftLabelWidth, rowHeight, "条形码:");
+              }
+
+
+
+              // 公司地址
+              // LODOP.ADD_PRINT_TEXT(bottomY + 85 * 1.9 + textCentered, leftLabelX, 280 * 1.9, rowHeight, "公司地址: 江苏省扬州市宝应县低碳产业园C区1号");
+              if(this.certificateFrontForm.codeHide === true){
+                LODOP.ADD_PRINT_TEXT(bottomY + 85 * 1.9 + textCentered, leftLabelX, 280 * 1.9, rowHeight, "公司地址: 江苏省扬州市宝应县低碳产业园C区1号");
+              }else{
+                LODOP.ADD_PRINT_TEXT(bottomY + textCentered + hideCodeHeight + 30 , leftLabelX, 280 * 1.9, rowHeight, "公司地址: 江苏省扬州市宝应县低碳产业园C区1号");
+              }
+
+              // 二维码和图标区域
+              LODOP.SET_PRINT_STYLEA(0, "Stretch", 1);
+              // 条形码行高: 119.7 平均分给5行 约等于24
+              // 图片上方横线
+              if(this.certificateFrontForm.codeHide === true){
+                LODOP.ADD_PRINT_LINE(bottomY + rowHeight * 1.8, 5, bottomY + rowHeight * 1.8, rightContentX + rightContentWidth, 0, 1);
+              }else{
+                LODOP.ADD_PRINT_LINE(bottomY + hideCodeHeight, 5, bottomY + hideCodeHeight , rightContentX + rightContentWidth, 0, 1);
+              }
+              //
+
+              // 为图标区域添加边框
+              const iconAreaY = 317 * scaleFactor;
+              const iconAreaHeight = 156;
+
+              LODOP.ADD_PRINT_IMAGE(iconAreaY, 300 * scaleFactor - 50, 410, 154, "http://172.18.12.250:9000/ammes/jimureport/images/new_logo.png");
+              LODOP.SET_PRINT_STYLEA(0,"Stretch",1);
+
+              // 二维码 - 等比例放大
+              let jsonQc = {
+                "id": jsonObject.id,
+                "type": "feedback",
+                "processCode": "AM006"
+              }
+
+              // 二维码
+              LODOP.ADD_PRINT_BARCODE(iconAreaY, 490 * scaleFactor, 156, iconAreaHeight, "QRCode", JSON.stringify(jsonQc));
+            }
+          }
+
+          LODOP.SET_PRINT_MODE('AUTO_CLOSE_PREWINDOW', 1);
+          LODOP.PREVIEW();
+        }
+        this.cancel();
+        this.getList();
+      } finally {
+        this.loading = false;
+      }
+    },
+    handleDefectSelectionChange(selection) {
+      this.selectedDefects = selection;
+    },
+
+    // 打开机长自检对话框
+    handleDefectDialogOpen() {
+      this.defectDialogVisible = true;
+    },
+
+    // 保存缺陷数据并更新不合格数量
+    saveDefects() {
+      // 循环processDefectList, 判定defectMeter不能为空
+      for (let i = 0; i < this.processDefectList.length; i++) {
+        if (!this.processDefectList[i].defectMeter) {
+          this.$message.error('第' + (i + 1) + '行缺陷米数不能为空');
+          return;
+        }
+      }
+
+      // 计算所有缺陷项的缺陷米数总和
+      const totalDefectMeter = this.processDefectList.reduce((sum, defect) => {
+        return sum + (parseFloat(defect.defectMeter) || 0);
+      }, 0);
+
+      // 更新不合格数量
+      this.form.quantityUnquanlified = totalDefectMeter;
+
+      // 同时更新报工总数（合格数 + 不良数 + 损耗数）
+      this.form.quantityFeedback = (this.form.quantityQualified || 0) +
+        totalDefectMeter +
+        (this.form.quantityExcess || 0);
+
+      // 关闭对话框
+      this.defectDialogVisible = false;
+
+      this.$message.success('机长自检数据已保存');
+    },
+    // 缺陷米数变更处理
+    handleDefectMeterChange(index, value) {
+      // 计算所有缺陷项的缺陷米数总和
+      const totalDefectMeter = this.processDefectList.reduce((sum, defect) => {
+        return sum + (parseFloat(defect.defectMeter) || 0);
+      }, 0);
+
+      // 更新不良品数量
+      this.form.quantityUnquanlified = totalDefectMeter;
+
+      // 同时更新报工总数（合格数 + 不良数 + 损耗数）
+      this.form.quantityFeedback = (this.form.quantityQualified || 0) +
+        totalDefectMeter +
+        (this.form.quantityExcess || 0);
+    },
+
+    changeMergeStatus() {
+      if (this.selectedRows.length < 1) {
+        this.$message.error('请至少选择一行数据进行操作');
+        return;
+      }
+      const selectedRow = this.selectedRows;
+      const ids = selectedRow.map(item => item.id);
+      this.$modal.confirm('确认变更合并状态？').then(() => {
+        this.loading = true;
+        updateMergeStatus(ids).then(response => {
+          this.$modal.msgSuccess("合并状态变更成功!");
+          this.getList();
+        }).finally(() => {
+          this.loading = false;
+        });
+      });
+    },
+
+    activated() {
+      // 当从缓存中重新激活组件时，可以在此更新数据
+      this.getList();
+    },
+    handleTabClick(tab) {
+      const form = this.$refs.certificateForm;
+      if (tab.name === 'otherQualified') {
+        // 保存原始验证规则
+        this.originalRules = this.certificateRules;
+        // 清空验证规则
+        this.certificateRules = {};
+      } else {
+        // 恢复原始验证规则
+        if (this.originalRules) {
+          this.certificateRules = this.originalRules;
+        }
+      }
+    },
+    handleMergeFeedbackCodeChange(val){
+        const row = this.mergeFeedbackOptions.find(item => item.workorderCode === val);
+        this.mergeForm = row;
+    },
+    handleRemark(row){
+      if (this.selectedRows.length < 1) {
+        this.$message.error('请至少选择一行数据进行操作');
+        return;
+      }
+      this.reset();
+      const recordId = row.id || this.ids;
+      getFeedback(recordId).then(response => {
+        this.remarkForm = response.data;
+      });
+      this.remarkDialogVisible = true;
+    },
+    updateRemark(){
+        // 根据数据开始修改
+        updateFeedbackRemark(this.remarkForm).then(response => {
+          this.$message.msgSuccess("修改备注成功!")
+        });
+        this.cancel();
+        this.getList();
     },
 
 
   },
-  activated() {
-    // 当从缓存中重新激活组件时，可以在此更新数据
-    this.getList();
-  },
+
   watch: {
     cachedProcessCode(newVal) {
       this.queryParams.processCode = newVal;
+      // this.auditQueryParams.processCode = newVal;
       this.getList();
-    },
-    /*'form.machineryCode'(newVal) {
-      if (this.initialized && newVal && !this.form.iotFlag) {
+    }
+    ,
+    'form.machineryCode'(newVal) {
+      if (newVal && this.form.iotFlag && (this.optType === 'add')) {
+        this.initialized = false;
         this.fetchIotData();
       }
     },
-    'form.iotFlag'(newVal) {
-      if (this.initialized && !newVal && this.form.machineryCode) {
-        this.fetchIotData();
-      }
-    }*/
   }
-};
+}
+;
 </script>
 
 
@@ -3120,6 +4566,5 @@ export default {
   border-radius: 4px;
   padding: 10px;
 }
-
 
 </style>

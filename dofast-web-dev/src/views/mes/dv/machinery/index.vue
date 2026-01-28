@@ -172,7 +172,7 @@
 </template>
 
 <script>
-import {listMachinery, getMachinery, delMachinery, addMachinery, updateMachinery } from '@/api/mes/dv/machinery';
+import {listMachinery, getMachinery, delMachinery, addMachinery, updateMachinery , getDeviceStatus} from '@/api/mes/dv/machinery';
 import {listMachinerytype} from '@/api/mes/dv/machinerytype';
 import {listAllWorkshop} from '@/api/mes/md/workshop';
 import {genCode} from '@/api/mes/autocode/rule';
@@ -292,6 +292,7 @@ export default {
   created() {
     this.getList();
     this.getTreeselect();
+    getDeviceStatus();
   },
   methods: {
     /** 查询物料编码列表 */

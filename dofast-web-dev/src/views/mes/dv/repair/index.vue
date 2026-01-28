@@ -40,28 +40,35 @@
       <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['cmms:dv-repair:delete']">删除</el-button>
       </el-col>
+
+      <el-col :span="1.5">
+        <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="multiple" @click="finish"  v-hasPermi="['cmms:dv-repair:confirm']">完成</el-button>
+      </el-col>
+
+
+
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="repairList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="repairList" @selection-change="handleSelectionChange"  ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="维修单编号" width="120px" align="center" prop="repairCode" />
       <el-table-column label="维修单名称" width="150px" align="center" prop="repairName" :show-overflow-tooltip="true" />
-      <el-table-column label="设备编码" align="center" prop="machineryCode" />
       <el-table-column label="设备名称" align="center" prop="machineryName" />
-      <el-table-column label="报修日期" align="center" prop="requireDate" width="120">
+      <el-table-column label="报修日期" align="center" prop="requireDate" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.requireDate, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.requireDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="维修完成日期" align="center" prop="finishDate" width="120">
+
+      <el-table-column label="维修完成日期" align="center" prop="finishDate" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.finishDate, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.finishDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="验收日期" align="center" prop="confirmDate" width="120">
+      <el-table-column label="验收日期" align="center" prop="confirmDate" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.confirmDate, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.confirmDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="维修结果" align="center" prop="repairResult">
@@ -76,10 +83,11 @@
           <dict-tag :options="dict.type.mes_order_status" :value="scope.row.status" />
         </template>
       </el-table-column>
+
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['cmms:dv-repair:update']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['cmms:dv-repair:delete']">删除</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['cmms:dv-repair:update']" v-if="scope.row.status == 'PREPARE'">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['cmms:dv-repair:delete']" v-if="scope.row.status == 'PREPARE'">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -97,7 +105,7 @@
           </el-col>
           <el-col :span="4">
             <el-form-item label-width="80">
-              <el-switch v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成" @change="handleAutoGenChange(autoGenFlag)" v-if="optType != 'view'"> </el-switch>
+              <el-switch v-model="autoGenFlag" active-color="#13ce66" active-text="自动生成" @change="handleAutoGenChange(autoGenFlag)" v-if="optType === 'add'"> </el-switch>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -108,6 +116,15 @@
         </el-row>
         <el-row>
           <el-col :span="8">
+            <el-form-item label="维修类型" prop="repairType">
+              <el-select v-model="form.repairType" placeholder="请选择维修类型">
+                <el-option v-for="dict in dict.type.mes_repair_type" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
             <el-form-item label="设备编号" prop="machineryCode">
               <el-input v-model="form.machineryCode" placeholder="请选择设备" disabled>
                 <el-button style="border-color: #46a6ff; background-color: #46a6ff; color: white" slot="append" @click="handleMachineryAdd" icon="el-icon-search"></el-button>
@@ -115,50 +132,62 @@
             </el-form-item>
             <MachinerySelectSingle ref="machinerySelect" @onSelected="onMachineryAdd"></MachinerySelectSingle>
           </el-col>
+
           <el-col :span="8">
             <el-form-item label="设备名称" prop="machineryName">
               <el-input v-model="form.machineryName" placeholder="请选择设备" disabled />
             </el-form-item>
           </el-col>
+
+
+        </el-row>
+        <el-row>
           <el-col :span="8">
             <el-form-item label="品牌" prop="machineryBrand">
               <el-input v-model="form.machineryBrand" placeholder="请选择设备" disabled />
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row>
+
           <el-col :span="8">
             <el-form-item label="报修日期" prop="requireDate">
-              <el-date-picker clearable v-model="form.requireDate" style="width: 187px" type="date" value-format="timestamp" placeholder="请选择报修日期"> </el-date-picker>
+              <el-date-picker clearable v-model="form.requireDate" style="width: 187px" type="datetime" value-format="timestamp" placeholder="请选择报修日期"> </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="维修完成日期" v-if="form.status == 'APPROVING' || form.status == 'FINISHED' || form.status == 'CONFIRMED'" prop="finishDate">
-              <el-date-picker clearable v-model="form.finishDate" style="width: 187px" type="date" value-format="timestamp" placeholder="请选择维修完成日期"> </el-date-picker>
+            <el-form-item label="维修完成日期">
+              <el-date-picker clearable v-model="form.finishDate" style="width: 187px" type="datetime" value-format="timestamp" placeholder="请选择维修完成日期"> </el-date-picker>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
-            <el-form-item label="验收日期" v-if="form.status == 'FINISHED' || form.status == 'CONFIRMED'" prop="confirmDate">
-              <el-date-picker clearable v-model="form.confirmDate" style="width: 187px" type="date" value-format="timestamp" placeholder="请选择验收日期"> </el-date-picker>
-            </el-form-item>
-          </el-col>
+
+
         </el-row>
         <el-row>
           <el-col :span="8">
-            <el-form-item label="维修结果" v-if="form.status == 'APPROVING' || form.status == 'FINISHED' || form.status == 'CONFIRMED'">
+            <el-form-item label="验收日期" v-if="form.status == 'FINISHED' || form.status == 'APPROVED' || form.status == 'UNAPPROVED' " prop="confirmDate">
+              <el-date-picker clearable v-model="form.confirmDate" style="width: 187px" type="datetime" value-format="timestamp" placeholder="请选择验收日期"> </el-date-picker>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="维修结果"  >
               <el-radio-group v-model="form.repairResult">
                 <el-radio v-for="dict in dict.type.mes_repair_result" :key="dict.value" :label="dict.value">{{ dict.label }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
+
           <el-col :span="8">
-            <el-form-item label="维修人员" prop="acceptedName" v-if="form.status == 'APPROVING' || form.status == 'FINISHED' || form.status == 'CONFIRMED'">
-              <el-input v-model="form.acceptedName" readonly="readonly" />
+            <el-form-item label="维修人员" prop="acceptedBy" v-if="form.status == 'APPROVED' || form.status == 'UNAPPROVED' || form.status == 'FINISHED'  ">
+              <el-input v-model="form.acceptedBy" readonly="readonly" />
             </el-form-item>
           </el-col>
+
+        </el-row>
+
+        <el-row>
           <el-col :span="8">
-            <el-form-item label="验收人员" prop="confirmName" v-if="form.status == 'FINISHED' || form.status == 'CONFIRMED'">
-              <el-input v-model="form.confirmName" readonly="readonly" />
+            <el-form-item label="验收人员" prop="confirmBy" v-if="form.status == 'APPROVED' || form.status == 'UNAPPROVED' || form.status == 'FINISHED' ">
+              <el-input v-model="form.confirmBy" readonly="readonly" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -173,14 +202,15 @@
       <!--   repairId   -->
       <el-divider v-if="form.id != null" content-position="center">维修内容</el-divider>
       <el-card shadow="always" v-if="form.id != null" class="box-card">
-        <Repairline ref="line" :repairId="form.id" :optType="optType"></Repairline>
+        <Repairline ref="line" :repairId="form.id" :optType="optType" :parentStatus="form.status"></Repairline>
       </el-card>
 
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" v-if="form.status == 'PREPARE' && optType != 'view'" @click="submitForm">提 交</el-button>
-        <el-button type="primary" v-if="form.status == 'APPROVING' && optType != 'view'" @click="finish">完成维修</el-button>
-        <el-button type="success" v-if="form.status == 'FINISHED' && optType != 'view'" @click="confirm">验收通过</el-button>
-        <el-button type="danger" v-if="form.status == 'FINISHED' && optType != 'view'" @click="unconfirm">不通过</el-button>
+        <el-button type="primary" v-if="form.status == 'PREPARE' && optType != 'view'" @click="submitForm" v-hasPermi="['cmms:dv-repair:update']">保 存</el-button>
+        <el-button type="primary" v-if="form.status == 'PREPARE' && optType != 'view'" @click="submitConfirm" v-hasPermi="['cmms:dv-repair:update']">提 交</el-button>
+<!--        <el-button type="primary" v-if="form.status == 'APPROVING' && optType != 'view'" @click="finish" v-hasPermi="['cmms:dv-repair:confirm']">完成维修</el-button>-->
+<!--        <el-button type="success" v-if="form.status == 'FINISHED' && optType != 'view'" @click="confirm" v-hasPermi="['cmms:dv-repair:confirm']">验收通过</el-button>
+        <el-button type="danger" v-if="form.status == 'FINISHED' && optType != 'view'" @click="unconfirm" v-hasPermi="['cmms:dv-repair:confirm']">不通过</el-button>-->
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
@@ -188,13 +218,15 @@
 </template>
 
 <script>
-import { listRepair, getRepair, delRepair, addRepair, updateRepair } from '@/api/mes/dv/repair';
+import { listRepair, getRepair, delRepair, addRepair, updateRepair , finshRepair } from '@/api/mes/dv/repair';
 import MachinerySelectSingle from '@/components/machinerySelect/single.vue';
 import Repairline from './line.vue';
 import { genCode } from '@/api/mes/autocode/rule';
+import {getFeedback, initWarehouse, updateFeedback} from "@/api/mes/pro/feedback";
+import {toBoolean} from "vue-qr/src/packages/util";
 export default {
   name: 'Repair',
-  dicts: ['mes_repair_result', 'mes_order_status'],
+  dicts: ['mes_repair_result', 'mes_order_status' , 'mes_repair_type'],
   components: { Repairline, MachinerySelectSingle },
   data() {
     return {
@@ -242,12 +274,15 @@ export default {
       form: {},
       // 表单校验
       rules: {
+        repairType: [{required: true, message: '报工类型不能为空', trigger: 'change'}],
         repairCode: [{ required: true, message: '维修单编号不能为空', trigger: 'blur' }],
         machineryId: [{ required: true, message: '设备ID不能为空', trigger: 'blur' }],
         machineryCode: [{ required: true, message: '设备编码不能为空', trigger: 'blur' }],
         machineryName: [{ required: true, message: '设备名称不能为空', trigger: 'blur' }],
         requireDate: [{ required: true, message: '请选择报修日期', trigger: 'blur' }],
       },
+      // 多选框选择项
+      selectedRows: [],
     };
   },
   created() {
@@ -296,6 +331,7 @@ export default {
         createTime: null,
         updateBy: null,
         updateTime: null,
+        repairType: null,
       };
       this.autoGenFlag = false;
       this.resetForm('form');
@@ -315,16 +351,19 @@ export default {
       this.ids = selection.map(item => item.id);// repairId
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
+      this.selectedRows = selection;
     },
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
       this.open = true;
+      this.optType = 'add';
       this.title = '添加设备维修单';
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
+      this.optType = 'edit';
       const repairId = row.id || this.ids;
       getRepair(repairId).then(response => {
         this.form = response.data;
@@ -353,9 +392,45 @@ export default {
         }
       });
     },
+    submitConfirm() {
+      if (!this.form.repairResult) {
+        this.$modal.msgWarning('请先选择维修结果');
+        return;
+      }
+
+      this.form.status = 'APPROVING';
+      this.$refs['form'].validate(valid => {
+        this.loading = true;
+        if (valid) {
+          if(!this.form.id){
+            this.$modal.msgError('当前单据未保存, 请先点击保存按钮!');
+            // 重置状态
+            this.form.status = 'PREPARE';
+            this.optType = 'add';
+            this.loading = false;
+            return;
+          }
+
+          if (this.form.id) {
+            this.form.feedbackMemberList = this.teamMembers;
+            updateRepair(this.form).then(async response => {
+              this.$modal.msgSuccess('完成提交!');
+              this.open = false;
+              this.getList();
+            });
+          }
+        }
+      });
+    },
+
     /** 删除按钮操作 */
     handleDelete(row) {
       const repairIds = row.id || this.ids;
+      // 若当前选中行状态不为PREPARE, 禁止删除
+      if (row.status !== 'PREPARE') {
+        this.$modal.msgError('不允许删除非草稿的单据!');
+        return;
+      }
       this.$modal
         .confirm('是否确认删除设备维修单编号为"' + repairIds + '"的数据项？')
         .then(function () {
@@ -399,6 +474,75 @@ export default {
       } else {
         this.form.repairCode = null;
       }
+    },
+    finish(){
+      this.form.status = 'FINISHED';
+      // 循环selectedRows, 若有一行的状态不为APPROVING, 且没有维修结果(repairResult), 则提示用户
+      for (let i = 0; i < this.selectedRows.length; i++) {
+        const row = this.selectedRows[i];
+        if (row.status === 'FINISHED'){
+          this.$modal.msgError('当前单据已审核!');
+          return;
+        }
+
+        if (row.status !== 'APPROVING' || !row.repairResult) {
+          this.$modal.msgWarning("第" + (i+1) + "行请先完成维修!");
+          return;
+        }
+      }
+      const ids = this.selectedRows.map(item => item.id);
+      console.log("选中的Ids" , ids);
+
+      this.$modal.confirm('是否确认验收设备维修单编号为"' + ids + '"的数据项？')
+        .then(function () {
+          return finshRepair(ids);
+        })
+        .then(() => {
+          this.getList();
+          this.$modal.msgSuccess('完成审核');
+        })
+        .catch(() => {});
+    },
+
+    confirm(){
+      this.form.status = 'APPROVED';
+      this.$refs['form'].validate(valid => {
+        if (valid) {
+          if (this.form.id) {
+            if(!this.form.repairResult){
+              this.$modal.msgWarning('请选择验收结果');
+            }
+            // this.form.repairResult = "验收通过";
+            updateRepair(this.form).then(async response => {
+              this.$modal.msgSuccess('验收通过');
+              this.open = false;
+              this.getList();
+            });
+          }
+        }
+      });
+    },
+    unconfirm(){
+      this.form.status = 'UNAPPROVED';
+      this.$refs['form'].validate(valid => {
+        if (valid) {
+          if (this.form.id) {
+            // this.form.repairResult = "验收不通过";
+            if(!this.form.repairResult){
+              this.$modal.msgWarning('请选择验收结果');
+            }
+            updateRepair(this.form).then(async response => {
+              this.$modal.msgSuccess('验收不通过');
+              this.open = false;
+              this.getList();
+            });
+          }
+        }
+      });
+    },
+    handleRowClick(row) {
+      // 切换行的选中状态
+      this.$refs.multipleTable.toggleRowSelection(row);
     },
   },
 };

@@ -3,7 +3,7 @@ import request from '@/utils/request';
 // 查询计划班次列表
 export function listShift(query) {
   return request({
-    url: '/cal/teamshift/page',
+    url: '/cal/shift/page',
     method: 'get',
     params: query,
   });
@@ -12,7 +12,7 @@ export function listShift(query) {
 // 查询计划班次详细
 export function getShift(shiftId) {
   return request({
-    url: '/cal/teamshift/get?id=' + shiftId,
+    url: '/cal/shift/get?id=' + shiftId,
     method: 'get',
   });
 }
@@ -20,7 +20,7 @@ export function getShift(shiftId) {
 // 新增计划班次
 export function addShift(data) {
   return request({
-    url: '/cal/teamshift/create',
+    url: '/cal/shift/create',
     method: 'post',
     data: data,
   });
@@ -29,7 +29,7 @@ export function addShift(data) {
 // 修改计划班次
 export function updateShift(data) {
   return request({
-    url: '/cal/teamshift/update',
+    url: '/cal/shift/update',
     method: 'put',
     data: data,
   });
@@ -38,7 +38,7 @@ export function updateShift(data) {
 // 删除计划班次
 export function delShift(shiftId) {
   return request({
-    url: '/cal/teamshift/delete?id=' + shiftId,
+    url: '/cal/shift/delete?id=' + shiftId,
     method: 'delete',
   });
 }

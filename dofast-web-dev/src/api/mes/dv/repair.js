@@ -42,3 +42,11 @@ export function delRepair(repairId) {
     method: 'delete',
   });
 }
+
+// 完成维修单
+export function finshRepair(ids) {
+  return request({
+    url: '/mes/cmms/dv-repair/finsh?ids=' + ids,
+    method: 'get',
+  })
+}

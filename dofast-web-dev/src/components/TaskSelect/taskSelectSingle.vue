@@ -5,7 +5,8 @@
         <el-col :span="8">
           <el-form-item label="所属工序" prop="processName">
             <el-select v-model="queryParams.processId" placeholder="请选择工序">
-              <el-option v-for="item in processOptions" :key="item.processId" :label="item.processName" :value="item.processId"></el-option>
+<!--              <el-option v-for="item in processOptions" :key="item.processId" :label="item.processName" :value="item.processId"></el-option>-->
+              <el-option v-for="item in processOptions" :key="item.id" :label="item.name" :value="item.id"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
@@ -40,6 +41,7 @@
       <el-table-column label="任务名称" align="center" width="120px" prop="taskName" :show-overflow-tooltip="true" />
       <el-table-column label="工作站编号" align="center" width="150px" prop="workstationCode" :show-overflow-tooltip="true" />
       <el-table-column label="工作站名称" align="center" width="150px" prop="workstationName" :show-overflow-tooltip="true" />
+      <el-table-column label="工作序" align="center" prop="processSequence" />
       <el-table-column label="排产数量" align="center" prop="quantity" />
       <el-table-column label="已生产数量" align="center" width="100px" prop="quantityProduced" />
       <el-table-column label="开始生产时间" align="center" prop="startTime" width="180">
@@ -75,7 +77,7 @@
 
 <script>
 import { listProtask } from '@/api/mes/pro/protask';
-import { listAllProcess } from '@/api/mes/pro/process';
+import { listAllProcess , listProcess } from '@/api/mes/pro/process';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 export default {
   name: 'ProtaskSelect',
@@ -98,6 +100,7 @@ export default {
   },
   watch: {
     workorderId(v) {
+      console.log("获取到新的工单ID: ", v)
       this.queryParams.workorderId = v;
     },
     workorderCode(v) {
@@ -169,6 +172,8 @@ export default {
         startTime: [{ required: true, message: '请选择开始生产日期', trigger: 'blur' }],
         duration: [{ required: true, message: '清输入估算的生产用时', trigger: 'blur' }],
       },
+      //工序选项
+      processOptions: [],
     };
   },
   created() {
@@ -187,6 +192,9 @@ export default {
     },
     //查询工序信息
     getProcess() {
+      /*listProcess().then(response => {
+        this.processOptions = response.data.list;
+      });*/
       listAllProcess().then(response => {
         this.processOptions = response.data;
       });

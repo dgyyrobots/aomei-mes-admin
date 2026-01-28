@@ -5,9 +5,13 @@
       <el-form-item label="任务编号" prop="taskCode">
         <el-input v-model="queryParams.taskCode" placeholder="请输入任编号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
-      <el-form-item label="任务名称" prop="taskName">
-        <el-input v-model="queryParams.taskName" placeholder="请输入任务名称" clearable @keyup.enter.native="handleQuery"/>
+
+      <el-form-item label="生产工序" prop="processCode">
+        <el-select @change="val => { handleProcessChange(val) }" v-model="queryParams.processCode" placeholder="请选择工序" clearable>
+          <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"/>
+        </el-select>
       </el-form-item>
+
       <el-form-item label="工单名称" prop="workorderName">
         <el-input v-model="queryParams.workorderName" placeholder="请输入工单名称" clearable
                   @keyup.enter.native="handleQuery"/>
@@ -368,6 +372,7 @@ import WorkorderSelect from '@/components/workorderSelect/single.vue';
 import ProtaskSelect from '@/components/TaskSelect/taskSelectSingle.vue';
 import UserSingleSelect from '@/components/userSelect/single.vue';
 import {getTeammemberByTeamCode} from "@/api/mes/cal/teammember";
+import {listProcess} from "@/api/mes/pro/process";
 
 export default {
   name: 'Task',
@@ -504,9 +509,16 @@ export default {
       },
       adjunctTypes: null,
       teamMembers: [],
+      processOptions: [], // 工序选项
     };
   },
   created() {
+    const cachedValue = localStorage.getItem('cachedProcessCode');
+    this.cachedProcessCode = cachedValue;
+    this.queryParams.processCode = cachedValue;
+
+    this.getProcess();
+
     this.date = +new Date();
     this.getList();
     getConfigKey('YL1').then(res => {
@@ -855,6 +867,28 @@ export default {
       console.log(row);
       this.teamMembers.push(row);
     },
+
+    getProcess() {
+      // 初始化工序选项
+      this.processOptions = [];
+      listProcess().then(response => {
+        this.processOptions = response.data.list;
+        console.log(this.processOptions)
+      });
+    },
+
+    // 工序缓存
+    handleProcessChange(val) {
+      this.cachedProcessCode = val;
+      if (val) {
+        localStorage.setItem('cachedProcessCode', val);
+      } else {
+        localStorage.removeItem('cachedProcessCode');
+      }
+      // 强制重新渲染
+      this.$forceUpdate();
+    },
+
     //  async yjbg(row) {
     //   await this.$modal.confirm(`确认一键报工?`).then(async () => {
     //      row.taskId = row.id;

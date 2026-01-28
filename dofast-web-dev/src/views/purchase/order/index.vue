@@ -306,8 +306,10 @@ export default {
         LODOP.ADD_PRINT_TEXT(110, 120, 280, 35, obj.goodsNumber); // 内容部分
 
         LODOP.ADD_PRINT_TEXT(155, 15, 120, 35, "物料名称:");
-        LODOP.ADD_PRINT_TEXT(155, 120, 280, 35, obj.goodsName + obj.goodsSpecs);
+        LODOP.SET_PRINT_STYLE("FontSize", 12);
+        LODOP.ADD_PRINT_TEXT(155, 120, 490, 35, obj.goodsName);
 
+        LODOP.SET_PRINT_STYLE("FontSize", 14);
         LODOP.ADD_PRINT_TEXT(200, 15, 120, 35, "采购单号:");
         LODOP.ADD_PRINT_TEXT(200, 120, 280, 35, obj.poNo);
 

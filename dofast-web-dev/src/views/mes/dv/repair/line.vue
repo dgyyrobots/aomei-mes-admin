@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-row :gutter="10" class="mb8">
+    <el-row :gutter="10" class="mb8" v-if="parentStatus === 'PREPARE'">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['cmms:dv-repair:create']">新增 </el-button>
       </el-col>
@@ -11,7 +11,7 @@
     </el-row>
 
     <el-table v-loading="loading" :data="repairlineList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
+      <el-table-column type="selection" width="55" align="center" v-if="parentStatus === 'PREPARE'"/>
       <el-table-column label="项目名称" align="center" prop="subjectName" />
 <!--      <el-table-column label="故障描述" align="center" prop="malfunction">
         <template slot-scope="scope">
@@ -21,7 +21,7 @@
       <el-table-column label="故障描述" align="center" prop="malfunction"/>
       <el-table-column label="故障描述资源" align="center" prop="malfunctionUrl"/>
       <el-table-column label="维修情况" align="center" prop="repairDes" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" v-if="parentStatus === 'PREPARE'">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['cmms:dv-repair:update']">修改 </el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['cmms:dv-repair:delete']">删除 </el-button>
@@ -63,6 +63,17 @@ export default {
   props: {
     repairId: null,
     optType: undefined,
+    // 接收父组件的状态
+    parentStatus: {
+      type: String,
+      default: 'PREPARE'
+    }
+  },
+  watch: {
+    // 监听父组件状态变化
+    parentStatus(newVal) {
+      console.log('父组件状态变化:', newVal);
+    }
   },
   data() {
     return {
@@ -169,12 +180,20 @@ export default {
     },
     /** 新增按钮操作 */
     handleAdd() {
+      if (this.parentStatus !== 'PREPARE') {
+        this.$modal.msgWarning('当前单据状态不允许新增维修内容');
+        return;
+      }
       this.reset();
       this.open = true;
       this.title = '添加设备维修单行';
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
+      if (this.parentStatus !== 'PREPARE') {
+        this.$modal.msgWarning('当前单据状态不允许新增维修内容');
+        return;
+      }
       this.reset();
       const lineId = row.id || this.ids;
       getRepairline(lineId).then(response => {
@@ -205,6 +224,11 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
+      if (this.parentStatus !== 'PREPARE') {
+        this.$modal.msgWarning('当前单据状态不允许新增维修内容');
+        return;
+      }
+
       const lineIds = row.id || this.ids;
       this.$modal
         .confirm('是否确认删除设备维修单行编号为"' + lineIds + '"的数据项？')

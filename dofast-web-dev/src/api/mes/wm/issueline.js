@@ -89,3 +89,11 @@ export function issueErp(data) {
     data: data,
   });
 }
+
+export function getErpUnsyncCount(query) {
+  return request({
+    url: '/mes/wms/issue-line/getErpUnsyncCount',
+    method: 'get',
+    params: query,
+  });
+}

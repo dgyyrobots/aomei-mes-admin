@@ -11,6 +11,11 @@
         <el-input v-model="queryParams.goodsNumber" placeholder="请输入商品编号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
 
+      <el-form-item label="批次号" prop="batchCode">
+        <el-input v-model="queryParams.batchCode" placeholder="请输入批次号" clearable @keyup.enter.native="handleQuery"/>
+      </el-form-item>
+
+
       <el-form-item label="商品名称" prop="goodsName">
         <el-input v-model="queryParams.goodsName" placeholder="请输入商品名称" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
@@ -50,14 +55,9 @@
         <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="multiple" @click="batchPrint" v-hasPermi="['purchase:goods:print']">批量打印</el-button>
       </el-col>
 
-      <el-col :span="1.5">
+<!--      <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="single" @click="printTitle" v-hasPermi="['purchase:goods:print']">单据打印</el-button>
-      </el-col>
-
-
-      <!--      <el-col :span="1.5">
-              <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" :loading="exportLoading" v-hasPermi="['purchase:goods:export']">导出</el-button>
-            </el-col>-->
+      </el-col>-->
 
       <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="disabledFlag" @click="receive" v-hasPermi="['purchase:goods:split']">收货</el-button>
@@ -69,6 +69,10 @@
 
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-success" size="mini" @click="warehousing" v-hasPermi="['purchase:goods:warehousing']">一键入库</el-button>
+      </el-col>
+
+      <el-col :span="1.5">
+        <el-button type="primary" plain icon="el-icon-merge" size="mini" :disabled="multiple" @click="mergeGoods" v-hasPermi="['purchase:goods:merge']">合并</el-button>
       </el-col>
 
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
@@ -89,6 +93,7 @@
       <el-table-column label="收货数量" align="center" prop="receiveNum"/>
       <el-table-column label="已拆数量" align="center" prop="receivedNum"/>
       <el-table-column label="单位" align="center" prop="company"/>
+      <el-table-column label="批次号"  width=160  align="center" prop="batchCode" :show-overflow-tooltip="true"/>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -328,7 +333,7 @@
 </template>
 
 <script>
-import {createGoods, updateGoods, deleteGoods, getGoods, getGoodsPage, getAllGoods, exportGoodsExcel, updateReceiveStatus, startWareHousing, splitGoods, getPurchaseBarCode, checkConfig, batchUpdateReceiveStatus, receiving} from '@/api/purchase/goods';
+import {createGoods, updateGoods, deleteGoods, getGoods, getGoodsPage, getAllGoods, exportGoodsExcel, updateReceiveStatus, startWareHousing, splitGoods, getPurchaseBarCode, checkConfig, batchUpdateReceiveStatus, receiving , mergeGoods , checkOrigin} from '@/api/purchase/goods';
 import {createPrintLog, getPrintLogPage} from "@/api/report/printLog";
 import '@/utils/CLodopfuncs2.js';
 import {getConfigKey} from '@/api/system/config';
@@ -596,8 +601,7 @@ export default {
             this.getList();
           });
         }
-      )
-      ;
+      );
     },
     /** 删除按钮操作 */
     handleDelete(row) {
@@ -613,8 +617,7 @@ export default {
         })
         .catch(() => {
         });
-    }
-    ,
+    },
     /** 导出按钮操作 */
     handleExport() {
       // 处理查询参数
@@ -633,17 +636,15 @@ export default {
         })
         .catch(() => {
         });
-    }
-    ,
-// 多选框选中数据
+    },
+    // 多选框选中数据
     handleSelectionChange(selection) {
       this.selectedRows = selection;
       this.ids = selection.map(item => item.id);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
-    }
-    ,
-// 单据打印
+    },
+    // 单据打印
     async printTitle() {
 
       // 校验当前采购单号下所有单身是否配置单位与收货数量
@@ -722,8 +723,8 @@ export default {
 
 
       this.batchUpdateStatus(this.selectedRows[0].poNo);
-    }
-    ,
+    },
+
     async batchPrint() {
       //校验当前所选项的收货数量与收货单位是否填写
       for (let i = 0; i < this.selectedRows.length; i++) {
@@ -744,6 +745,8 @@ export default {
       }
 
       await this.$modal.confirm('确认批量打印？');
+
+      this.loading = true;
       LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
       LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
       for (const queryId of this.ids) {
@@ -811,13 +814,15 @@ export default {
       LODOP.SET_PRINT_MODE('AUTO_CLOSE_PREWINDOW', 1); //打印后自动关闭预览窗口
       LODOP.PREVIEW();
 
-      this.updateStatus();
+      await this.updateStatus();
     },
     // 打印完成后， 修改当前行的状态
     updateStatus() {
+      this.loading = true;
       updateReceiveStatus(this.selectedRows).then(response => {
         this.$message.success('打印成功');
         this.getList();
+        this.loading = false;
       });
     }
     ,
@@ -878,7 +883,7 @@ export default {
       // TODO 校验表单数据
       await startWareHousing(obj).then(response => {
         if (response != "success") {
-          this.$message.error("入库失败, 请联系系统管理员, 问题如下: ", response);
+          this.$message.error(response);
           return;
         }
         this.$message.success('入库成功');
@@ -1097,7 +1102,7 @@ export default {
       this.scanResult = inputValue;
     },
     // 显示拆分弹出框
-    split() {
+    async split() {
       if (this.selectedRows.length === 0) {
         this.$message.warning('请选择至少一项进行拆分');
         return;
@@ -1106,6 +1111,13 @@ export default {
         this.$message.warning('请先填写收货数量');
         return;
       }
+
+      /*let result = await checkOrigin(this.selectedRows[0].id);
+      if(result.data !== 'success'){
+        this.$message.warning('无法拆分非来源单据物料！');
+        this.getList();
+        return;
+      }*/
 
       /*
       允许收获前拆分
@@ -1311,6 +1323,13 @@ export default {
          }
        }*/
 
+      for (let i = 0; i < this.selectedRows.length; i++) {
+        if (this.selectedRows[i].status !== 0) {
+          this.$message.error('只允许勾选未收货状态的单据!');
+          return;
+        }
+      }
+
       // 调用后台收货接口
       let obj = {
         'list': this.selectedRows,
@@ -1353,7 +1372,72 @@ export default {
         return 'highlight-row';
       }
       return '';
-    }
+    },
+
+    async mergeGoods() {
+      if (this.selectedRows.length < 2) {
+        this.$message.warning('请至少选择两条记录进行合并');
+        return;
+      }
+
+      // 检查是否包含已入库的商品
+      const hasWarehoused = this.selectedRows.some(row => row.status === 3);
+      if (hasWarehoused) {
+        this.$message.error('已入库的商品不允许合并');
+        return;
+      }
+
+      // 检查采购单号和物料编号是否一致
+      const firstRow = this.selectedRows[0];
+      const samePoAndItem = this.selectedRows.every(row =>
+        row.poNo === firstRow.poNo && row.goodsNumber === firstRow.goodsNumber
+      );
+
+      if (!samePoAndItem) {
+        this.$message.error('只能合并相同采购单和物料编号的商品');
+        return;
+      }
+
+      // 检查未打印和已打印状态的ERP收货单号是否一致
+      const hasUnprintedOrPrinted = this.selectedRows.some(row => row.status === 1 || row.status === 2);
+      if (hasUnprintedOrPrinted) {
+        const firstErpCode = this.selectedRows.find(row => row.status === 1 || row.status === 2)?.erpReceiveCode;
+        const sameErpCode = this.selectedRows
+          .filter(row => row.status === 1 || row.status === 2)
+          .every(row => row.erpReceiveCode === firstErpCode);
+
+        if (!sameErpCode) {
+          this.$message.error('未打印和已打印状态的商品只能合并相同ERP收货单号的记录');
+          return;
+        }
+      }
+
+      try {
+        await this.$confirm('确定要合并选中的商品吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        });
+
+        this.loading = true;
+        const ids = this.selectedRows.map(row => row.id);
+        const response = await mergeGoods({ ids });
+
+        if (response.code === 0) {
+          this.$message.success('合并成功');
+          this.getList();
+        } else {
+          this.$message.error(response.msg || '合并失败');
+        }
+      } catch (error) {
+        if (error !== 'cancel') {
+          this.$message.error('合并失败: ' + (error.msg || error.message || '未知错误'));
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+
   },
 
 

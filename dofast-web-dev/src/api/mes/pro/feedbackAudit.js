@@ -73,3 +73,14 @@ export function executes(data) {
   });
 }
 
+export function transferFeedbackAuditDetails(data) {
+  return request({
+    url: '/mes/pro/feedback-audit/transferFeedbackAuditDetails',
+    method: 'post',
+    data: data
+  });
+}
+
+
+
+

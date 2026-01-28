@@ -4,9 +4,9 @@
       :on-error="handleUploadError" :on-exceed="handleExceed" :on-success="handleUploadSuccess" :show-file-list="false"
       :headers="headers" class="upload-file-uploader" ref="fileUpload">
       <!-- 上传按钮 -->
-      <el-button size="mini" type="primary" v-if="isShowTips">选取文件</el-button>
+      <el-button size="mini" type="primary" >选取文件</el-button> <!--v-if="isShowTips"-->
       <!-- 上传提示 -->
-      <div class="el-upload__tip" slot="tip" v-if="isShowTips"><!--showTip-->
+      <div class="el-upload__tip" slot="tip" ><!--showTip--> <!-- v-if="isShowTips" -->
         请上传
         <template v-if="fileSize">
           大小不超过 <b style="color: #f56c6c">{{ fileSize }}MB</b>
@@ -52,8 +52,8 @@
           <!-- 添加预览按钮 -->
           <el-button type="text" @click="handlePreview(file.name)">{{ file.name.split('_')[1] }}</el-button>
         </el-link>
-        <div class="ele-upload-list__item-content-action">
-          <el-link :underline="false" @click="handleDelete(index)" v-if="isShowTips" type="danger" style="text-align: center;" v-hasPermi="['system:file:delete']" >
+        <div class="ele-upload-list__item-content-action" >
+          <el-link :underline="false" @click="handleDelete(index)" v-if="isShowTips"  type="danger" style="text-align: center;" v-hasPermi="['system:file:delete']" >
             删除
           </el-link>
         </div>
@@ -255,13 +255,35 @@ export default {
       }
       return strs != '' ? strs.substr(0, strs.length - 1) : '';
     },
-    handlePreview(fileUrl) {
+    /*handlePreview(fileUrl) {
       console.log(fileUrl);
       const parts = fileUrl.split('?');
       console.log(parts[0]);
       let base64Url = this.base64Encode(parts[0]);
       const kkFileViewUrl = `http://172.18.12.250:8012/onlinePreview?url=${base64Url}`;
       console.log(kkFileViewUrl);
+      window.open(kkFileViewUrl, '_blank');
+    },*/
+    handlePreview(fileUrl) {
+      console.log("fileUrl: " , fileUrl)
+      // 确保MinIO地址和桶名称正确
+      const minioBaseUrl = "http://172.18.12.250:9000/ammes/";
+
+      let fullFileUrl = null;
+      // 追加卡控, 若传递过来的fileUrl已经包含minioBaseUrl, 则跳过
+      if (fileUrl.includes(minioBaseUrl)) {
+        fullFileUrl = encodeURIComponent(fileUrl);
+      }else{
+        fullFileUrl = minioBaseUrl + encodeURIComponent(fileUrl);
+      }
+      console.log("fullFileUrl: " , fullFileUrl)
+      // Base64编码完整URL
+      const base64Url = this.base64Encode(fullFileUrl);
+      // 双重编码确保URL安全传递
+      // const safeUrl = encodeURIComponent(base64Url);
+      // 构建kkFileView预览链接
+      const kkFileViewUrl = `http://172.18.12.250:8012/onlinePreview?url=${base64Url}`;
+
       window.open(kkFileViewUrl, '_blank');
     },
     /**

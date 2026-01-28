@@ -42,6 +42,12 @@
       </el-col>
 
       <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExportDetail" :disabled="single" :loading="exportLoading"
+                   v-hasPermi="['wms:allocated-header:export']">导出明细
+        </el-button>
+      </el-col>
+
+      <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-edit" size="mini" @click="handleFinsh" :disabled="single"
                    v-hasPermi="['wms:allocated-header:finsh']">完成
         </el-button>
@@ -57,11 +63,11 @@
     </el-row>
 
     <!-- 列表 -->
-    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="调拨单编号" align="center" prop="allocatedCode"/>
       <el-table-column label="调拨单名称" align="center" prop="allocatedName"/>
-      <el-table-column label="生产工单" align="center" prop="workorderCode"/>
+      <!--      <el-table-column label="生产工单" align="center" prop="workorderCode"/>-->
       <el-table-column label="调拨日期" align="center" prop="allocatedDate" width="180">
         <template v-slot="scope">
           <span>{{ parseTime(scope.row.allocatedDate) }}</span>
@@ -72,7 +78,8 @@
           <dict-tag :options="dict.type.wms_allocated_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
-
+      <el-table-column label="创建人" align="center" prop="creator" width="120"/>
+      <el-table-column label="完成人" align="center" prop="completer" width="120"/>
       <el-table-column label="操作" width="210" fixed="right" align="center" class-name="small-padding fixed-width">
         <template v-slot="scope">
           <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status != 'FINISHED'" @click="handleExecute(scope.row)" v-hasPermi="['wms:allocated-header:allocated']">执行领出</el-button>
@@ -170,7 +177,6 @@
         </el-row>
 
 
-
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
@@ -180,53 +186,53 @@
         </el-row>
       </el-form>
       <div v-if="form.bindWorkorder">
-      <el-divider content-position="center">物料信息</el-divider>
-      <el-card shadow="always" class="box-card">
-        <!--追加工单BOM信息-->
-        <el-table v-loading="bomLoadding" max-height="250" :data="bomList" @selection-change="handleBomSelectionChange">
-          <el-table-column type="selection" width="55" align="center"/>
-          <el-table-column width="210" label="物料编码" align="center" prop="itemCode"/>
-          <el-table-column width="210" label="物料名称" :show-overflow-tooltip="true" align="center" prop="itemName"/>
-          <el-table-column width="210" label="需求数量" align="center" prop="quantityAllocated"/>
-          <el-table-column width="190" label="单位" align="center" prop="unitOfMeasure"/>
+        <el-divider content-position="center">物料信息</el-divider>
+        <el-card shadow="always" class="box-card">
+          <!--追加工单BOM信息-->
+          <el-table v-loading="bomLoadding" max-height="250" :data="bomList" @selection-change="handleBomSelectionChange">
+            <el-table-column type="selection" width="55" align="center"/>
+            <el-table-column width="210" label="物料编码" align="center" prop="itemCode"/>
+            <el-table-column width="210" label="物料名称" :show-overflow-tooltip="true" align="center" prop="itemName"/>
+            <el-table-column width="210" label="需求数量" align="center" prop="quantityAllocated"/>
+            <el-table-column width="190" label="单位" align="center" prop="unitOfMeasure"/>
 
-<!--          <el-table-column width="100" label="批次号" align="center" prop="batchCode"/>
-          <el-table-column width="100" label="库存数量" align="center" prop="quantityOnhand"/>
-          <el-table-column width="100" label="仓库名称" align="center" prop="warehouseName"/>
-          <el-table-column width="130" label="库区名称" align="center" prop="locationName"/>
-          <el-table-column width="100" label="库位名称" align="center" prop="areaName"/>-->
-        </el-table>
+            <!--          <el-table-column width="100" label="批次号" align="center" prop="batchCode"/>
+                      <el-table-column width="100" label="库存数量" align="center" prop="quantityOnhand"/>
+                      <el-table-column width="100" label="仓库名称" align="center" prop="warehouseName"/>
+                      <el-table-column width="130" label="库区名称" align="center" prop="locationName"/>
+                      <el-table-column width="100" label="库位名称" align="center" prop="areaName"/>-->
+          </el-table>
 
-      </el-card>
+        </el-card>
 
-      <el-divider content-position="center">调拨信息</el-divider>
-      <el-card shadow="always" class="box-card">
-        <!--追加工单BOM信息-->
-        <el-table v-loading="bomLoadding" max-height="250" :data="allocatedList" row-key="itemCode">
-          <el-table-column width="220" label="物料编码" align="center" prop="itemCode"/>
-          <el-table-column width="220" label="物料名称" :show-overflow-tooltip="true" align="center" prop="itemName"/>
-          <el-table-column width="220" label="调拨数量" align="center" prop="quantityAllocated">
+        <el-divider content-position="center">调拨信息</el-divider>
+        <el-card shadow="always" class="box-card">
+          <!--追加工单BOM信息-->
+          <el-table v-loading="bomLoadding" max-height="250" :data="allocatedList" row-key="itemCode">
+            <el-table-column width="220" label="物料编码" align="center" prop="itemCode"/>
+            <el-table-column width="220" label="物料名称" :show-overflow-tooltip="true" align="center" prop="itemName"/>
+            <el-table-column width="220" label="调拨数量" align="center" prop="quantityAllocated">
 
-            <template slot-scope="scope">
-              <el-input
-                v-model="scope.row.quantityAllocated"
-                type="number"
-                placeholder="请输入数量"
-                @blur="handleQuantityChange(scope.row)"
-              />
-            </template>
-          </el-table-column>
-          <el-table-column width="210" label="单位" align="center" prop="unitOfMeasure"/>
-<!--          <el-table-column width="100" label="调拨数量" align="center" prop="quantityAllocated"/>-->
+              <template slot-scope="scope">
+                <el-input
+                  v-model="scope.row.quantityAllocated"
+                  type="number"
+                  placeholder="请输入数量"
+                  @blur="handleQuantityChange(scope.row)"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column width="210" label="单位" align="center" prop="unitOfMeasure"/>
+            <!--          <el-table-column width="100" label="调拨数量" align="center" prop="quantityAllocated"/>-->
 
-<!--          <el-table-column width="100" label="批次号" align="center" prop="batchCode"/>
-          <el-table-column width="100" label="库存数量" align="center" prop="quantityOnhand"/>
-          <el-table-column width="100" label="仓库名称" align="center" prop="warehouseName"/>
-          <el-table-column width="130" label="库区名称" align="center" prop="locationName"/>
-          <el-table-column width="100" label="库位名称" align="center" prop="areaName"/>-->
-        </el-table>
+            <!--          <el-table-column width="100" label="批次号" align="center" prop="batchCode"/>
+                      <el-table-column width="100" label="库存数量" align="center" prop="quantityOnhand"/>
+                      <el-table-column width="100" label="仓库名称" align="center" prop="warehouseName"/>
+                      <el-table-column width="130" label="库区名称" align="center" prop="locationName"/>
+                      <el-table-column width="100" label="库位名称" align="center" prop="areaName"/>-->
+          </el-table>
 
-      </el-card>
+        </el-card>
 
       </div>
 
@@ -237,7 +243,7 @@
     </el-dialog>
 
     <!--执行出库-->
-    <el-dialog :title="executeTitle" :visible.sync="executeDialogVisible" width="960px" v-dialogDrag append-to-body>
+    <el-dialog :title="executeTitle" :visible.sync="executeDialogVisible" width="80%" v-dialogDrag append-to-body>
       <el-form ref="executeForm" :model="executeForm" label-width="100px">
         <!-- 这里添加与新增页面一致的表单项，但设置为禁用或只读 -->
         <el-row>
@@ -315,11 +321,11 @@
           <el-table-column width="220" label="需求数量" align="center" prop="quantityAllocated"/>
           <el-table-column width="210" label="单位" align="center" prop="unitOfMeasure"/>
 
-<!--          <el-table-column width="100" label="批次号" align="center" prop="batchCode"/>
-          <el-table-column width="100" label="库存数量" align="center" prop="quantityOnhand"/>
-          <el-table-column width="100" label="仓库名称" align="center" prop="warehouseName"/>
-          <el-table-column width="130" label="库区名称" align="center" prop="locationName"/>
-          <el-table-column width="100" label="库位名称" align="center" prop="areaName"/>-->
+          <!--          <el-table-column width="100" label="批次号" align="center" prop="batchCode"/>
+                    <el-table-column width="100" label="库存数量" align="center" prop="quantityOnhand"/>
+                    <el-table-column width="100" label="仓库名称" align="center" prop="warehouseName"/>
+                    <el-table-column width="130" label="库区名称" align="center" prop="locationName"/>
+                    <el-table-column width="100" label="库位名称" align="center" prop="areaName"/>-->
 
         </el-table>
 
@@ -341,10 +347,10 @@
           <el-col :span="1.5">
             <el-button type="primary" plain icon="el-icon-plus" size="mini" v-hasPermi="['wms:allocated-header:batchAdd']" @click="allocatedHandleBatchAdd">批量新增</el-button>
           </el-col>
-          <StockSelect ref="stockSelect"  @onSelected="onStockSelected"></StockSelect>
+          <StockSelect ref="stockSelect" @onSelected="onStockSelected"></StockSelect>
 
           <el-col :span="1.5">
-            <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="allocatedSingle" @click="allocatedHandleDelete">删除</el-button>
+            <el-button type="danger" plain icon="el-icon-delete" size="mini" @click="allocatedHandleDelete">删除</el-button>
           </el-col>
         </el-row>
         <el-table v-loading="loading" :data="allocatedList" @selection-change="allocatedHandleSelectionChange">
@@ -356,24 +362,25 @@
           </el-table-column>
           <el-table-column width="150" label="物料编码" align="center" prop="itemCode"/>
           <el-table-column width="150" label="物料名称" :show-overflow-tooltip="true" align="center" prop="itemName"/>
+          <el-table-column width="150" label="物料规格" :show-overflow-tooltip="true" align="center" prop="specification"/>
           <el-table-column width="100" label="调拨数量" align="center" prop="quantityAllocated"/>
           <el-table-column width="100" label="单位" align="center" prop="unitOfMeasure"/>
           <el-table-column width="150" label="批次号" align="center" prop="batchCode"/>
           <el-table-column width="120" label="母批次号" align="center" prop="parentBatchCode"/>
-          <el-table-column fixed="right" label="调拨标识" align="center" prop="allocatedFlag" >
+          <el-table-column fixed="right" label="调拨标识" align="center" prop="allocatedFlag">
             <template v-slot="scope">
               <span v-if="scope.row.allocatedFlag === 'N' || !scope.row.allocatedFlag ">未调拨</span>
               <span v-else>已调拨</span>
             </template>
           </el-table-column>
 
-          <el-table-column fixed="right" width="120" label="ERP同步状态" align="center" prop="erpStatus" >
+          <el-table-column fixed="right" width="120" label="ERP同步状态" align="center" prop="erpStatus">
             <template slot-scope="scope">
-              <dict-tag :options="dict.type.erp_status" :value="scope.row.erpStatus" />
+              <dict-tag :options="dict.type.erp_status" :value="scope.row.erpStatus"/>
             </template>
           </el-table-column>
 
-<!--          <el-table-column width="100" label="库存数量" align="center" prop="quantityOnhand"/>-->
+          <!--          <el-table-column width="100" label="库存数量" align="center" prop="quantityOnhand"/>-->
           <el-table-column width="100" label="仓库名称" align="center" prop="warehouseName"/>
           <el-table-column width="130" label="库区名称" :show-overflow-tooltip="true" align="center" prop="locationName"/>
           <el-table-column width="130" label="库位名称" :show-overflow-tooltip="true" align="center" prop="areaName"/>
@@ -401,7 +408,8 @@
 </template>
 
 <script>
-import {createAllocatedHeader, updateAllocatedHeader, deleteAllocatedHeader, getAllocatedHeader, getAllocatedHeaderPage, exportAllocatedHeaderExcel, initBomInfo, execute, finshAllocatedHeader , updateAllocatedLine, createIssue} from "@/api/wms/allocatedHeader";
+import {createAllocatedHeader, updateAllocatedHeader, deleteAllocatedHeader, getAllocatedHeader, getAllocatedHeaderPage, exportAllocatedHeaderExcel, initBomInfo, execute, finshAllocatedHeader, updateAllocatedLine, createIssue} from "@/api/wms/allocatedHeader";
+
 import {genCode} from '@/api/mes/autocode/rule';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import WorkorderSelect from '@/components/workorderSelect/single.vue';
@@ -410,9 +418,8 @@ import {getGoods} from '@/api/purchase/goods';
 import {getStockInfoByPurchaseId} from "@/api/purchase/goods";
 import jsQR from "jsqr";
 import ProtaskSelect from '@/components/TaskSelect/taskSelectSingle.vue';
-import {getAllocatedRecordByHeaderId} from  "@/api/wms/allocatedRecord";
+import {getAllocatedRecordByHeaderId , exportAllocatedRecordExcel} from "@/api/wms/allocatedRecord";
 import StockSelect from '@/components/stockSelect/multi.vue';
-
 
 
 export default {
@@ -524,8 +531,8 @@ export default {
       // 如果绑定了工单，则设置工单和任务单为必填
       if (this.form.bindWorkorder) {
         return {
-          workorderCode: [{ required: true, message: '请指定生产工单', trigger: 'blur' }],
-          taskCode: [{ required: true, message: '请指定生产任务', trigger: 'blur' }],
+          workorderCode: [{required: true, message: '请指定生产工单', trigger: 'blur'}],
+          taskCode: [{required: true, message: '请指定生产任务', trigger: 'blur'}],
         };
       }
       // 如果未绑定工单，则清空相关规则
@@ -546,12 +553,10 @@ export default {
         this.stopScanning();
       }
     },
-    'purchaseId': function(newVal) {
+    'purchaseId': function (newVal) {
       if (typeof newVal === 'string' && newVal.includes('{') && newVal.includes('}')) {
         console.log('输入内容包含完整的 "{" 和 "}"');
         let type = '';
-        // 开始基于当前的内容追加产品入库
-
         // 替换中文引号为英文引号，并解析 JSON
         newVal = newVal.replace(/“/g, '"').replace(/”/g, '"').replace(/：/g, ':').replace(/，/g, ',');
         // 移除零宽度非换行空格字符
@@ -623,7 +628,7 @@ export default {
         areaId: null,
         areaCode: null,
         areaName: null,
-        allocatedDate: null,
+        allocatedDate: new Date().getTime(),
         status: 'PREPARE',
         remark: null,
         bomList: [],
@@ -684,11 +689,10 @@ export default {
         if (!valid) {
           return;
         }
-        console.log("this.form: ", this.form);
-        if(!this.form.bindWorkorder){
+        if (!this.form.bindWorkorder) {
           this.form.bindWorkorder = false;
         }
-        if(this.form.warehouseId == null || this.form.locationId == null || this.form.areaId == null){
+        if (this.form.warehouseId == null || this.form.locationId == null || this.form.areaId == null) {
           this.$modal.msgError("请选择调拨仓库、库区、库位信息！");
           return;
         }
@@ -700,15 +704,21 @@ export default {
           ...item, quantityAllocated: parseFloat(item.quantityAllocated)
         }));
 
+        if(this.form.locationId === 69){
+          // 若创建调拨单时, 用户选择不良品仓需要卡控其填写备注
+          if(!this.form.remark){
+            this.$modal.msgError("检测到当前调拨到不良品仓, 请填写备注!");
+            return;
+          }
+        }
+
         // 修改的提交
-        console.log(this.form);
         if (this.form.id != null) {
-          console.log("修改参数: "+ this.form);
-          console.log(this.form);
+          console.log("修改参数: " + this.form);
           updateAllocatedHeader(this.form).then(response => {
             this.$modal.msgSuccess("修改成功");
-            this.open = false;
             this.getList();
+            this.open = false;
           });
 
           return;
@@ -718,8 +728,8 @@ export default {
         // 添加的提交
         createAllocatedHeader(this.form).then(response => {
           this.$modal.msgSuccess("新增成功");
-          this.open = false;
           this.getList();
+          this.open = false;
         });
 
       });
@@ -743,6 +753,10 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const id = row.id;
+      if (row.status === 'CONFIRMED') {
+        this.$modal.msgError("该调拨单已执行，不允许删除！");
+        return;
+      }
       this.$modal.confirm('是否确认删除调拨单头编号为"' + id + '"的数据项?').then(function () {
         return deleteAllocatedHeader(id);
       }).then(() => {
@@ -766,6 +780,25 @@ export default {
       }).catch(() => {
       });
     },
+
+    handleExportDetail(row) {
+      // 获取选中行
+      const allocatedId = row.id || this.ids;
+      console.log("allocatedId: " , allocatedId);
+
+      let params = {"allocatedId": allocatedId[0]};
+      params.pageNo = undefined;
+      params.pageSize = undefined;
+      this.$modal.confirm('是否确认调拨明细?').then(() => {
+        this.exportLoading = true;
+        return exportAllocatedRecordExcel(params);
+      }).then(response => {
+        this.$download.excel(response, '调拨明细.xls');
+        this.exportLoading = false;
+      }).catch(() => {
+      });
+    },
+
     //选择默认的仓库、库区、库位
     handleWarehouseChanged(value) {
       if (value !== null) {
@@ -827,7 +860,7 @@ export default {
       });
     },
     handleBomSelectionChange(selection) {
-      this.allocatedList = selection.map(item => ({ ...item }));
+      this.allocatedList = selection.map(item => ({...item}));
     },
     // 执行出库的弹出框方法
     handleExecute(row) {
@@ -863,7 +896,7 @@ export default {
       this.executeDialogVisible = true; // 控制弹出框显示
 
     },
-    handleShow(row){
+    handleShow(row) {
       this.executeTitle = "出库详情";
       this.openExecuteDialog(row.id);
     },
@@ -874,29 +907,64 @@ export default {
         this.$message.error('请扫描正确的单据信息!');
         return;
       }
-        this.handleBlur();
+      this.handleBlur();
     },
-    allocatedHandleBatchAdd(){
+    allocatedHandleBatchAdd() {
       this.$refs.stockSelect.showFlag = true;
       this.$refs.stockSelect.getList();
     },
     // 删除调拨数据
     allocatedHandleDelete() {
+
+      if (this.allocatedIds.length <1) {
+        this.$message.error('请选择要删除的调拨行!');
+        return;
+      }
+
+      // 获取选中的行数据
+      const selectedItems = this.allocatedList.filter(item =>
+        this.allocatedIds.includes(item.id)
+      );
+
+      // 检查是否有已调拨的行
+      const hasAllocatedItem = selectedItems.some(item =>
+        item.allocatedFlag === 'Y'
+      );
+
+      if (hasAllocatedItem) {
+        this.$modal.msgError("已调拨的记录无法删除");
+        return;
+      }
+
       const ids = this.allocatedIds;
       // 将allocatedList中的列表进行循环,若行Id等于当前选中的ids则进行删除
       this.allocatedList = this.allocatedList.filter(item => !ids.includes(item.id));
+
+      let obj = {
+        "headerId": this.executeForm.id,
+        "bomList": this.allocatedList
+      }
+
+      updateAllocatedLine(obj).then(response => {
+        this.$message.success('调拨信息变更成功!');
+      }).catch(error => {
+        this.$message.error('调拨信息变更失败');
+        return;
+      });
+
+
     },
     allocatedHandleSelectionChange(selection) {
       this.allocatedIds = selection.map(item => item.id);
       this.allocatedSingle = selection.length !== 1;
       this.allocatedMultiple = !selection.length;
     },
-    handleBlur(type) {
+    async handleBlur(type) {
       let finType = '';
-      if(type){
+      if (type) {
         finType = type;
       }
-      if(this.warehouseInfo[0] === '' || this.warehouseInfo[1] === '' || this.warehouseInfo[2] === '') {
+      if (this.warehouseInfo[0] === '' || this.warehouseInfo[1] === '' || this.warehouseInfo[2] === '') {
         this.$message.error('请选择调拨仓库、库区、库位信息！');
         return;
       }
@@ -951,23 +1019,50 @@ export default {
       }
       console.log(obj);
       this.loading = true;
-      getStockInfoByPurchaseId(obj).then(response => {
+      /*await getStockInfoByPurchaseId(obj).then(response => {
         this.loading = false;
         this.purchaseId = null;
         let obj = response.data;
         obj.quantityAllocated = obj.quantityOnhand
-        console.log("获取的库存信息： ", obj)
-        //this.allocatedList.push(obj);
         const isItemCodeExists = this.allocatedList.some(item => item.itemCode === obj.itemCode && item.batchCode === obj.batchCode);
         // 如果物料Id不存在，则添加到this.allocatedList
         if (!isItemCodeExists) {
           this.allocatedList.unshift(obj);// 改为插入到数组开头
-          console.log("获取的库存详情obj: " , obj);
-          console.log("当前调拨详情: " , this.allocatedList);
+          console.log("获取的库存详情obj: ", obj);
+          console.log("当前调拨详情: ", this.allocatedList);
         } else {
           this.$message.error(`物料唯一码已存在，请勿添加重复项。`);
         }
+      });*/
+      const response = await getStockInfoByPurchaseId(obj).finally(() => {
+        this.loading = false
+        this.purchaseId = null;
+        }
+      );
+      const newItem = response.data;
+      newItem.quantityAllocated = newItem.quantityOnhand;
+      const isDuplicate = this.allocatedList.some(item =>
+        item.itemCode === newItem.itemCode &&
+        item.batchCode === newItem.batchCode
+      );
+      if (isDuplicate) {
+        this.$message.error('物料唯一码已存在，请勿重复添加');
+        return;
+      }
+      this.allocatedList.unshift(newItem);
+
+      let addObj = {
+        "headerId": this.executeForm.id,
+        "bomList": this.allocatedList
+      }
+      await updateAllocatedLine(addObj).then(response => {
+      }).catch(error => {
+        this.$message.error('追加单身信息失败');
+        this.loading = false;
+        this.disabledFlag = false;
+        return;
       });
+
     },
     async getCameraInfo() {
       try {
@@ -1037,6 +1132,7 @@ export default {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
       let type = '';
+
       function tick() {
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
           // 将视频流绘制到 canvas 上
@@ -1098,50 +1194,31 @@ export default {
     async executeAllocated() {
       this.loading = true;
       this.disabledFlag = true;
-      // 检查allocatedList和bomList是否有匹配的物料编码
-      this.allocatedList.forEach(allocatedItem => {
-        // 查找bomList中是否存在相同的物料编码
-        // const bomItem = this.bomList.find(item => item.itemCode === allocatedItem.itemCode);
-        /*if (!bomItem) {
-          this.$message.error(`物料编码 ${allocatedItem.itemCode} 在BOM信息中不存在`);
-          return;
-        }*/
-        // 检查调拨数量是否不超过库存数量
-        // 先禁用, 此处没考虑单位换算问题
-        /*if (allocatedItem.quantityAllocated > bomItem.quantityOnhand) {
-          this.$message.error(`物料编码 ${allocatedItem.itemCode} 的调拨数量超过了库存数量`);
-          return;
-        }*/
-      });
-      // 如果所有校验都通过，执行调拨出库操作
-      /*if (this.allocatedList.every(item => {
-        const bomItem = this.bomList.find(bom => bom.itemCode === item.itemCode);
-        return bomItem;
-      })) {*/
-        console.log("将扫码的数据同步领料单身表");
-        let obj = {
-          "headerId": this.executeForm.id,
-          "bomList": this.allocatedList
-        }
 
-        await updateAllocatedLine(obj).then(response => {
-          console.log("追加完毕");
-        }).catch(error => {
-          this.$message.error('追加单身信息失败');
-          this.loading = false;
-          this.disabledFlag = false;
-          return;
-        });
-        execute(this.executeForm.id).then(() => {
-          this.getList();
-          this.$modal.msgSuccess('出库成功');
-        }).catch(error => {
-          this.$message.error('出库失败');
-        }).finally(()=>{
-          this.executeDialogVisible = false;
-          this.loading = false;
-          this.disabledFlag = false;
-        });
+      let obj = {
+        "headerId": this.executeForm.id,
+        "bomList": this.allocatedList
+      }
+
+      await updateAllocatedLine(obj).then(response => {
+        console.log("追加完毕");
+      }).catch(error => {
+        this.$message.error('追加单身信息失败');
+        this.loading = false;
+        this.disabledFlag = false;
+        return;
+      });
+
+      await execute(this.executeForm.id).then(() => {
+        this.getList();
+        this.$modal.msgSuccess('出库成功');
+      }).catch(error => {
+        this.$message.error('出库失败');
+      }).finally(() => {
+        this.executeDialogVisible = false;
+        this.loading = false;
+        this.disabledFlag = false;
+      });
 
     },
     handleQuantityChange(row) {
@@ -1155,7 +1232,7 @@ export default {
       // 找到对应的索引并更新数据
       const index = this.allocatedList.findIndex(item => item.itemCode === row.itemCode);
       if (index !== -1) {
-        this.$set(this.allocatedList, index, { ...this.allocatedList[index], quantityAllocated: quantity });
+        this.$set(this.allocatedList, index, {...this.allocatedList[index], quantityAllocated: quantity});
       }
     },
     handleTaskSelect() {
@@ -1210,7 +1287,7 @@ export default {
       // 触发重新校验
       this.$refs.form.validate();
     },
-    handleIssue(row){
+    handleIssue(row) {
       // 确认执行吗?
       this.$confirm('确认生成领料单吗?').then(() => {
         this.loading = true;
@@ -1229,7 +1306,10 @@ export default {
         this.$message.info('已取消');
       });
     },
-
+    handleRowClick(row) {
+      // 切换行的选中状态
+      this.$refs.multipleTable.toggleRowSelection(row);
+    },
 
   }
 };

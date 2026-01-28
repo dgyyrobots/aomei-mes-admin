@@ -206,7 +206,7 @@
           @click.native="handleStepClick(index)"></el-step>
       </el-steps>
       <el-card v-for="(item, index) in processOptions" :key="index" v-if="activeProcess == index && form.id != null">
-        <ProTask :workorderId="form.id" :processId="item.processId" :colorCode="item.colorCode" :optType="optType">
+        <ProTask :workorderCode="form.workorderCode" :workorderId="form.id" :processId="item.processId" :colorCode="item.colorCode" :processCode="item.processCode" :processSequence="item.processSequence" :optType="optType">
         </ProTask>
       </el-card>
       <div slot="footer" class="dialog-footer">
@@ -533,7 +533,7 @@ export default {
     /** 导出按钮操作 */
     handleExport() {
       this.download(
-        'mes/pro/workorder/export',
+        'mes/pro/workorder/export-excel',
         {
           ...this.queryParams,
         },

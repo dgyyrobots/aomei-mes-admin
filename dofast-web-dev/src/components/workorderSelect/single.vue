@@ -118,7 +118,8 @@ export default {
         requestDate: null,
         parentId: null,
         ancestors: null,
-        status: 'CONFIRMED',
+        // status: 'CONFIRMED',
+        status: null,
       },
     };
   },
@@ -130,7 +131,14 @@ export default {
     getList() {
       console.log('queryParams', this.queryParams);
       this.loading = true;
-      listWorkorder(this.queryParams).then(response => {
+
+      if(this.queryParams.workorderCode){
+        this.queryParams.pageNo = 1
+      }
+      listWorkorder({
+        ...this.queryParams,
+        ...(this.isMine ? {} : {isMine: 1})
+      }).then(response => {
         this.workorderList = response.data.list;
         console.log('workorderList', this.workorderList);
         this.total = response.data.total;

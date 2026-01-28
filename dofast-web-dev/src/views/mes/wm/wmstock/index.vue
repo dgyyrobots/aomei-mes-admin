@@ -3,40 +3,40 @@
     <el-row :gutter="20">
       <el-col :span="4" :xs="24">
         <div class="head-container">
-          <el-input v-model="itemTypeName" placeholder="请输入分类名称" clearable size="small" prefix-icon="el-icon-search" style="margin-bottom: 20px" />
+          <el-input v-model="itemTypeName" placeholder="请输入分类名称" clearable size="small" prefix-icon="el-icon-search" style="margin-bottom: 20px"/>
         </div>
         <div class="head-container">
-          <el-tree :data="itemTypeOptions" :props="defaultProps" :expand-on-click-node="false" :filter-node-method="filterNode" ref="tree" default-expand-all @node-click="handleNodeClick" />
+          <el-tree :data="itemTypeOptions" :props="defaultProps" :expand-on-click-node="false" :filter-node-method="filterNode" ref="tree" default-expand-all @node-click="handleNodeClick"/>
         </div>
       </el-col>
 
       <el-col :span="20" :xs="24">
         <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="100px">
           <el-form-item label="产品物料编码" prop="itemCode">
-            <el-input v-model="queryParams.itemCode" placeholder="请输入产品物料编码" clearable @keyup.enter.native="handleQuery" />
+            <el-input v-model="queryParams.itemCode" placeholder="请输入产品物料编码" clearable @keyup.enter.native="handleQuery"/>
           </el-form-item>
           <el-form-item label="产品物料名称" prop="itemName">
-            <el-input v-model="queryParams.itemName" placeholder="请输入产品物料名称" clearable @keyup.enter.native="handleQuery" />
+            <el-input v-model="queryParams.itemName" placeholder="请输入产品物料名称" clearable @keyup.enter.native="handleQuery"/>
           </el-form-item>
           <el-form-item label="入库批次号" prop="batchCode">
-            <el-input v-model="queryParams.batchCode" placeholder="请输入入库批次号" clearable @keyup.enter.native="handleQuery" />
+            <el-input v-model="queryParams.batchCode" placeholder="请输入入库批次号" clearable @keyup.enter.native="handleQuery"/>
           </el-form-item>
-<!--          <el-form-item label="仓库名称" prop="warehouseName">
-            <el-input v-model="queryParams.warehouseName" placeholder="请输入仓库名称" clearable @keyup.enter.native="handleQuery" />
-          </el-form-item>-->
+          <!--          <el-form-item label="仓库名称" prop="warehouseName">
+                      <el-input v-model="queryParams.warehouseName" placeholder="请输入仓库名称" clearable @keyup.enter.native="handleQuery" />
+                    </el-form-item>-->
 
           <el-form-item label="仓库信息" prop="warehouse">
             <el-cascader v-model="queryParams.warehouse" :options="warehouseOptions" :props="warehouseProps" @change="handleWarehouseChanged"></el-cascader>
           </el-form-item>
 
           <el-form-item label="供应商编号" prop="vendorCode">
-            <el-input v-model="queryParams.vendorCode" placeholder="请输入供应商编号" clearable @keyup.enter.native="handleQuery" />
+            <el-input v-model="queryParams.vendorCode" placeholder="请输入供应商编号" clearable @keyup.enter.native="handleQuery"/>
           </el-form-item>
           <el-form-item label="供应商名称" prop="vendorName">
-            <el-input v-model="queryParams.vendorName" placeholder="请输入供应商名称" clearable @keyup.enter.native="handleQuery" />
+            <el-input v-model="queryParams.vendorName" placeholder="请输入供应商名称" clearable @keyup.enter.native="handleQuery"/>
           </el-form-item>
           <el-form-item label="库存有效期" prop="expireDate">
-            <el-date-picker clearable v-model="queryParams.expireDate" type="date" value-format="timestamp" placeholder="请选择库存有效期"> </el-date-picker>
+            <el-date-picker clearable v-model="queryParams.expireDate" type="date" value-format="timestamp" placeholder="请选择库存有效期"></el-date-picker>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -53,24 +53,30 @@
             <el-button type="primary" plain icon="el-icon-edit" size="mini" :disabled="multiple" @click="batchPrint">批量打印</el-button>
           </el-col>
 
+          <el-col :span="1.5"><!--  -->
+            <el-button type="primary" v-hasPermi="['wms:material-stock:create']" plain icon="el-icon-plus" size="mini" @click="handleAdd"
+            >新增
+            </el-button>
+          </el-col>
+
           <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
         <el-table v-loading="loading" :data="wmstockList" @selection-change="handleSelectionChange" ref="multipleTable" @row-click="handleRowClick">
-          <el-table-column type="selection" width="55" align="center" />
-          <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode" />
-          <el-table-column label="产品物料名称" width="150px" align="center" prop="itemName" :show-overflow-tooltip="true" />
-          <el-table-column label="规格型号" align="center" prop="specification" :show-overflow-tooltip="true" />
-          <el-table-column label="在库数量" align="center" prop="quantityOnhand" />
-          <el-table-column label="单位" align="center" prop="unitOfMeasure" />
-          <el-table-column label="入库批次号" width="100px" align="center" prop="batchCode" :show-overflow-tooltip="true" />
-          <el-table-column label="仓库" width="120px" align="center" prop="warehouseName" :show-overflow-tooltip="true" />
-          <el-table-column label="库区" width="150px" align="center" prop="locationName" :show-overflow-tooltip="true" />
-          <el-table-column label="库位" width="150px" align="center" prop="areaName" :show-overflow-tooltip="true" />
-          <el-table-column label="供应商编号" width="100px" align="center" prop="vendorCode" />
-          <el-table-column label="供应商名称" width="120px" align="center" prop="vendorName" :show-overflow-tooltip="true" />
-          <el-table-column label="供应商简称" width="100px" align="center" prop="vendorNick" />
-          <el-table-column label="生产工单" width="180px" prop="workorderCode" :show-overflow-tooltip="true" />
+          <el-table-column type="selection" width="55" align="center"/>
+          <el-table-column label="产品物料编码" width="120px" align="center" prop="itemCode"/>
+          <el-table-column label="产品物料名称" width="150px" align="center" prop="itemName" :show-overflow-tooltip="true"/>
+          <el-table-column label="规格型号" align="center" prop="specification" :show-overflow-tooltip="true"/>
+          <el-table-column label="在库数量" align="center" prop="quantityOnhand"/>
+          <el-table-column label="单位" align="center" prop="unitOfMeasure"/>
+          <el-table-column label="入库批次号" width="160px" align="center" prop="batchCode" :show-overflow-tooltip="true"/>
+          <el-table-column label="仓库" width="120px" align="center" prop="warehouseName" :show-overflow-tooltip="true"/>
+          <el-table-column label="库区" width="150px" align="center" prop="locationName" :show-overflow-tooltip="true"/>
+          <el-table-column label="库位" width="150px" align="center" prop="areaName" :show-overflow-tooltip="true"/>
+          <el-table-column label="供应商编号" width="100px" align="center" prop="vendorCode"/>
+          <el-table-column label="供应商名称" width="120px" align="center" prop="vendorName" :show-overflow-tooltip="true"/>
+          <el-table-column label="供应商简称" width="100px" align="center" prop="vendorNick"/>
+          <el-table-column label="生产工单" width="180px" prop="workorderCode" :show-overflow-tooltip="true"/>
           <el-table-column label="入库日期" align="center" prop="recptDate" width="120">
             <template slot-scope="scope">
               <span>{{ parseTime(scope.row.recptDate, '{y}-{m}-{d}') }}</span>
@@ -83,26 +89,112 @@
           </el-table-column>
         </el-table>
 
-        <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList" />
+        <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize" @pagination="getList"/>
       </el-col>
     </el-row>
 
+    <!-- 对话框(添加 / 修改) -->
+    <el-dialog :title="title" :visible.sync="open" width="80%" v-dialogDrag append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="120px">
+
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="产品物料编码" prop="itemCode">
+              <el-input v-model="form.itemCode" placeholder="请选择产品">
+                <el-button slot="append" @click="handleSelectProduct" icon="el-icon-search"></el-button>
+              </el-input>
+              <ItemSelect ref="itemSelect" @onSelected="onItemSelected"></ItemSelect>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="产品物料名称" prop="itemName">
+              <el-input v-model="form.itemName" placeholder="请输入产品物料名称" readonly="readonly"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="规格型号" prop="specification">
+              <el-input v-model="form.specification" placeholder="请输入规格型号" readonly="readonly"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="单位" prop="unitOfMeasure">
+              <el-input v-model="form.unitOfMeasure" placeholder="请输入单位" readonly="readonly"/>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="入库批次号" prop="batchCode">
+              <el-input v-model="form.batchCode" placeholder="请输入入库批次号"/>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="仓库信息">
+              <el-cascader v-model="wareHouse" :options="warehouseOptions" :props="warehouseProps" @change="handleCreateWarehouseChanged"></el-cascader>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="供应商编号" prop="vendorCode">
+              <el-input v-model="form.vendorCode" placeholder="请输入供应商编号"/>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="在库数量" prop="quantityOnhand">
+              <el-input-number :min="0" v-model="form.quantityOnhand" placeholder="请输入在库数量"/>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="入库时间" prop="recptDate">
+              <el-date-picker style="width: 100%" clearable v-model="form.recptDate" type="datetime" value-format="timestamp"
+                              placeholder="入库时间" ></el-date-picker>
+            </el-form-item>
+          </el-col>
+
+        </el-row>
+
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="母批次号" prop="parentBatchCode">
+              <el-input v-model="form.parentBatchCode" placeholder="请输入母批次号"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitForm">确 定</el-button>
+        <el-button @click="cancel">取 消</el-button>
+      </div>
+    </el-dialog>
 
 
   </div>
 </template>
 
 <script>
-import { listWmstock, getWmstock, delWmstock, addWmstock, updateWmstock , exportExcel} from '@/api/mes/wm/wmstock';
-import { treeselect } from '@/api/mes/md/itemtype';
+import {listWmstock, getWmstock, delWmstock, addWmstock, updateWmstock, exportExcel} from '@/api/mes/wm/wmstock';
+import {treeselect} from '@/api/mes/md/itemtype';
 import Treeselect from '@riophae/vue-treeselect';
 import {getTreeList} from '@/api/mes/wm/warehouse';
 import '@/utils/CLodopfuncs2.js';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
 import {getGoods} from "@/api/purchase/goods";
+import ProtaskSelect from "@/components/TaskSelect/taskSelectSingle.vue";
+import WorkorderSelect from "@/components/workorderSelect/single.vue";
+import ItemSelect from "@/components/itemSelect/single.vue";
+
 export default {
   name: 'Wmstock',
-  components: { Treeselect },
+  components: {ItemSelect, WorkorderSelect, ProtaskSelect, Treeselect},
   data() {
     return {
       // 遮罩层
@@ -165,7 +257,16 @@ export default {
         value: 'pId',
         label: 'pName',
       },
-      exportLoading: false
+      exportLoading: false,
+      wareHouse: [], // 仓库信息
+      // 表单校验
+      rules: {
+        batchCode: [{required: true, message: "批次不能为空", trigger: "blur"}],
+        quantityOnhand: [{required: true, message: "在库数量不能为空", trigger: "blur"}],
+        itemCode: [{required: true, message: "产品物料不能为空", trigger: "blur"}],
+        warehouse: [{required: true, message: "仓库不能为空", trigger: "blur"}],
+      }
+
     };
   },
   watch: {
@@ -190,6 +291,42 @@ export default {
         this.loading = false;
       });
     },
+    reset() {
+      this.form = {
+        id: undefined,
+        itemTypeId: undefined,
+        itemId: undefined,
+        itemCode: undefined,
+        itemName: undefined,
+        specification: undefined,
+        unitOfMeasure: undefined,
+        batchCode: undefined,
+        warehouseId: undefined,
+        warehouseCode: undefined,
+        warehouseName: undefined,
+        locationId: undefined,
+        locationCode: undefined,
+        locationName: undefined,
+        areaId: undefined,
+        areaCode: undefined,
+        areaName: undefined,
+        vendorId: undefined,
+        vendorCode: undefined,
+        vendorName: undefined,
+        vendorNick: undefined,
+        quantityOnhand: undefined,
+        workorderId: undefined,
+        workorderCode: undefined,
+        recptDate: undefined,
+        expireDate: undefined,
+        attr1: undefined,
+        attr2: undefined,
+        attr3: undefined,
+        attr4: undefined,
+      };
+      this.resetForm("form");
+    },
+
     /** 查询分类下拉树结构 */
     getTreeselect() {
       treeselect().then(response => {
@@ -224,13 +361,13 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-     /* this.download(
-        'mes/wms/material-stock/export-excel',
-        {
-          ...this.queryParams,
-        },
-        `库存明细_${new Date().getTime()}.xlsx`,
-      );*/
+      /* this.download(
+         'mes/wms/material-stock/export-excel',
+         {
+           ...this.queryParams,
+         },
+         `库存明细_${new Date().getTime()}.xlsx`,
+       );*/
 
       this.$modal
         .confirm('是否确认导出所有库存数据?')
@@ -244,7 +381,8 @@ export default {
           this.$download.excel(response, '库存明细.xls');
           this.exportLoading = false;
         })
-        .catch(() => { });
+        .catch(() => {
+        });
 
     },
     // 初始化仓库数据
@@ -262,7 +400,13 @@ export default {
         this.queryParams.areaId = obj[2]; // 库位
       }
     },
-
+    handleCreateWarehouseChanged(obj) {
+      if (obj != null) {
+        this.form.warehouseId = obj[0]; // 仓库
+        this.form.locationId = obj[1];// 库区
+        this.form.areaId = obj[2]; // 库位
+      }
+    },
     async batchPrint() {
       await this.$modal.confirm('确认批量打印？');
       LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
@@ -296,8 +440,10 @@ export default {
         LODOP.ADD_PRINT_TEXT(110, 120, 280, 35, obj.itemCode); // 内容部分
 
         LODOP.ADD_PRINT_TEXT(155, 15, 120, 35, "物料名称:");
-        LODOP.ADD_PRINT_TEXT(155, 120, 280, 35, obj.itemName + obj.specification);
+        LODOP.SET_PRINT_STYLE("FontSize", 12);
+        LODOP.ADD_PRINT_TEXT(155, 120, 490, 35, obj.itemName );
 
+        LODOP.SET_PRINT_STYLE("FontSize", 14);
         LODOP.ADD_PRINT_TEXT(200, 15, 120, 35, "库位:");
         LODOP.ADD_PRINT_TEXT(200, 120, 280, 35, obj.locationName);
 
@@ -335,6 +481,60 @@ export default {
       // 切换行的选中状态
       this.$refs.multipleTable.toggleRowSelection(row);
     },
+    handleAdd() {
+      this.reset();
+      this.open = true;
+      this.form.recptDate = new Date();
+      this.title = "添加库存记录";
+    },
+    /** 提交按钮 */
+    submitForm() {
+      this.$refs["form"].validate(valid => {
+        if (!valid) {
+          return;
+        }
+
+        if (!this.form.warehouseId || !this.form.warehouseId || !this.form.areaId) {
+          this.$message.error("请选择仓库、库区、库位");
+          return;
+        }
+
+        // 修改的提交
+        if (this.form.id != null) {
+          updateWmstock(this.form).then(response => {
+            this.$modal.msgSuccess("修改成功");
+            this.open = false;
+            this.getList();
+          });
+          return;
+        }
+        // 添加的提交
+        addWmstock(this.form).then(response => {
+          this.$modal.msgSuccess("新增成功");
+          this.open = false;
+          this.getList();
+        });
+      });
+    },
+    cancel() {
+      this.open = false;
+      this.reset();
+    },
+    handleSelectProduct() {
+      this.$refs.itemSelect.showFlag = true;
+    },
+    //物料选择弹出框
+    onItemSelected(obj) {
+      if (obj != undefined && obj != null) {
+        this.form.itemId = obj.id;
+        this.form.itemCode = obj.itemCode;
+        this.form.itemName = obj.itemName;
+        this.form.specification = obj.specification;
+        this.form.unitOfMeasure = obj.unitOfMeasure;
+      }
+    },
+
+
   },
 };
 </script>

@@ -158,3 +158,21 @@ export function initIqcQuantity(query) {
     params: query,
   });
 }
+
+export function mergeGoods(data) {
+  return request({
+    url: '/purchase/goods/mergeGoods',
+    method: 'post',
+    data: data
+  })
+}
+
+
+
+// 校验明细是否配置
+export function checkOrigin(id) {
+  return request({
+    url: '/purchase/goods/checkOrigin?id=' + id,
+    method: 'get',
+  });
+}

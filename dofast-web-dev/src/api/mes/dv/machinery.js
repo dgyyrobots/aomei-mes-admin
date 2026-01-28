@@ -52,3 +52,12 @@ export function getListByProcessCode(query) {
     params: query,
   });
 }
+
+// 查询设备列表
+export function getDeviceStatus(query) {
+  return request({
+    url: '/mes/cmms/dv-machinery/getDeviceStatus',
+    method: 'get',
+    params: query,
+  });
+}

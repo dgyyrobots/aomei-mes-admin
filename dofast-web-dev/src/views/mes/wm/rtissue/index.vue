@@ -453,6 +453,18 @@ export default {
             this.$modal.msgError('请选择完整的仓库信息（仓库、库区、库位）');
             return;
           }
+          // 检查是否正确选择工单与任务单
+          if(!this.form.taskCode || !this.form.workorderCode) {
+            this.$modal.msgError('请选择完整的工单与任务单信息!');
+            return;
+          }
+
+          // 至少要选中一行退料单明细
+          if(this.form.rtissuelineList.length < 1){
+            this.$modal.msgError('请至少选中一行明细!');
+            return;
+          }
+
           if (this.form.id != null) {
             updateRtissue(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
@@ -603,6 +615,9 @@ export default {
          // this.showPrintComponent = true;
        }*/
 
+      LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
+      LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
+
       for (let i = 0; i < rtissueLine.length; i++) {
         let id = rtissueLine[i].id;
         let itemName = rtissueLine[i].itemName;
@@ -616,9 +631,8 @@ export default {
         let areaName = rtissueLine[i].areaName; // 库位名称
         let createTime = new Date(rtissueLine[i].createTime).toISOString().slice(0, 19).replace('T', ' '); // 退料日期
         let workStationName = rtissueLine[i].workstationName; // 工位名称
-        // 先使用测试数据
-        LODOP.PRINT_INITA(0, 0, 150, 100); // 初始化打印任务，纸张大小为150mm*100mm，单位：像素
-        LODOP.SET_PRINT_PAGESIZE(2, "", "", "热敏纸"); // 设置纸张横向
+
+        LODOP.NEWPAGE();
         // 添加整体边框
         LODOP.ADD_PRINT_RECT(8, 5, 150 * 3.71 - 10, 100 * 3.71 - 10, 0, 1); // 整体边框
 
@@ -637,8 +651,10 @@ export default {
         LODOP.ADD_PRINT_TEXT(70, 120, 280, 35, workStationName); // 内容部分
 
         LODOP.ADD_PRINT_TEXT(120, 15, 120, 35, "物料名称:");
-        LODOP.ADD_PRINT_TEXT(120, 120, 280, 35, itemName);
+        LODOP.SET_PRINT_STYLE("FontSize", 14);
+        LODOP.ADD_PRINT_TEXT(120, 120, 490, 35, itemName);
 
+        LODOP.SET_PRINT_STYLE("FontSize", 16);
         LODOP.ADD_PRINT_TEXT(170, 15, 120, 35, "数量:");
         LODOP.ADD_PRINT_TEXT(170, 120, 280, 35, quantity);
 
@@ -657,8 +673,11 @@ export default {
           "rt_code": itemCode,
         }
         LODOP.ADD_PRINT_BARCODE(220, 390, 170, 170, "QRCode", JSON.stringify(jsonQc));
-        LODOP.PREVIEW();
+        // LODOP.PREVIEW();
       }
+
+      LODOP.SET_PRINT_MODE('AUTO_CLOSE_PREWINDOW', 1);
+      LODOP.PREVIEW();
 
 
     },

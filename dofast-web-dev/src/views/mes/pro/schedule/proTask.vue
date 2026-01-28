@@ -115,7 +115,7 @@
 </template>
 
 <script>
-import { listProtask, getProtask, delProtask, addProtask, updateProtask } from '@/api/mes/pro/protask';
+import { listProtask, getProtask, delProtask, addProtask, updateProtask, initChangeInfo , exportTaskExcel} from '@/api/mes/pro/protask';
 import WorkstationSelect from '@/components/workstationSelect/simpletableSingle.vue';
 import {listWorkstation} from "@/api/mes/md/workstation";
 
@@ -162,7 +162,7 @@ export default {
         itemName: null,
         specification: null,
         unitOfMeasure: null,
-        quantity: this.initQuantity,
+        quantity: null,
         quantityProduced: null,
         quantityChanged: null,
         clientId: null,
@@ -174,6 +174,7 @@ export default {
         endTime: null,
         colorCode: null,
         requestDate: null,
+        processSequence: this.processSequence,
       },
       // 表单参数
       form: {},
@@ -184,6 +185,8 @@ export default {
         startTime: [{ required: true, message: '请选择开始生产日期', trigger: 'blur' }],
         duration: [{ required: true, message: '清输入估算的生产用时', trigger: 'blur' }],
       },
+      // 导出遮罩层
+      exportLoading: false,
     };
   },
   props: {
@@ -192,37 +195,27 @@ export default {
     workorderName: null,
     colorCode: null,
     processId: null,
+    processCode: null,
     optType: null,
     initQuantity: {
       type: Number,
       default: 0
-    }
+    },
+    processSequence: null
   },
 
   created() {
     this.getList();
   },
   watch: {
+    /*
+    2025-8-4: 基于工单号与工序从ERP获取转换后的排产数量
     initQuantity: {
       immediate: true,
       handler(newVal) {
         if (this.form) {
           this.form.quantity = newVal;
         }
-      }
-    },
-    /*workorderId:{
-      immediate: true,
-      handler(newVal) {
-        console.log("获取到工单Id: ", this.workorderId)
-        this.getList();
-      }
-    },*/
-    /*processId:{
-      immediate: true,
-      handler(newVal) {
-        console.log("获取到工序Id: ", this.processId)
-        this.getList();
       }
     },*/
     workorderId: {
@@ -305,7 +298,7 @@ export default {
         itemName: null,
         specification: null,
         unitOfMeasure: null,
-        quantity: this.initQuantity,
+        quantity: null,
         quantityProduced: null,
         quantityChanged: null,
         clientId: null,
@@ -326,6 +319,7 @@ export default {
         createTime: null,
         updateBy: null,
         updateTime: null,
+        processSequence: null,
       };
       this.resetForm('form');
     },
@@ -346,16 +340,25 @@ export default {
       this.multiple = !selection.length;
     },
     /** 新增按钮操作 */
-    handleAdd() {
+    async handleAdd() {
       this.reset();
-      this.open = true;
+
       if (!this.form.workstationId) {
-        this.$nextTick(() => {
-          this.fetchFirstWorkstation();
+        this.$nextTick(async() => {
+         await this.fetchFirstWorkstation();
         });
       }
       this.title = '添加生产任务';
-
+      await initChangeInfo(this.workorderCode , this.processCode).then(response => {
+        if(response.data){
+          this.form.quantity = response.data.CHANGE_QUANTITY != null ? response.data.CHANGE_QUANTITY : 0;
+          this.form.unitOfMeasure = response.data.CHANGE_UNIT !=null ? response.data.CHANGE_UNIT : "米";
+        }else{
+          this.form.quantity = 0;
+          this.form.unitOfMeasure = "米";
+        }
+      })
+      this.open = true;
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -373,7 +376,7 @@ export default {
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
-          console.log(this.form);
+          this.form.processSequence = this.processSequence;
           if (this.form.id != null) {
             updateProtask(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
@@ -406,13 +409,22 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      this.download(
-        'mes/pro/protask/export',
-        {
-          ...this.queryParams,
-        },
-        `protask_${new Date().getTime()}.xlsx`,
-      );
+      // 处理查询参数
+      let params = {...this.queryParams};
+      params.pageNo = undefined;
+      params.pageSize = undefined;
+      this.$modal
+        .confirm('是否确认导出排产信息?')
+        .then(() => {
+          this.exportLoading = true;
+          return exportTaskExcel(params);
+        })
+        .then(response => {
+          this.$download.excel(response, '生产任务.xls');
+          this.exportLoading = false;
+        })
+        .catch(() => {
+        });
     },
     handleWorkstationSelect() {
       this.$refs.wsSelect.showFlag = true;
@@ -431,7 +443,6 @@ export default {
       listWorkstation({ processId: this.processId }).then(response => {
         if (response.data.list && response.data.list.length > 0) {
           const firstWorkstation = response.data.list[0];
-          console.log("firstWorkstation" , firstWorkstation);
           this.form.workstationId = firstWorkstation.workstationId;
           this.form.workstationCode = firstWorkstation.workstationCode;
           this.form.workstationName = firstWorkstation.workstationName;

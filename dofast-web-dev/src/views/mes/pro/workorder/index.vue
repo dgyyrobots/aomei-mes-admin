@@ -35,10 +35,23 @@
                 <el-radio :key="true" :label="true">委外</el-radio>
               </el-radio-group>
             </el-form-item>-->
-      <el-form-item label="需求日期" prop="requestDate">
+`      <el-form-item label="需求日期" prop="requestDate">
         <el-date-picker clearable v-model="queryParams.requestDate" type="date" value-format="timestamp"
           placeholder="请选择需求日期"></el-date-picker>
       </el-form-item>
+
+<!--      <el-form-item label="需求日期" prop="requestDate">
+        <el-date-picker
+          v-model="queryParams.requestDate"
+          type="datetimerange"
+          range-separator="至"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          value-format="yyyy-MM-dd HH:mm:ss"
+          :default-time="['00:00:00', '23:59:59']"
+        ></el-date-picker>
+      </el-form-item>-->
+
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -59,12 +72,12 @@
           v-hasPermi="['pro:workorder:delete']">删除 </el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
-          v-hasPermi="['pro:feedback:export']">导出 </el-button>
-      </el-col>
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['pro:workorder:export']"
+           :loading="exportLoading">导出 </el-button>
+      </el-col><!--  -->
 
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-download" size="mini" :disabled="single" @click="handleFinsh">完成 </el-button>
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleFinsh">完成 </el-button>
       </el-col>
 
 <!--      <el-col :span="1.5">
@@ -72,11 +85,15 @@
                    v-hasPermi="['pro:feedback:update']">流转卡 </el-button>
       </el-col>-->
 
-      <el-col :span="1.5">
+<!--      <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-edit" size="mini" @click="handleQuality"
                    v-hasPermi="['pro:feedback:update']">合格率 </el-button>
-      </el-col>
+      </el-col>-->
 
+<!--      <el-col :span="1.5">
+      <el-button type="warning" plain icon="el-icon-edit" size="mini" @click="handleTest"
+                >测试 </el-button>
+      </el-col>-->
 
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -129,16 +146,14 @@
       </el-table-column>
       <el-table-column label="操作" width="150px" align="center" class-name="small-padding fixed-width" fixed="right">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-printer" :disabled="!handleCanPrint(scope.row)"
-            @click="handlePrint(scope.row)">打印 </el-button>
+          <el-button size="mini" type="text" icon="el-icon-printer"
+            @click="handlePrint(scope.row)">打印 </el-button> <!-- :disabled="!handleCanPrint(scope.row)" -->
           <el-button size="mini" type="text" icon="el-icon-edit" v-if="scope.row.status == 'PREPARE'"
             @click="handleUpdate(scope.row)" v-hasPermi="['pro:workorder:update']">修改 </el-button>
           <el-button size="mini" type="text" icon="el-icon-plus" v-if="scope.row.status == 'CONFIRMED'"
             @click="handleAdd(scope.row)" v-hasPermi="['pro:workorder:create']">新增 </el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" v-if="scope.row.status == 'PREPARE'"
             @click="handleDelete(scope.row)" v-hasPermi="['pro:workorder:delete']">删除 </el-button>
-
-
         </template>
       </el-table-column>
     </el-table>
@@ -231,6 +246,7 @@
               <ItemSelect ref="itemSelect" @onSelected="onItemSelected"></ItemSelect>
             </el-form-item>
           </el-col>
+
           <el-col :span="12">
             <el-form-item label="产品名称" prop="productName">
               <el-input v-model="form.productName" placeholder="请选择产品" disabled />
@@ -315,7 +331,7 @@
           </el-steps>
           <template v-for="(item, index) in processOptions">
             <el-card :key="index" v-if="activeProcess == index">
-              <ProTask :workorderId="form.id" :workorderName = "form.workorderName" :workorderCode="form.workorderCode" :processId="item.processId" :colorCode="item.colorCode" :optType="optType" :initQuantity="form.quantity">
+              <ProTask :workorderId="form.id" :workorderName = "form.workorderName" :workorderCode="form.workorderCode" :processId="item.processId" :processCode="item.processCode" :colorCode="item.colorCode" :optType="optType" :initQuantity="form.quantity" :processSequence="item.processSequence">
               </ProTask>
             </el-card>
           </template>
@@ -338,7 +354,7 @@ import { createPrintLog } from "@/api/report/printLog";
 import { listProductprocess } from '@/api/mes/pro/routeprocess';
 import { getRouteCodeByItemCode } from '@/api/mes/pro/proroute';
 import ProTask from '../schedule/proTask.vue';
-import { listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder , updateWorkorderAdjuncts , finshWorkorder , calculateQuality , reportCalculateQuality } from '@/api/mes/pro/workorder';
+import { listWorkorder, getWorkorder, delWorkorder, addWorkorder, updateWorkorder , updateWorkorderAdjuncts , finshWorkorder , calculateQuality , reportCalculateQuality , exportExcel } from '@/api/mes/pro/workorder';
 import Workorderbom from './bom/bom.vue';
 import WorkorderItemList from './items/item.vue';
 import ItemSelect from '@/components/itemSelect/single.vue';
@@ -422,7 +438,6 @@ export default {
         ancestors: null,
         status: null,
         isOut: null,
-
       },
       // 表单参数
       form: {},
@@ -442,11 +457,12 @@ export default {
         level0: '',
         level1: '',
       },
-      isShowDelete: true,
+      isShowDelete: false,
       ids: [],
       // 行选中项
       selectionObj: {},
-      getData: false
+      getData: false,
+      exportLoading: false,
     };
   },
   created() {
@@ -471,9 +487,11 @@ export default {
     /** 查询生产工单列表 */
     getList() {
       this.loading = true;
-      listWorkorder({
-        ...this.queryParams,
-        ...(this.isMine ? {} : {isMine: 1}),
+      if(this.queryParams.workorderCode){
+        this.queryParams.pageNo = 1
+      }
+      listWorkorder({ /*...(this.isMine ? {} : {isMine: 1}),*/
+        ...this.queryParams
       }).then(response => {
         // this.workorderList = this.handleTree(response.data.list, 'id', 'parentId');
         this.workorderList = response.data.list;
@@ -581,15 +599,18 @@ export default {
     },
     async handlePrint(row) {
       await this.$modal.confirm('确认打印？')
+
       let datas = await createPrintLog({printName: this.$store.state.user.nickname, printType: this.$route.meta.title + '-工单编码', printCode: row.workorderCode});
       if (!datas.data) {
         this.$message.error(datas.msg);
         return
       }
-      const id = this.handleCanPrint(row);
+      /*const id = this.handleCanPrint(row);
       if (id) {
-        window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/${id}?token=${getAccessToken()}&workorderId=${row.id}`);
-      }
+        window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/1158988932573622272?token=${getAccessToken()}&workorderId=${row.id}`);
+      }*/
+      window.open(`${process.env.VUE_APP_BASE_API}/jmreport/view/1158988932573622272?token=${getAccessToken()}&workorderId=${row.id}`);
+
     },
     /** 新增按钮操作 */
     async handleAdd(row) {
@@ -617,7 +638,8 @@ export default {
       } else {
         this.form.parentId = 0;
       }
-      this.isShowDelete = true;
+      // 2025-12-15 禁用工单删除
+      // this.isShowDelete = true;
       this.title = '添加生产工单';
       this.optType = 'add';
       setTimeout(() => {
@@ -642,12 +664,11 @@ export default {
       await getRouteCodeByItemCode(this.form.productCode).then(response => {
         this.form.routeList = response.data;
         this.open = true;
-        this.isShowDelete = true;
+        // 2025-12-15 禁用工单删除
+        // this.isShowDelete = true;
         this.title = '查看工单信息';
         this.optType = 'view';
       });
-      console.log("工单Id: ", this.form.id);
-      console.log("工序信息: ", this.processOptions);
       this.getData = true;
     },
     /** 修改按钮操作 */
@@ -677,7 +698,8 @@ export default {
         this.title = '修改生产工单';
         this.optType = 'edit';
       });
-      this.isShowDelete = true;
+      // 2025-12-15 禁用工单删除
+      // this.isShowDelete = true;
       this.getData = true;
     },
 
@@ -695,7 +717,7 @@ export default {
           } else {
             addWorkorder(this.form).then(response => {
               this.$modal.msgSuccess('新增成功');
-              //this.open = false;
+              this.open = false;
               this.form.id = response.data;
               this.getList();
             });
@@ -725,13 +747,28 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      this.download(
+      /*this.download(
         'mes/pro/workorder/export',
         {
           ...this.queryParams,
         },
         `workorder_${new Date().getTime()}.xlsx`,
-      );
+      );*/
+
+      this.$modal
+        .confirm('是否确认导出所有工单数据?')
+        .then(() => {
+          this.exportLoading = true;
+          return exportExcel({
+            ...this.queryParams,
+          });
+        })
+        .then(response => {
+          this.$download.excel(response, '工单信息.xls');
+          this.exportLoading = false;
+        })
+        .catch(() => {
+        });
     },
     handleFinish() {
       let that = this;
@@ -746,10 +783,10 @@ export default {
         this.form.productId = obj.id;
         this.form.productCode = obj.itemCode;
         this.form.productName = obj.itemName;
-        // this.form.productSpc = obj.specification;
+        this.form.productSpc = obj.specification;
         this.form.unitOfMeasure = obj.unitOfMeasure;
         // 根据当前选中的物料, 获取工艺路线编号
-        this.initRouteList(obj.itemCode);
+        // this.initRouteList(obj.itemCode);
       }
     },
     //客户选择弹出框
@@ -824,25 +861,21 @@ export default {
       this.multiple = !selection.length;
     },
     // 工单完结
-    handleFinsh(){
+    async handleFinsh(){
       // 澳美的工单跨度可达个月，无法通过数量来进行卡控是否完结
       // 当前通过人为控制单据状态
-      let obj = this.selectionObj;
-
-      if(!obj){
-        this.$modal.msgError('请选择一条数据!');
+      if(!this.selectionObj){
+        this.$modal.msgError('请至少选择一条数据!');
         return;
       }
-
-      // 追加提示
-      this.$modal.confirm('是否确认完成选中的工单？').then(function () {
-         finshWorkorder(obj[0]).then(response => {
-           //this.$modal.msgSuccess('附件修改成功');
-           this.getList();
-           return;
-         });
-      });
-
+      try {
+        await this.$modal.confirm('是否确认完成选中的工单？');
+        await finshWorkorder(this.selectionObj);
+      } catch (error) {
+        this.$modal.msgError('完成工单时发生错误，请稍后再试。');
+      } finally {
+        this.getList();
+      }
     },
 
     handleQuality(){
@@ -858,8 +891,7 @@ export default {
         return;
       });*/
 
-     /* const  response = reportCalculateQuality({"workorderCode": null});
-      console.log(response);*/
+      const  response = reportCalculateQuality({"workorderCode": null});
     },
 
   },

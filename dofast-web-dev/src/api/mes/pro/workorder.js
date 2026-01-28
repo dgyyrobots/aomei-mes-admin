@@ -10,6 +10,16 @@ export function listWorkorder(query) {
 }
 
 // 查询生产工单列表
+export function listWorkorderSummaryBom(query) {
+  return request({
+    url: '/mes/pro/workorder/summaryBomPage',
+    method: 'get',
+    params: query,
+  });
+}
+
+
+// 查询生产工单列表
 export function traceWorkorderPage
 (query) {
   return request({
@@ -109,6 +119,7 @@ export function getWorkorderMonthCount(year) {
 }
 
 
+/*
 export function calculateQuality(workorderId) {
   return request({
     url: '/mes/pro/workorder/calculateQuality?id=' + workorderId,
@@ -123,4 +134,53 @@ export function reportCalculateQuality(data) {
     data: data,
   });
 }
+*/
+
+/*export function test(query) {
+  return request({
+    url: '/mes/cmms/dv-machinery/getDeviceOnlineLog',
+    method: 'get',
+    params: query,
+  });
+}*/
+
+export function exportExcel(query) {
+  return request({
+    url: '/mes/pro/workorder/export-excel',
+    method: 'get',
+    params: query,
+    responseType: 'blob',
+  });
+}
+
+
+export function productQualityReport(query) {
+  return request({
+    url: '/mes/pro/workorder/productQualityReport',
+    method: 'get',
+    params: query,
+  });
+}
+
+
+
+export function teamQualityReport(query) {
+  return request({
+    url: '/mes/pro/workorder/teamQualityReport',
+    method: 'get',
+    params: query,
+  });
+}
+
+
+// 结案工单班组成员报表
+export function closeTeamQualityReport(query) {
+  return request({
+    url: '/mes/pro/workorder/closeTeamQualityReport',
+    method: 'get',
+    params: query,
+  });
+}
+
+
 

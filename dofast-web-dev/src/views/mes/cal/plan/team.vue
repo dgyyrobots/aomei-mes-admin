@@ -12,7 +12,7 @@
             <el-table-column label="班组名称" align="center" prop="teamName" />
             <el-table-column label="操作" align="center" v-if="optType != 'view'" class-name="small-padding fixed-width">
               <template slot-scope="scope">
-                <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['cal:plan-team:update']">删除</el-button>
+                <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" >删除</el-button> <!--v-hasPermi="['cal:plan-team:update']"-->
               </template>
             </el-table-column>
           </el-table>
@@ -97,7 +97,8 @@ export default {
     },
     onTeamSelected(rows) {
       rows.forEach(team => {
-        this.form.teamId = team.teamId;
+        console.log("team: " , team);
+        this.form.teamId = team.id;
         this.form.teamCode = team.teamCode;
         this.form.teamName = team.teamName;
         this.form.planId = this.planId;

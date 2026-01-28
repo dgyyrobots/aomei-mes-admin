@@ -483,8 +483,10 @@ export default {
         LODOP.ADD_PRINT_TEXT(120, 120, 280, 35, obj.toolCode);
 
         LODOP.ADD_PRINT_TEXT(170, 15, 120, 35, "镭射板名称:");
-        LODOP.ADD_PRINT_TEXT(170, 120, 280, 35, obj.toolName);
+        LODOP.SET_PRINT_STYLE("FontSize", 14);
+        LODOP.ADD_PRINT_TEXT(170, 120, 490, 35, obj.toolName);
 
+        LODOP.SET_PRINT_STYLE("FontSize", 16);
         LODOP.ADD_PRINT_TEXT(220, 15, 120, 35, "合格数量:");
         LODOP.ADD_PRINT_TEXT(220, 120, 280, 35, obj.quantityAvail);
 

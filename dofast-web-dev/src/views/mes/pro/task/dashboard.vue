@@ -238,6 +238,9 @@ export default {
         this.detail.machineryName = response.data?.machineryName;
         this.machineryCode = response.data?.erpMachineryCode;
         this.productId = response.data?.productId;
+        console.log("AAA: " , this.detail.machineryName ,this.machineryCode , this.productId )
+
+        console.log("bbb: " , response.data)
       })
       this.getStaffInfo();
       this.getFeedbackInfo();

@@ -131,3 +131,22 @@ export function getTaskDetail(taskCode) {
     params: {'taskCode': taskCode},
   });
 }
+
+
+export function initChangeInfo(workorderCode, processCode) {
+  return request({
+    url: '/mes/pro/task/initChangeInfo',
+    method: 'get',
+    params: {'workorderCode': workorderCode, 'processCode': processCode},
+  });
+}
+
+// 导出排产
+export function exportTaskExcel(query) {
+  return request({
+    url: '/mes/pro/task/export-excel',
+    method: 'get',
+    params: query,
+    responseType: 'blob',
+  });
+}

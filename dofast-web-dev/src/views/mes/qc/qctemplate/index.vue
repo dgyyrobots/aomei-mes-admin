@@ -55,6 +55,9 @@
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.enableFlag" />
         </template>
       </el-table-column>
+
+
+
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['qms:template:update']">修改</el-button>
@@ -86,13 +89,17 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="18">
+          <el-col :span="24">
             <el-form-item label="检测种类" prop="qcTypesParam">
               <el-checkbox-group v-model="form.qcTypesParam">
                 <el-checkbox v-for="dict in dict.type.mes_qc_type" :key="dict.value" :label="dict.value" :value="dict.value">{{ dict.label }}</el-checkbox>
               </el-checkbox-group>
             </el-form-item>
           </el-col>
+
+        </el-row>
+
+        <el-row>
           <el-col :span="6">
             <el-form-item label="是否启用" prop="enableFlag">
               <el-radio-group v-model="form.enableFlag" disabled v-if="optType == 'view'">
@@ -103,7 +110,16 @@
               </el-radio-group>
             </el-form-item>
           </el-col>
+
+          <el-col :span="8">
+            <el-form-item label="生产工序" prop="processCode">
+              <el-select v-model="form.processCode" placeholder="请选择工序" clearable>
+                <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
         </el-row>
+
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注" prop="remark">
@@ -135,6 +151,8 @@ import { listQctemplate, getQctemplate, delQctemplate, addQctemplate, updateQcte
 import { genCode } from '@/api/mes/autocode/rule';
 import TemplateIndex from './templateindex.vue';
 import TemplateProduct from './templateproduct';
+import {listProcess} from "@/api/mes/pro/process";
+
 export default {
   name: 'Qctemplate',
   dicts: ['sys_yes_no', 'mes_qc_type'],
@@ -181,10 +199,14 @@ export default {
         templateName: [{ required: true, message: '检测模板名称不能为空', trigger: 'blur' }],
         qcTypes: [{ required: true, message: '检测种类不能为空', trigger: 'blur' }],
       },
+      processOptions: [], // 工序选项
+
     };
   },
   created() {
     this.getList();
+    this.getProcess();
+
   },
   methods: {
     /** 查询检测模板列表 */
@@ -267,6 +289,11 @@ export default {
     submitForm() {
       this.$refs['form'].validate(valid => {
         if (valid) {
+          if(!this.form.qcTypesParam){
+            this.$modal.error('请至少选择一项检测种类!');
+            return;
+          }
+
           if (this.form.id != null) {
             updateQctemplate(this.form).then(response => {
               this.$modal.msgSuccess('修改成功');
@@ -307,6 +334,15 @@ export default {
         this.form.templateCode = null;
       }
     },
+
+    getProcess() {
+      // 初始化工序选项
+      this.processOptions = [];
+      listProcess().then(response => {
+        this.processOptions = response.data.list;
+      });
+    },
+
   },
 };
 </script>

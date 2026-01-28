@@ -13,6 +13,11 @@
       <el-form-item label="领料日期" prop="issueDate">
         <el-date-picker clearable v-model="queryParams.issueDate" type="date" value-format="timestamp" placeholder="请选择领料日期"></el-date-picker>
       </el-form-item>
+
+      <el-form-item label="工单号" prop="workorderCode">
+        <el-input v-model="queryParams.workorderCode" placeholder="请输入工单号" clearable @keyup.enter.native="handleQuery"/>
+      </el-form-item>
+
       <el-form-item label="任务单号" prop="taskCode" v-if="!taskCode">
         <el-input v-model="queryParams.taskCode" placeholder="请输入任务单号" clearable @keyup.enter.native="handleQuery"/>
       </el-form-item>
@@ -77,6 +82,7 @@
       <el-table-column label="生产工单" align="center" prop="workorderCode"/>
       <el-table-column label="生产工序" align="center" prop="processName"/>
       <el-table-column label="生产任务" align="center" prop="taskCode"/>
+      <el-table-column label="工作序" align="center" prop="processSequence" />
       <el-table-column label="领料日期" align="center" prop="issueDate" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.issueDate, '{y}-{m}-{d}') }}</span>
@@ -754,6 +760,7 @@ export default {
         this.form.workstationCode = row.workstationCode;
         this.form.workstationId = row.workstationId;
         this.form.workstationName = row.workstationName;
+        this.form.processSequence = row.processSequence;
         console.log(this.form)
       }
     },

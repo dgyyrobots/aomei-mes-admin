@@ -80,8 +80,8 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="所属工序" prop="processId">
-              <el-select v-model="form.processCode" placeholder="请选择工序">
-                <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"></el-option>
+              <el-select v-model="form.processCode" placeholder="请选择工序" @change="handleProcessChange">
+                <el-option v-for="item in processOptions" :key="item.processCode" :label="item.processName" :value="item.processCode"  ></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -229,6 +229,7 @@ export default {
               this.getList();
             });
           } else {
+            console.log(this.form);
             addQcdefect(this.form).then(response => {
               this.$modal.msgSuccess('新增成功');
               this.open = false;
@@ -272,6 +273,19 @@ export default {
         console.log(this.processOptions)
       });
     },
+    // 工序选择变化处理
+    handleProcessChange(selectedCode) {
+      // 根据选中的工序编码找到对应的工序对象
+      const selectedProcess = this.processOptions.find(item => item.processCode === selectedCode);
+      console.log("selectedProcess: " , selectedProcess);
+
+      if (selectedProcess) {
+        // 将工序名称设置到表单中
+        this.form.processName = selectedProcess.processName;
+      } else {
+        this.form.processName = null;
+      }
+    }
 
   },
 };

@@ -24,27 +24,6 @@
       </el-form-item>
     </el-form>
 
-    <!--
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
-                       v-hasPermi="['pro:feedback:create']">新增
-            </el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
-                       v-hasPermi="['pro:feedback:update']">修改
-            </el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
-                       v-hasPermi="['pro:feedback:delete']">删除
-            </el-button>
-          </el-col>
-
-          <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
-        </el-row>
-    -->
     <el-tabs v-model="activeName" @tab-click="handleClick" type="border-card">
       <el-tab-pane label="采购来源" name="first">
         <el-table v-loading="loading" :data="purchaseGoodsList" ref="multipleTable">
