@@ -7,6 +7,9 @@
       <el-form-item label="工艺路线名称" prop="routeName">
         <el-input v-model="queryParams.routeName" placeholder="请输入工艺路线名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
+      <el-form-item label="工艺路线说明" prop="enableFlag">
+        <el-input v-model="queryParams.routeDesc" placeholder="请输入工艺路线说明" clearable @keyup.enter.native="handleQuery" />
+      </el-form-item>
       <el-form-item label="是否启用" prop="enableFlag">
         <el-input v-model="queryParams.enableFlag" placeholder="请输入是否启用" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
@@ -89,7 +92,7 @@
         </el-row>
         <el-row>
           <el-col :span="24">
-            <el-form-item label="说明" prop="routeDesc">
+            <el-form-item label="工艺路线说明" prop="routeDesc">
               <el-input v-model="form.routeDesc" type="textarea" placeholder="请输入内容" />
             </el-form-item>
           </el-col>
